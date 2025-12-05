@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const GAS_URL = process.env.NEXT_PUBLIC_GAS_URL || 'https://script.google.com/macros/s/AKfycbysXElBCf_m-oI-jzVadX6fH4rc7Ss0TOUZLfnBZUejmoAC5LqFz0npmJK4groab6l9/exec';
+  const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/auth';
 
 export default function DashboardPage() {
   const [username, setUsername] = useState<string | null>(null);
