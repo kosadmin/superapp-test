@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter from 'next/navigation';
+import { useRouter } from 'next/navigation';   // ← ĐÃ SỬA ĐÚNG DẤU NGOẶC
 
-// URL n8n giống 2 trang kia
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // ← DÁN URL THẬT CỦA BẠN VÀO ĐÂY
+// URL n8n của bạn (đúng rồi)
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth';
 
 export default function ProfilePage() {
   const [userInfo, setUserInfo] = useState<any>(null);
@@ -18,7 +18,6 @@ export default function ProfilePage() {
       return;
     }
 
-    // Gọi verify để lấy username trước
     fetch(N8N_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -26,28 +25,28 @@ export default function ProfilePage() {
     })
       .then(r => r.json())
       .then(data => {
-        if (data.success && data.username) {
-          // Sau khi có username → gọi thêm 1 lần mới để lấy full thông tin từ sheet users
-          return fetch(N8N_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'get_user_info',        // action mới mình sẽ thêm ở bước 2
-              username: data.username
-            }),
-          }).then(r => r.json());
-        } else {
-          throw new Error('Invalid token');
-        }
+        if (!data.success) throw new Error();
+        return fetch(N8N_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'get_user_info',
+            username: data.username
+          }),
+        }).then(r => r.json());
       })
-      .then(info => {
-        setUserInfo(info.user);
-        setLoading(false);
+      .then(res => {
+        if (res.user) {
+          setUserInfo(res.user);
+        } else {
+          throw new Error();
+        }
       })
       .catch(() => {
         localStorage.removeItem('token');
         router.replace('/login');
-      });
+      })
+      .finally(() => setLoading(false));
   }, [router]);
 
   if (loading) {
@@ -57,37 +56,39 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
-        <h1 className="text-3xl font-bold text-center mb-8 text-blue-700">
+        <h1 className="text-3xl font-bold text-center mb-10 text-blue-700">
           Thông tin tài khoản
         </h1>
 
-        <div className="space-y-6 text-lg">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="font-medium text-gray-600">Username:</div>
-            <div className="font-bold">{userInfo?.username}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
+          <div className="font-medium text-gray-600">Username:</div>
+          <div className="font-bold text-gray-900">{userInfo?.username}</div>
 
-            <div className="font-medium text-gray-600">Họ tên:</div>
-            <div className="font-bold">{userInfo?.name || '—'}</div>
+          <div className="font-medium text-gray-600">Họ tên:</div>
+          <div className="font-bold text-gray-900">{userInfo?.name || '—'}</div>
 
-            <div className="font-medium text-gray-600">Email:</div>
-            <div className="font-bold">{userInfo?.email || '—'}</div>
+          <div className="font-medium text-gray-600">Email:</div>
+          <div className="font-bold text-gray-900">{userInfo?.email || '—'}</div>
 
-            <div className="font-medium text-gray-600">Nhóm người dùng:</div>
-            <div className="font-bold">{userInfo?.user_group || '—'}</div>
+          <div className="font-medium text-gray-600">Nhóm:</div>
+          <div className="font-bold text-gray-900">{userInfo?.user_group || '—'}</div>
 
-            <div className="font-medium text-gray-600">Trạng thái:</div>
-            <div className="font-bold text-green-600">{userInfo?.user_status === 'active' ? 'Đang hoạt động' : 'Khóa'}</div>
+          <div className="font-medium text-gray-600">Trạng thái:</div>
+          <div className={`font-bold ${userInfo?.user_status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+            {userInfo?.user_status === 'active' ? 'Hoạt động' : 'Bị khóa'}
+          </div>
 
-            <div className="font-medium text-gray-600">Ngày tạo:</div>
-            <div className="font-bold">{userInfo?.created_at ? new Date(userInfo.created_at).toLocaleDateString('vi-VN') : '—'}</div>
+          <div className="font-medium text-gray-600">Ngày tạo:</div>
+          <div className="font-bold text-gray-900">
+            {userInfo?.created_at ? new Date(userInfo.created_at).toLocaleDateString('vi-VN') : '—'}
           </div>
         </div>
 
         <button
-          onClick={() => router.back()}
-          className="mt-10 w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700"
+          onClick={() => router.push('/dashboard')}
+          className="mt-10 w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg"
         >
-          Quay lại Dashboard
+          ← Quay lại Dashboard
         </button>
       </div>
     </div>
