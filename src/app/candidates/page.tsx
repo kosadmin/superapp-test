@@ -119,17 +119,17 @@ export default function CandidatesList() {
                     ) : cand.unqualified ? (
                       <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">Không đạt</span>
                     ) : cand.onboard ? (
-                      <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-bold">🎉 Nhận việc</span> // Màu xanh lục tươi mới
+                      <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-bold">Nhận việc</span> // Màu xanh lục tươi mới
                     ) : cand.pass_interview ? (
-                      <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-bold">✅ Đỗ PV</span> // Màu chàm
+                      <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-bold">Đỗ PV</span> // Màu chàm
                     ) : cand.show_up_for_interview ? (
-                      <span className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-bold">🏃 Tham gia PV</span> // Màu xanh ngọc
+                      <span className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-bold">Tham gia PV</span> // Màu xanh ngọc
                     ) : cand.scheduled_for_interview ? (
-                      <span className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-bold">📅 Đăng ký PV</span> // Màu xanh da trời
+                      <span className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-bold">Đăng ký PV</span> // Màu xanh da trời
                     ) : cand.interested ? (
-                      <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">⭐ Quan tâm</span> // Màu hổ phách
+                      <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">Quan tâm</span> // Màu hổ phách
                     ) : cand.new ? (
-                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">✨ Mới</span> // Màu xám nhạt (new)
+                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">Mới</span> // Màu xám nhạt (new)
                     ) : null}
                   </td>
                   <td className="px-6 py-4 text-center">
