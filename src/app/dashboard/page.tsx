@@ -57,7 +57,7 @@ export default function DashboardPage() {
 
         <h1 className="text-3xl font-bold mb-4">Đăng nhập thành công!</h1>
         <p className="text-xl mb-8">
-          Xin chào <span className="font-bold text-blue-600">{username}</span>
+          Xin chào <span className="font-bold text-blue-600">{name}</span>
         </p>
 
         {/* === 2 NÚT MỚI ĐẸP ĐÂY === */}
