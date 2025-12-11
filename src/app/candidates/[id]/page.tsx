@@ -34,16 +34,19 @@ interface Candidate {
   assigned_user?: string;
   reason_rejected_offer?: string;
   reason_unqualified?: string;
+  // THÊM CÁC TRƯỜNG NGÀY THÁNG CẦN THIẾT
+  interview_date?: string; // Định dạng từ API: DD/MM/YYYY
+  onboard_date?: string; // Định dạng từ API: DD/MM/YYYY
 }
 
-// HÀM CHUYỂN ĐỔI FORMAT NGÀY THÁNG
+// HÀM CHUYỂN ĐỔI FORMAT NGÀY THÁNG: DD/MM/YYYY -> YYYY-MM-DD (format cho input type="date")
 const formatDateToISO = (dateString: string | undefined): string => {
   if (!dateString) return '';
-  // Kiểm tra nếu nó đã là YYYY-MM-DD (format ISO)
+  // Nếu đã là YYYY-MM-DD thì trả về luôn
   if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return dateString;
   }
-  // Chuyển đổi từ DD/MM/YYYY sang YYYY-MM-DD
+  // Chuyển đổi từ DD/MM/YYYY
   const parts = dateString.split('/');
   if (parts.length === 3) {
     // parts[0] = Day, parts[1] = Month, parts[2] = Year
@@ -51,6 +54,18 @@ const formatDateToISO = (dateString: string | undefined): string => {
   }
   return '';
 };
+
+// HÀM CHUYỂN ĐỔI NGƯỢC LẠI: YYYY-MM-DD -> DD/MM/YYYY (format để lưu vào backend)
+const formatISOToDDMMYYYY = (isoString: string): string => {
+    if (!isoString) return '';
+    const parts = isoString.split('-');
+    if (parts.length === 3) {
+        // parts[0] = Year, parts[1] = Month, parts[2] = Day
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return '';
+}
+
 
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -228,9 +243,44 @@ export default function CandidateDetail() {
             )}
           </section>
 
-          {/* 3. Thông tin ứng viên */}
+          {/* 3. THÔNG TIN NGÀY THÁNG BỔ SUNG */}
           <section>
-            <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Thông tin ứng viên</h2>
+            <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Ngày quan trọng</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-lg font-medium text-gray-700">Ngày phỏng vấn</label>
+                <input
+                  type="date"
+                  // SỬ DỤNG format DD/MM/YYYY -> YYYY-MM-DD để hiển thị
+                  value={formatDateToISO(candidate.interview_date)}
+                  onChange={(e) => {
+                    // SỬ DỤNG format YYYY-MM-DD -> DD/MM/YYYY để lưu vào state/API
+                    const newDate = formatISOToDDMMYYYY(e.target.value);
+                    saveUpdate({ interview_date: newDate });
+                  }}
+                  className="mt-2 w-full px-5 py-3 border rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="block text-lg font-medium text-gray-700">Ngày nhận việc (Onboard)</label>
+                <input
+                  type="date"
+                  // SỬ DỤNG format DD/MM/YYYY -> YYYY-MM-DD để hiển thị
+                  value={formatDateToISO(candidate.onboard_date)}
+                  onChange={(e) => {
+                    // SỬ DỤNG format YYYY-MM-DD -> DD/MM/YYYY để lưu vào state/API
+                    const newDate = formatISOToDDMMYYYY(e.target.value);
+                    saveUpdate({ onboard_date: newDate });
+                  }}
+                  className="mt-2 w-full px-5 py-3 border rounded-xl"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* 4. Thông tin ứng viên */}
+          <section>
+            <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Thông tin cá nhân</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-lg font-medium text-gray-700">Số điện thoại</label>
@@ -242,17 +292,13 @@ export default function CandidateDetail() {
               </div>
               <div>
                 <label className="block text-lg font-medium text-gray-700">Ngày sinh</label>
-                {/* ĐÃ SỬA: Dùng formatDateToISO để chuyển đổi định dạng ngày tháng */}
                 <input 
                   type="date" 
+                  // SỬ DỤNG format DD/MM/YYYY -> YYYY-MM-DD để hiển thị
                   value={formatDateToISO(candidate.date_of_birth)} 
                   onChange={(e) => {
-                    // Khi người dùng thay đổi, bạn có thể lưu lại giá trị YYYY-MM-DD
-                    // và xử lý việc chuyển đổi ngược lại (nếu API backend yêu cầu DD/MM/YYYY để lưu)
-                    // Ở đây, tôi giả định API có thể chấp nhận YYYY-MM-DD hoặc bạn cần chuyển đổi trước khi gọi saveUpdate.
-                    // Nếu API backend chỉ chấp nhận DD/MM/YYYY, bạn cần chuyển đổi e.target.value về DD/MM/YYYY:
-                    const [year, month, day] = e.target.value.split('-');
-                    const newDate = day && month && year ? `${day}/${month}/${year}` : '';
+                    // SỬ DỤNG format YYYY-MM-DD -> DD/MM/YYYY để lưu vào state/API
+                    const newDate = formatISOToDDMMYYYY(e.target.value);
                     saveUpdate({ date_of_birth: newDate });
                   }} 
                   className="mt-2 w-full px-5 py-3 border rounded-xl" 
@@ -273,7 +319,7 @@ export default function CandidateDetail() {
             </div>
           </section>
 
-          {/* 4. Nguồn gốc ứng viên */}
+          {/* 5. Nguồn gốc ứng viên */}
           <section>
             <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Nguồn gốc ứng viên</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -292,7 +338,7 @@ export default function CandidateDetail() {
             </div>
           </section>
 
-          {/* 5. Thông tin hệ thống */}
+          {/* 6. Thông tin hệ thống */}
           <section>
             <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Thông tin hệ thống</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
