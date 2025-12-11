@@ -3,7 +3,7 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import Link from 'next/link';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
 interface Candidate {
   candidate_id: string;
