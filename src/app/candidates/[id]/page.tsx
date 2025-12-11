@@ -140,14 +140,14 @@ export default function CandidateDetail() {
   if (!candidate) return null;
 
   const funnelSteps = [
-    { key: 'new', label: 'Liên hệ', color: 'blue' },
-    { key: 'interested', label: 'Quan tâm', color: 'yellow' },
-    { key: 'scheduled_for_interview', label: 'Đặt PV', color: 'purple' },
-    { key: 'show_up_for_interview', label: 'Đi PV', color: 'orange' },
-    { key: 'pass_interview', label: 'Đỗ PV', color: 'emerald' },
-    { key: 'onboard', label: 'Nhận việc', color: 'green' },
-    { key: 'reject_offer', label: 'Từ chối offer', color: 'red' },
-    { key: 'unqualified', label: 'Không đạt', color: 'red' },
+    { key: 'new', label: 'Liên hệ'},
+    { key: 'interested', label: 'Quan tâm'},
+    { key: 'scheduled_for_interview', label: 'Đặt PV'},
+    { key: 'show_up_for_interview', label: 'Đi PV'},
+    { key: 'pass_interview', label: 'Đỗ PV'},
+    { key: 'onboard', label: 'Nhận việc'},
+    { key: 'reject_offer', label: 'Từ chối offer'},
+    { key: 'unqualified', label: 'Không đạt'},
   ];
 
   return (
@@ -343,16 +343,22 @@ export default function CandidateDetail() {
             <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Thông tin hệ thống</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-600">Ngày tạo</label>
-                <input value={new Date(candidate.created_at).toLocaleString('vi-VN')} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl" />
+                {/* Sửa text-sm thành text-lg */}
+                <label className="block text-lg font-medium text-gray-700">Ngày tạo</label>
+                {/* THÊM text-lg vào input readOnly */}
+                <input value={new Date(candidate.created_at).toLocaleString('vi-VN')} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl text-lg" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Người tạo</label>
-                <input value={candidate.created_by || ''} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl" />
+                {/* Sửa text-sm thành text-lg */}
+                <label className="block text-lg font-medium text-gray-700">Người tạo</label>
+                {/* THÊM text-lg vào input readOnly */}
+                <input value={candidate.created_by || ''} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl text-lg" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Cập nhật lần cuối</label>
-                <input value={candidate.last_updated_at ? new Date(candidate.last_updated_at).toLocaleString('vi-VN') : '—'} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl" />
+                {/* Sửa text-sm thành text-lg */}
+                <label className="block text-lg font-medium text-gray-700">Cập nhật lần cuối</label>
+                {/* THÊM text-lg vào input readOnly */}
+                <input value={candidate.last_updated_at ? new Date(candidate.last_updated_at).toLocaleString('vi-VN') : '—'} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl text-lg" />
               </div>
               <div>
                 <label className="block text-lg font-medium text-gray-700">Người phụ trách</label>
@@ -360,7 +366,8 @@ export default function CandidateDetail() {
                   type="text"
                   value={candidate.assigned_user || ''}
                   onChange={(e) => saveUpdate({ assigned_user: e.target.value })}
-                  className="mt-2 w-full px-5 py-3 border rounded-xl font-medium"
+                  // Thêm text-lg để đảm bảo đồng nhất với các trường trên
+                  className="mt-2 w-full px-5 py-3 border rounded-xl font-medium text-lg" 
                   placeholder="Mã nhân viên phụ trách"
                 />
               </div>
