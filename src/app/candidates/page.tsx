@@ -3,7 +3,7 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import Link from 'next/link';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 
 interface Candidate {
   candidate_id: string;
@@ -11,6 +11,10 @@ interface Candidate {
   phone: string;
   onboard?: boolean;
   pass_interview?: boolean;
+  interested?: boolean;
+  reject_offer?: boolean;
+  unqualified?: boolean;
+  position?: string;
   [key: string]: any;
 }
 
@@ -46,7 +50,6 @@ export default function CandidatesList() {
     }
   };
 
-  // ĐÃ FIX LỖI TYPE Ở ĐÂY
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearch(value);
@@ -107,7 +110,10 @@ export default function CandidatesList() {
                   <td className="px-6 py-4">{cand.phone}</td>
                   <td className="px-6 py-4">{cand.position || '—'}</td>
                   <td className="px-6 py-4 text-center">
-                    {cand.onboard ? (
+                    {/* LOGIC SỬA ĐÂY - ƯU TIÊN THUA TRƯỚC, MÀU XÁM */}
+                    {cand.reject_offer || cand.unqualified ? (
+                      <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">Thua</span>
+                    ) : cand.onboard ? (
                       <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">Onboard</span>
                     ) : cand.pass_interview ? (
                       <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">Pass</span>
