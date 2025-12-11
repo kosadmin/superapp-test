@@ -22,41 +22,54 @@ interface Candidate {
 }
 
 export default function CandidatesList() {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);     // ← dữ liệu gốc từ n8n
+  const [candidates, setCandidates] = useState<Candidate[]>([]);          // ← dữ liệu đã lọc
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  // Chỉ gọi n8n 1 lần khi vào trang
   useEffect(() => {
-    fetchCandidates();
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(N8N_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'list', sort: 'newest' }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setAllCandidates(data.data || []);
+          setCandidates(data.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
   }, []);
 
-  const fetchCandidates = async (query: string = '') => {
-    setLoading(true);
-    try {
-      const res = await fetch(N8N_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'list',
-          search: query,
-          sort: 'newest'
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCandidates(data.data || []);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  // Search realtime trên dữ liệu đã load (không gọi lại n8n)
+  useEffect(() => {
+    if (!search.trim()) {
+      setCandidates(allCandidates);
+      return;
     }
-  };
+
+    const lowerSearch = search.toLowerCase();
+    const filtered = allCandidates.filter(cand => {
+      return (
+        cand.candidate_name.toLowerCase().includes(lowerSearch) ||
+        cand.phone.includes(search)
+      );
+    });
+    setCandidates(filtered);
+  }, [search, allCandidates]);
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearch(value);
-    fetchCandidates(value);
+    setSearch(e.target.value);
   };
 
   if (loading) {
@@ -91,7 +104,9 @@ export default function CandidatesList() {
       </div>
 
       {candidates.length === 0 ? (
-        <p className="text-center text-gray-500 text-xl">Chưa có ứng viên nào</p>
+        <p className="text-center text-gray-500 text-xl">
+          {search ? 'Không tìm thấy ứng viên nào' : 'Chưa có ứng viên nào'}
+        </p>
       ) : (
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="w-full bg-white">
@@ -113,24 +128,23 @@ export default function CandidatesList() {
                   <td className="px-6 py-4">{cand.phone}</td>
                   <td className="px-6 py-4">{cand.position || '—'}</td>
                   <td className="px-6 py-4 text-center">
-                    {/* LOGIC HIỂN THỊ TRẠNG THÁI (ƯU TIÊN THEO TIẾN TRÌNH VÀ KẾT QUẢ) */}
                     {cand.reject_offer ? (
                       <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">Từ chối Offer</span>
                     ) : cand.unqualified ? (
                       <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">Không đạt</span>
                     ) : cand.onboard ? (
-                      <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-bold">Nhận việc</span> // Màu xanh lục tươi mới
+                      <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-bold">Nhận việc</span>
                     ) : cand.pass_interview ? (
-                      <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-bold">Đỗ PV</span> // Màu chàm
+                      <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-bold">Đỗ PV</span>
                     ) : cand.show_up_for_interview ? (
-                      <span className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-bold">Tham gia PV</span> // Màu xanh ngọc
+                      <span className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-bold">Tham gia PV</span>
                     ) : cand.scheduled_for_interview ? (
-                      <span className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-bold">Đăng ký PV</span> // Màu xanh da trời
+                      <span className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-bold">Đăng ký PV</span>
                     ) : cand.interested ? (
-                      <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">Quan tâm</span> // Màu hổ phách
-                    ) : cand.new ? (
-                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">Mới</span> // Màu xám nhạt (new)
-                    ) : null}
+                      <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">Quan tâm</span>
+                    ) : (
+                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">Mới</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <Link
