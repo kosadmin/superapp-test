@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// DÁN CÙNG URL WEBHOOK N8N VỚI TRÊN
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // ← DÁN URL CỦA BẠN VÀO ĐÂY
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth';
 
 export default function DashboardPage() {
-  const [username, setUsername] = useState<string | null>(null);
+  // Thêm state để lưu tên thật (name) thay vì chỉ username
+  const [displayName, setDisplayName] = useState<string>('...');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -18,6 +18,7 @@ export default function DashboardPage() {
       return;
     }
 
+    // Bước 1: Verify token như cũ để lấy username
     fetch(N8N_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -25,12 +26,22 @@ export default function DashboardPage() {
     })
       .then(r => r.json())
       .then(data => {
-        if (data.success && data.username) {
-          setUsername(data.username);
-        } else {
-          localStorage.removeItem('token');
-          router.replace('/login');
-        }
+        if (!data.success || !data.username) throw new Error();
+
+        // Bước 2: Lấy thêm thông tin user (dùng action get_user_info đã có sẵn)
+        return fetch(N8N_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'get_user_info',
+            username: data.username
+          }),
+        }).then(r => r.json());
+      })
+      .then(info => {
+        // Lấy tên thật từ sheet users
+        const name = info.user?.name?.trim();
+        setDisplayName(name && name !== '' ? name : info.user?.username || 'User');
       })
       .catch(() => {
         localStorage.removeItem('token');
@@ -44,7 +55,9 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Đang kiểm tra...</div>;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-xl">Đang tải...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -54,11 +67,27 @@ export default function DashboardPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
+
         <h1 className="text-3xl font-bold mb-4">Đăng nhập thành công!</h1>
-        <p className="text-xl mb-8">Xin chào <span className="font-bold text-blue-600">{username}</span></p>
-        <button onClick={handleLogout} className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700">
-          Đăng xuất
-        </button>
+        <p className="text-2xl mb-10">
+          Xin chào <span className="font-bold text-blue-600">{displayName}</span> 
+        </p>
+
+        <div className="space-y-4">
+          <a
+            href="/profile"
+            className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg transition"
+          >
+            Thông tin tài khoản
+          </a>
+
+          <button
+            onClick={handleLogout}
+            className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 font-medium text-lg transition"
+          >
+            Đăng xuất
+          </button>
+        </div>
       </div>
     </div>
   );
