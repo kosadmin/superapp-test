@@ -27,6 +27,7 @@ export default function DashboardPage() {
       .then(data => {
         if (data.success && data.username) {
           setUsername(data.username);
+          setName(data.name);
         } else {
           localStorage.removeItem('token');
           router.replace('/login');
