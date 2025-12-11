@@ -11,7 +11,10 @@ interface Candidate {
   phone: string;
   onboard?: boolean;
   pass_interview?: boolean;
+  show_up_for_interview?: boolean;
+  scheduled_for_interview?: boolean;
   interested?: boolean;
+  new?: boolean;
   reject_offer?: boolean;
   unqualified?: boolean;
   position?: string;
@@ -110,18 +113,24 @@ export default function CandidatesList() {
                   <td className="px-6 py-4">{cand.phone}</td>
                   <td className="px-6 py-4">{cand.position || '—'}</td>
                   <td className="px-6 py-4 text-center">
-                    {/* LOGIC SỬA ĐÂY - ƯU TIÊN THUA TRƯỚC, MÀU XÁM */}
-                    {cand.reject_offer || cand.unqualified ? (
-                      <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">Thua</span>
+                    {/* LOGIC HIỂN THỊ TRẠNG THÁI (ƯU TIÊN THEO TIẾN TRÌNH VÀ KẾT QUẢ) */}
+                    {cand.reject_offer ? (
+                      <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">Từ chối Offer</span>
+                    ) : cand.unqualified ? (
+                      <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">Không đạt</span>
                     ) : cand.onboard ? (
-                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">Onboard</span>
+                      <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-bold">🎉 Nhận việc</span> // Màu xanh lục tươi mới
                     ) : cand.pass_interview ? (
-                      <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">Pass</span>
+                      <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-bold">✅ Đỗ PV</span> // Màu chàm
+                    ) : cand.show_up_for_interview ? (
+                      <span className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-bold">🏃 Tham gia PV</span> // Màu xanh ngọc
+                    ) : cand.scheduled_for_interview ? (
+                      <span className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-sm font-bold">📅 Đăng ký PV</span> // Màu xanh da trời
                     ) : cand.interested ? (
-                      <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">Quan tâm</span>
-                    ) : (
-                      <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">Mới</span>
-                    )}
+                      <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">⭐ Quan tâm</span> // Màu hổ phách
+                    ) : cand.new ? (
+                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">✨ Mới</span> // Màu xám nhạt (new)
+                    ) : null}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <Link
