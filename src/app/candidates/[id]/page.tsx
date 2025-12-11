@@ -12,7 +12,7 @@ interface Candidate {
   position?: string;
   phone: string;
   id_card_number?: string;
-  date_of_birth?: string;
+  date_of_birth?: string; // Định dạng từ API: DD/MM/YYYY
   birth_year?: number;
   address_street?: string;
   address_ward?: string;
@@ -20,7 +20,7 @@ interface Candidate {
   data_source_dept?: string;
   data_source_type_group?: string;
   data_source_type?: string;
-  contacted?: boolean;
+  new?: boolean;
   interested?: boolean;
   scheduled_for_interview?: boolean;
   show_up_for_interview?: boolean;
@@ -35,6 +35,22 @@ interface Candidate {
   reason_rejected_offer?: string;
   reason_unqualified?: string;
 }
+
+// HÀM CHUYỂN ĐỔI FORMAT NGÀY THÁNG
+const formatDateToISO = (dateString: string | undefined): string => {
+  if (!dateString) return '';
+  // Kiểm tra nếu nó đã là YYYY-MM-DD (format ISO)
+  if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return dateString;
+  }
+  // Chuyển đổi từ DD/MM/YYYY sang YYYY-MM-DD
+  const parts = dateString.split('/');
+  if (parts.length === 3) {
+    // parts[0] = Day, parts[1] = Month, parts[2] = Year
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+  return '';
+};
 
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -109,7 +125,7 @@ export default function CandidateDetail() {
   if (!candidate) return null;
 
   const funnelSteps = [
-    { key: 'contacted', label: 'Liên hệ', color: 'blue' },
+    { key: 'new', label: 'Liên hệ', color: 'blue' },
     { key: 'interested', label: 'Quan tâm', color: 'yellow' },
     { key: 'scheduled_for_interview', label: 'Đặt PV', color: 'purple' },
     { key: 'show_up_for_interview', label: 'Đi PV', color: 'orange' },
@@ -226,7 +242,21 @@ export default function CandidateDetail() {
               </div>
               <div>
                 <label className="block text-lg font-medium text-gray-700">Ngày sinh</label>
-                <input type="date" value={candidate.date_of_birth || ''} onChange={(e) => saveUpdate({ date_of_birth: e.target.value })} className="mt-2 w-full px-5 py-3 border rounded-xl" />
+                {/* ĐÃ SỬA: Dùng formatDateToISO để chuyển đổi định dạng ngày tháng */}
+                <input 
+                  type="date" 
+                  value={formatDateToISO(candidate.date_of_birth)} 
+                  onChange={(e) => {
+                    // Khi người dùng thay đổi, bạn có thể lưu lại giá trị YYYY-MM-DD
+                    // và xử lý việc chuyển đổi ngược lại (nếu API backend yêu cầu DD/MM/YYYY để lưu)
+                    // Ở đây, tôi giả định API có thể chấp nhận YYYY-MM-DD hoặc bạn cần chuyển đổi trước khi gọi saveUpdate.
+                    // Nếu API backend chỉ chấp nhận DD/MM/YYYY, bạn cần chuyển đổi e.target.value về DD/MM/YYYY:
+                    const [year, month, day] = e.target.value.split('-');
+                    const newDate = day && month && year ? `${day}/${month}/${year}` : '';
+                    saveUpdate({ date_of_birth: newDate });
+                  }} 
+                  className="mt-2 w-full px-5 py-3 border rounded-xl" 
+                />
               </div>
               <div>
                 <label className="block text-lg font-medium text-gray-700">Năm sinh</label>
