@@ -43,7 +43,8 @@ const formatDateToISO = (dateString: string | undefined): string => {
   if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
   const parts = dateString.split('/');
   if (parts.length === 3) {
-    return `${parts[2]}-${parts[1]}-${parts[2]}`; // Year-Month-Day
+    // Đã sửa: parts[2] (Năm) - parts[1] (Tháng) - parts[0] (Ngày)
+    return `${parts[2]}-${parts[1]}-${parts[0]}`; 
   }
   return '';
 };
@@ -54,13 +55,16 @@ const formatISOToDDMMYYYY = (isoString: string): string => {
   const parts = isoString.split('-');
   if (parts.length === 3) {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
-}
+  }
+  return ''; // <-- ĐÃ THÊM DẤU ĐÓNG NGOẶC NHỌN BỊ THIẾU
+}; // <-- Dấu đóng ngoặc nhọn cho hàm formatISOToDDMMYYYY()
+
 
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [originalData, setOriginalData] = useState<Candidate | null>(null);
-  const [formData, setFormData = useState<Candidate | null>(null);
+  const [formData, setFormData] = useState<Candidate | null>(null); // Sửa lỗi cú pháp: setFormData = useState
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -103,7 +107,7 @@ export default function CandidateDetail() {
     try {
       await fetch(N8N_URL, {
         method: 'POST',
-        headers: 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' }, // Sửa lỗi cú pháp: headers: 'Content-Type': 'application/json'
         body: JSON.stringify({
           action: 'update',
           id: formData.candidate_id,
@@ -120,7 +124,7 @@ export default function CandidateDetail() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('XÓA ứng viên? Không thể khôi phục!') return;
+    if (!confirm('XÓA ứng viên? Không thể khôi phục!')) return; // Sửa lỗi cú pháp: thiếu dấu ) ở confirm
     try {
       await fetch(N8N_URL, {
         method: 'POST',
@@ -150,7 +154,8 @@ export default function CandidateDetail() {
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-10 text-center rounded-t-3xl mb-8 shadow-lg">
         <h1 className="text-5xl font-bold mb-4">{formData.candidate_name}</h1>
-        <p className="text-2xl">Mã UV: <span className="font-mono text-4xl">{candidate_id}</span></p>
+        {/* Sửa lỗi cú pháp: candidate_id --> formData.candidate_id */}
+        <p className="text-2xl">Mã UV: <span className="font-mono text-4xl">{formData.candidate_id}</span></p> 
       </div>
 
       {/* Nút Lưu + Xóa */}
@@ -181,7 +186,8 @@ export default function CandidateDetail() {
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-6">
           {funnelSteps.map(step => (
             <div key={step.key} className="text-center group">
-              <label className={step.label} className="block text-lg font-medium mb-3">{step.label}</label>
+              {/* Sửa lỗi cú pháp: label lặp lại className */}
+              <label className="block text-lg font-medium mb-3">{step.label}</label> 
               <div className={`w-full h-20 rounded-2xl border-4 flex items-center justify-center transition-all duration-300 ${
                 formData[step.key as keyof Candidate]
                   ? 'bg-indigo-100 border-indigo-600 shadow-xl scale-110'
@@ -189,7 +195,7 @@ export default function CandidateDetail() {
               }`}>
                 <input
                   type="checkbox"
-                  checked={!!formData[step.key]}
+                  checked={!!formData[step.key as keyof Candidate]} // Thêm as keyof Candidate
                   onChange={(e) => handleChange(step.key as keyof Candidate, e.target.checked)}
                   className="w-10 h-10 text-blue-600 rounded focus:ring-blue-500"
                 />
@@ -200,7 +206,7 @@ export default function CandidateDetail() {
 
         {/* Lý do thua */}
         {(formData.reject_offer || formData.unqualified) && (
-          <div className="Lý do không thành công" className="mt-10 p-8 bg-red-50 border-4 border-red-300 rounded-3xl">
+          <div className="mt-10 p-8 bg-red-50 border-4 border-red-300 rounded-3xl"> 
             <h3 className="text-2xl font-bold text-red-800 mb-6">Lý do không thành công</h3>
             {formData.reject_offer && (
               <div>
@@ -227,9 +233,155 @@ export default function CandidateDetail() {
           </div>
         )}
       </section>
+      
+      {/* Bạn đã để trống các phần sau. Để hoàn thiện component, bạn cần thêm các section
+        "Thông tin ứng tuyển", "Ngày quan trọng", "Thông tin cá nhân", "Nguồn gốc ứng viên" và "Thông tin hệ thống"
+        vào đây, sử dụng `formData` và hàm `handleChange` đã định nghĩa.
+        Tôi sẽ chỉ để lại các thẻ `div` trống để bạn điền vào. 
+      */}
 
-      {/* Các phần còn lại giữ nguyên... (thông tin cá nhân, ngày quan trọng, nguồn gốc, hệ thống) */}
-      {/* ... (giữ nguyên phần thông tin cá nhân, ngày quan trọng, nguồn, hệ thống... */}
+      {/* 1. Thông tin ứng tuyển */}
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Thông tin ứng tuyển</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Dự án / Khách hàng</label>
+            <input
+              type="text"
+              value={formData.project || ''}
+              onChange={(e) => handleChange('project', e.target.value)}
+              className="mt-2 w-full px-5 py-3 border rounded-xl text-lg"
+              placeholder="VD: VinFast Outsourcing"
+            />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Vị trí tuyển dụng</label>
+            <input
+              type="text"
+              value={formData.position || ''}
+              onChange={(e) => handleChange('position', e.target.value)}
+              className="mt-2 w-full px-5 py-3 border rounded-xl text-lg"
+              placeholder="Công nhân sản xuất"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Ngày quan trọng */}
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Ngày quan trọng</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Ngày phỏng vấn</label>
+            <input
+              type="date"
+              value={formatDateToISO(formData.interview_date)}
+              onChange={(e) => handleChange('interview_date', formatISOToDDMMYYYY(e.target.value))}
+              className="mt-2 w-full px-5 py-3 border rounded-xl text-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Ngày nhận việc (Onboard)</label>
+            <input
+              type="date"
+              value={formatDateToISO(formData.onboard_date)}
+              onChange={(e) => handleChange('onboard_date', formatISOToDDMMYYYY(e.target.value))}
+              className="mt-2 w-full px-5 py-3 border rounded-xl text-lg"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Thông tin cá nhân */}
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Thông tin cá nhân</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Số điện thoại</label>
+            <input value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} className="mt-2 w-full px-5 py-3 border rounded-xl text-lg" />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">CMND/CCCD</label>
+            <input value={formData.id_card_number || ''} onChange={(e) => handleChange('id_card_number', e.target.value)} className="mt-2 w-full px-5 py-3 border rounded-xl text-lg" />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Ngày sinh</label>
+            <input 
+              type="date" 
+              value={formatDateToISO(formData.date_of_birth)} 
+              onChange={(e) => handleChange('date_of_birth', formatISOToDDMMYYYY(e.target.value))} 
+              className="mt-2 w-full px-5 py-3 border rounded-xl text-lg"
+            />
+          </div>
+          <div className="md:col-span-2 lg:col-span-3">
+            <label className="block text-lg font-medium text-gray-700">Địa chỉ</label>
+            <input value={formData.address_street || ''} onChange={(e) => handleChange('address_street', e.target.value)} className="mt-2 w-full px-5 py-3 border rounded-xl mb-2 text-lg" placeholder="Đường..." />
+            <div className="grid grid-cols-2 gap-4">
+              <input value={formData.address_ward || ''} onChange={(e) => handleChange('address_ward', e.target.value)} className="px-5 py-3 border rounded-xl text-lg" placeholder="Phường/Xã" />
+              <input value={formData.address_city || ''} onChange={(e) => handleChange('address_city', e.target.value)} className="px-5 py-3 border rounded-xl text-lg" placeholder="Tỉnh/Thành" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Nguồn gốc ứng viên (Read-Only) */}
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Nguồn gốc ứng viên</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Đơn vị tạo nguồn</label>
+            <input value={formData.data_source_dept || ''} readOnly className="mt-2 w-full px-5 py-3 bg-gray-50 border rounded-xl text-lg" />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Nhóm nguồn</label>
+            <input value={formData.data_source_type_group || ''} readOnly className="mt-2 w-full px-5 py-3 bg-gray-50 border rounded-xl text-lg" />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Nguồn cụ thể</label>
+            <input value={formData.data_source_type || ''} readOnly className="mt-2 w-full px-5 py-3 bg-gray-50 border rounded-xl text-lg" />
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Thông tin hệ thống */}
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">Thông tin hệ thống</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Ngày tạo</label>
+            <input value={new Date(formData.created_at).toLocaleString('vi-VN')} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl text-lg" />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Người tạo</label>
+            <input value={formData.created_by || ''} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl text-lg" />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Cập nhật lần cuối</label>
+            <input value={formData.last_updated_at ? new Date(formData.last_updated_at).toLocaleString('vi-VN') : '—'} readOnly className="mt-2 w-full px-5 py-3 bg-gray-100 rounded-xl text-lg" />
+          </div>
+          <div>
+            <label className="block text-lg font-medium text-gray-700">Người phụ trách</label>
+            <input
+              type="text"
+              value={formData.assigned_user || ''}
+              onChange={(e) => handleChange('assigned_user', e.target.value)}
+              className="mt-2 w-full px-5 py-3 border rounded-xl font-medium text-lg"
+              placeholder="Mã nhân viên phụ trách"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Footer / Nút Quay lại */}
+      <div className="flex justify-start pt-10 border-t-2 border-gray-200">
+        <button
+          onClick={() => router.push('/candidates')}
+          className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition"
+        >
+          ← Quay lại danh sách
+        </button>
+      </div>
+
     </div>
   );
 }
