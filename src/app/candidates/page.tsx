@@ -53,7 +53,7 @@ export default function CandidatesList() {
       const isLoggedIn = await checkAuth();
       if (!isLoggedIn) {
         localStorage.removeItem('token');
-        router.replace('/login?redirect=/candidates');
+        router.replace('/login');
         return;
       }
 
