@@ -51,12 +51,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (data.success && data.token) {
-        // Lưu token vào cookie (có thể đọc được ở server middleware)
-document.cookie = `auth_token=${data.token}; path=/; max-age=2592000`; // 30 ngày
-
-localStorage.setItem('token', data.token);
-// LƯU TOKEN VÀO COOKIE ĐỂ MIDDLEWARE ĐỌC ĐƯỢC
-document.cookie = `auth_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
+        localStorage.setItem('token', data.token);
         router.push('/dashboard');
       } else {
         setError(data.message || 'Đăng nhập thất bại');
