@@ -1,36 +1,28 @@
-// middleware.ts
+// middleware.ts (phải ở root project)
 import { NextRequest, NextResponse } from 'next/server';
 
-// Các trang cần phải đăng nhập mới được vào
-const protectedRoutes = ['/candidates', '/profile'];
-
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const path = request.nextUrl.pathname;
 
-  // Kiểm tra xem có đang truy cập vào route bảo vệ không
-  const isProtected = protectedRoutes.some(route =>
-    pathname.startsWith(route)
-  );
+  // Các trang cần bảo vệ
+  const protectedPaths = ['/candidates', '/profile'];
 
-  if (!isProtected) {
-    return NextResponse.next();
-  }
+  const isProtected = protectedPaths.some(p => path.startsWith(p));
 
-  // Kiểm tra token trong localStorage? → Không được ở server
-  // → Dùng cookie thay vì localStorage (Next.js middleware chạy ở server)
+  if (!isProtected) return NextResponse.next();
+
+  // Lấy token từ cookie (không dùng localStorage ở đây được)
   const token = request.cookies.get('auth_token')?.value;
 
   if (!token) {
-    // Chưa đăng nhập → đẩy về login
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname); // nhớ đường dẫn để quay lại sau
+    loginUrl.searchParams.set('from', path); // để quay lại sau khi login
     return NextResponse.redirect(loginUrl);
   }
 
-  // Đã đăng nhập → cho qua
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/candidates/:path*', '/profile'],
+  matcher: ['/candidates/:path*', '/profile/:path*'],
 };
