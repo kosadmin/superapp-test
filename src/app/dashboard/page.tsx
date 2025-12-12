@@ -14,14 +14,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     
-    // START: Đoạn mã được thêm theo yêu cầu
-    // Đảm bảo cookie luôn tồn tại khi vào dashboard
+    // START: CẬP NHẬT THEO YÊU CẦU: Thêm SameSite=Lax
     if (token) {
-      // Đặt auth_token vào cookie, có hiệu lực trên toàn bộ domain (path=/) 
-      // và có thời hạn (max-age=2592000 giây = 30 ngày)
-      document.cookie = `auth_token=${token}; path=/; max-age=2592000`;
+      // Đồng bộ cookie mỗi khi vào trang có token
+      document.cookie = `auth_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
     }
-    // END: Đoạn mã được thêm theo yêu cầu
+    // END: CẬP NHẬT THEO YÊU CẦU
 
     if (!token) {
       router.replace('/login');
@@ -58,12 +56,16 @@ export default function DashboardPage() {
         router.replace('/login');
       })
       .finally(() => setLoading(false));
-  }, [router]); // Thêm router vào dependency array (best practice)
+  }, [router]); 
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    // Xóa cookie khi đăng xuất (optional nhưng nên làm)
-    document.cookie = 'auth_token=; path=/; max-age=0';
+    
+    // START: CẬP NHẬT THEO YÊU CẦU: Xóa cookie bằng expires
+    // XÓA COOKIE bằng cách thiết lập thời gian hết hạn về quá khứ
+    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    // END: CẬP NHẬT THEO YÊU CẦU
+    
     router.push('/login');
   };
 
