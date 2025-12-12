@@ -2,8 +2,10 @@
 
 import { useState, useEffect, ChangeEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
+const AUTH_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // webhook verify của bạn
 
 interface Candidate {
   candidate_id: string;
@@ -22,49 +24,76 @@ interface Candidate {
 }
 
 export default function CandidatesList() {
-  const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);     // ← dữ liệu gốc từ n8n
-  const [candidates, setCandidates] = useState<Candidate[]>([]);          // ← dữ liệu đã lọc
+  const router = useRouter();
+  const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  // Chỉ gọi n8n 1 lần khi vào trang
-  useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(N8N_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'list', sort: 'newest' }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setAllCandidates(data.data || []);
-          setCandidates(data.data || []);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, []);
+  // HÀM KIỂM TRA ĐĂNG NHẬP – CHẠY TRƯỚỚC KHI LẤY DATA
+  const checkAuth = async (): Promise<boolean> => {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
 
-  // Search realtime trên dữ liệu đã load (không gọi lại n8n)
+    try {
+      const res = await fetch(AUTH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', token }),
+      });
+      const data = await res.json();
+      return data.success === true;
+    } catch {
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      const isLoggedIn = await checkAuth();
+      if (!isLoggedIn) {
+        localStorage.removeItem('token');
+        router.replace('/login?redirect=/candidates');
+        return;
+      }
+
+      // Nếu đã đăng nhập → mới được lấy danh sách
+      fetchAllCandidates();
+    };
+
+    init();
+  }, [router]);
+
+  const fetchAllCandidates = async () => {
+    try {
+      const res = await fetch(N8N_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'list', sort: 'newest' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAllCandidates(data.data || []);
+        setCandidates(data.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search realtime
   useEffect(() => {
     if (!search.trim()) {
       setCandidates(allCandidates);
       return;
     }
-
-    const lowerSearch = search.toLowerCase();
-    const filtered = allCandidates.filter(cand => {
-      return (
-        cand.candidate_name.toLowerCase().includes(lowerSearch) ||
-        cand.phone.includes(search)
-      );
-    });
+    const lower = search.toLowerCase();
+    const filtered = allCandidates.filter(c =>
+      c.candidate_name.toLowerCase().includes(lower) ||
+      c.phone.includes(search)
+    );
     setCandidates(filtered);
   }, [search, allCandidates]);
 
@@ -72,10 +101,11 @@ export default function CandidatesList() {
     setSearch(e.target.value);
   };
 
+  // Nếu đang check auth hoặc loading → hiện loading
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-2xl">
-        Đang tải danh sách ứng viên...
+        Đang kiểm tra phiên đăng nhập...
       </div>
     );
   }
@@ -151,7 +181,7 @@ export default function CandidatesList() {
                       href={`/candidates/${cand.candidate_id}`}
                       className="text-blue-600 hover:underline font-medium"
                     >
-                      Xem &amp; Sửa
+                      Xem & Sửa
                     </Link>
                   </td>
                 </tr>
