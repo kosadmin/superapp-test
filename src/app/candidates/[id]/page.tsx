@@ -139,7 +139,7 @@ export default function CandidateDetail() {
   };
 
   const funnelSteps = [
-    { key: 'new', label: 'Liên hệ' },
+    { key: 'new', label: 'Mới' },
     { key: 'interested', label: 'Quan tâm' },
     { key: 'scheduled_for_interview', label: 'Đặt PV' },
     { key: 'show_up_for_interview', label: 'Đi PV' },
