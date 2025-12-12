@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // webhook verify của bạn
 
-export default function ProtectedRoute({ children }: {children}: { children: React.ReactNode }) {
+export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,6 +34,8 @@ export default function ProtectedRoute({ children }: {children}: { children: Rea
           router.replace('/login');
         }
       } catch (err) {
+        // Xử lý lỗi network hoặc lỗi khác
+        console.error("Authentication check failed:", err);
         localStorage.removeItem('token');
         router.replace('/login');
       } finally {
