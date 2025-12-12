@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Import Link từ next/link
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth';
 
@@ -13,14 +14,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    
-    // START: CẬP NHẬT THEO YÊU CẦU: Thêm SameSite=Lax
-    if (token) {
-      // Đồng bộ cookie mỗi khi vào trang có token
-      document.cookie = `auth_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
-    }
-    // END: CẬP NHẬT THEO YÊU CẦU
-
     if (!token) {
       router.replace('/login');
       return;
@@ -56,16 +49,10 @@ export default function DashboardPage() {
         router.replace('/login');
       })
       .finally(() => setLoading(false));
-  }, [router]); 
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    
-    // START: CẬP NHẬT THEO YÊU CẦU: Xóa cookie bằng expires
-    // XÓA COOKIE bằng cách thiết lập thời gian hết hạn về quá khứ
-    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    // END: CẬP NHẬT THEO YÊU CẦU
-    
     router.push('/login');
   };
 
@@ -88,15 +75,17 @@ export default function DashboardPage() {
         </p>
 
         <div className="space-y-4">
-          <a
+          {/* Nút mới: Dẫn đến trang Quản lý Ứng viên */}
+          <Link
             href="/candidates"
-            className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg transition"
+            className="block w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium text-lg transition shadow-md"
           >
-            Quản lý Ứng viên (Demo)
-          </a>
+            Quản lý Ứng viên
+          </Link>
+
           <a
             href="/profile"
-            className="block w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 font-medium text-lg transition"
+            className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg transition"
           >
             Thông tin tài khoản
           </a>
