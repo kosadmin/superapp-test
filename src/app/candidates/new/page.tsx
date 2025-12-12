@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
+const AUTH_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // webhook verify của bạn
 
 interface FormData {
   candidate_name: string;
@@ -35,12 +36,47 @@ export default function NewCandidate() {
     data_source_type: '',
   });
 
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [loading, setLoading] = useState(true); // Dùng loading để quản lý trạng thái auth
+
+  // HÀM KIỂM TRA ĐĂNG NHẬP (TÁI SỬ DỤNG TỪ /candidates)
+  const checkAuth = async (): Promise<boolean> => {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+
+    try {
+      const res = await fetch(AUTH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', token }),
+      });
+      const data = await res.json();
+      return data.success === true;
+    } catch {
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      const isLoggedIn = await checkAuth();
+      if (!isLoggedIn) {
+        localStorage.removeItem('token');
+        // Redirect về login, thêm redirect path
+        router.replace('/login');
+        return;
+      }
+      // Nếu đã đăng nhập, cho phép hiển thị form
+      setLoading(false);
+    };
+
+    init();
+  }, [router]);
+
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    setLoading(true); // Tạm thời dùng loading để disable nút submit
 
     try {
       const res = await fetch(N8N_URL, {
@@ -72,6 +108,14 @@ export default function NewCandidate() {
   const handleChange = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-2xl">
+        Đang kiểm tra phiên đăng nhập...
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
