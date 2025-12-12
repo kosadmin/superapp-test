@@ -13,6 +13,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    
+    // START: Đoạn mã được thêm theo yêu cầu
+    // Đảm bảo cookie luôn tồn tại khi vào dashboard
+    if (token) {
+      // Đặt auth_token vào cookie, có hiệu lực trên toàn bộ domain (path=/) 
+      // và có thời hạn (max-age=2592000 giây = 30 ngày)
+      document.cookie = `auth_token=${token}; path=/; max-age=2592000`;
+    }
+    // END: Đoạn mã được thêm theo yêu cầu
+
     if (!token) {
       router.replace('/login');
       return;
@@ -48,10 +58,12 @@ export default function DashboardPage() {
         router.replace('/login');
       })
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router]); // Thêm router vào dependency array (best practice)
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    // Xóa cookie khi đăng xuất (optional nhưng nên làm)
+    document.cookie = 'auth_token=; path=/; max-age=0';
     router.push('/login');
   };
 
@@ -70,13 +82,19 @@ export default function DashboardPage() {
 
         <h1 className="text-3xl font-bold mb-4">Đăng nhập thành công!</h1>
         <p className="text-2xl mb-10">
-          Xin chào <span className="font-bold text-blue-600">{displayName}</span> 
+          Xin chào <span className="font-bold text-blue-600">{displayName}</span>
         </p>
 
         <div className="space-y-4">
           <a
-            href="/profile"
+            href="/candidates"
             className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg transition"
+          >
+            Quản lý Ứng viên (Demo)
+          </a>
+          <a
+            href="/profile"
+            className="block w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 font-medium text-lg transition"
           >
             Thông tin tài khoản
           </a>
