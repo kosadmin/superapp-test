@@ -93,7 +93,7 @@ export default function CandidateDetail() {
       if (!isLoggedIn) {
         localStorage.removeItem('token');
         // Redirect về login, thêm redirect path
-        router.replace(`/login?redirect=/candidates/${id}`); 
+        router.replace(`/login`); 
         setLoading(false); 
         return;
       }
