@@ -33,6 +33,7 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
         if (data.success) {
           setAuthData({
             isAuthenticated: true,
+            user_id: data.user_id || null,
             username: data.username || null,
             user_group: data.user_group || null,
             isLoading: false,
