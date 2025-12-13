@@ -4,7 +4,7 @@ import { useState, useEffect, ChangeEvent } from 'react';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute'; // Đảm bảo đường dẫn này đúng
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
 interface Candidate {
   candidate_id: string;
