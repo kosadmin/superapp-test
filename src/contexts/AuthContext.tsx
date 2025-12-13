@@ -5,6 +5,7 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 
 // Định nghĩa kiểu dữ liệu cho thông tin người dùng
 interface AuthData {
+  user_id: string | null;
   username: string | null;
   user_group: string | null;
   isAuthenticated: boolean;
@@ -19,6 +20,7 @@ interface AuthContextType extends AuthData {
 }
 
 const defaultAuthData: AuthData = {
+  user_id: null;
   username: null,
   user_group: null,
   isAuthenticated: false,
