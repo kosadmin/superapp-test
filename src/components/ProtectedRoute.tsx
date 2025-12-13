@@ -1,16 +1,16 @@
-// src/components/ProtectedRoute.tsx (Đã sửa)
+// src/components/ProtectedRoute.tsx (ĐÃ CẬP NHẬT)
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, AuthProvider } from '@/contexts/AuthContext'; // Import AuthContext
+import { useAuth, AuthProvider } from '@/contexts/AuthContext'; 
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // webhook verify của bạn
 
 // Component con chịu trách nhiệm xác thực
 function AuthCheck({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { setAuthData, isAuthenticated, isLoading } = useAuth(); // Lấy từ context
+  const { setAuthData, isAuthenticated, isLoading } = useAuth(); 
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -29,15 +29,15 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
         });
         const data = await res.json();
 
-        // CHỖ NÀY ĐÃ CẬP NHẬT
         if (data.success) {
-          setAuthData({
-            isAuthenticated: true,
-            user_id: data.user_id || null,
+          const user = {
             username: data.username || null,
+            user_id: data.user_id || null, 
             user_group: data.user_group || null,
+            isAuthenticated: true,
             isLoading: false,
-          });
+          };
+          setAuthData(user);
         } else {
           localStorage.removeItem('token');
           setAuthData({ isAuthenticated: false, isLoading: false });
@@ -75,10 +75,7 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
 
 // Component chính bọc AuthProvider
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    // Chúng ta cần bọc AuthProvider ở cấp độ cao hơn (Layout hoặc Component Cha)
-    // Nhưng để giữ ProtectedRoute là một Component độc lập, chúng ta bọc nó lại.
-    // LƯU Ý: Nếu bạn có thể, hãy đặt AuthProvider trong file src/app/layout.tsx
-    // để tránh việc AuthProvider được tạo lại mỗi khi ProtectedRoute được gọi.
+    // Chúng ta bọc AuthProvider tại đây
     return (
       <AuthProvider>
           <AuthCheck>{children}</AuthCheck>
