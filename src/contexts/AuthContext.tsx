@@ -1,27 +1,21 @@
-// src/contexts/AuthContext.tsx
-'use client';
+// src/contexts/AuthContext.tsx (Đã sửa)
 
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 // Định nghĩa kiểu dữ liệu cho thông tin người dùng
 interface AuthData {
-  user_id: string | null;
   username: string | null;
+  user_id: string | null; // <--- TRƯỜNG MỚI
   user_group: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  // Bạn có thể thêm các quyền khác ở đây (ví dụ: can_create, can_edit)
 }
 
-// Định nghĩa kiểu dữ liệu cho Context
-interface AuthContextType extends AuthData {
-  setAuthData: (data: Partial<AuthData>) => void;
-  logout: () => void;
-}
+// ... (phần AuthContextType và useAuth không đổi)
 
 const defaultAuthData: AuthData = {
-  user_id: null;
   username: null,
+  user_id: null, // <--- KHỞI TẠO
   user_group: null,
   isAuthenticated: false,
   isLoading: true,
@@ -29,13 +23,7 @@ const defaultAuthData: AuthData = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+// ... (hàm useAuth không đổi)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthData>(defaultAuthData);
@@ -47,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     setAuth(defaultAuthData);
-    // Trong ứng dụng thực tế, bạn sẽ dùng router.replace('/login') ở đây hoặc ở nơi gọi logout
   };
 
   const contextValue: AuthContextType = {
