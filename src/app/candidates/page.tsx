@@ -1,4 +1,4 @@
-// Trang /candidates/page.tsx (CandidatesList) - Đã sửa
+// Trang /candidates/page.tsx (CandidatesList) - ĐÃ CẬP NHẬT
 'use client';
 
 import { useState, useEffect, ChangeEvent } from 'react';
@@ -12,13 +12,21 @@ interface Candidate {
   candidate_id: string;
   candidate_name: string;
   phone: string;
-  // ... các trường khác
+  onboard?: boolean;
+  pass_interview?: boolean;
+  show_up_for_interview?: boolean;
+  scheduled_for_interview?: boolean;
+  interested?: boolean;
+  new?: boolean;
+  reject_offer?: boolean;
+  unqualified?: boolean;
+  position?: string;
   [key: string]: any;
 }
 
 // Tách logic chính ra khỏi ProtectedRoute để sử dụng Context
 function CandidatesContent() {
-  const { user_group, isLoading: isAuthLoading } = useAuth(); // Lấy user_group từ Context
+  const { user_group, user_id, isLoading: isAuthLoading } = useAuth(); // Lấy user_group & user_id
 
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -27,18 +35,19 @@ function CandidatesContent() {
 
   // HÀM GỌI N8N ĐỂ LẤY DANH SÁCH ỨNG VIÊN
   const fetchAllCandidates = async () => {
-    if (isAuthLoading || !user_group) return; // Chờ Auth xong
+    if (isAuthLoading || !user_group || !user_id) return; // Chờ Auth xong
 
     setDataLoading(true);
     try {
-      // GỬI KÈM user_group VÀO BODY
+      // GỬI KÈM user_group VÀ user_id VÀO BODY
       const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'list',
           sort: 'newest',
-          user_group: user_group, // <--- THÊM user_group VÀO ĐÂY
+          user_group: user_group,
+          user_id: user_id, 
         }),
       });
       const data = await res.json();
@@ -53,16 +62,15 @@ function CandidatesContent() {
     }
   };
 
-  // CHỈ GỌI N8N 1 LẦN KHI VÀO TRANG, VÀ KHI user_group đã có
+  // CHỈ GỌI N8N 1 LẦN KHI VÀO TRANG, VÀ KHI user_group/userId đã có
   useEffect(() => {
-    if (user_group) {
+    if (user_group && user_id) {
       fetchAllCandidates();
     }
-  }, [user_group, isAuthLoading]); // Phụ thuộc vào user_group
+  }, [user_group, userId, isAuthLoading]); // Phụ thuộc vào user_group và userId
 
   // Search realtime trên dữ liệu đã load
   useEffect(() => {
-    // Logic tìm kiếm như cũ
     if (!search.trim()) {
       setCandidates(allCandidates);
       return;
@@ -94,9 +102,10 @@ function CandidatesContent() {
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <h1 className="text-4xl font-bold mb-8 text-center text-blue-700">
-        Quản lý Ứng viên (Nhóm: {user_group})
+        Quản lý Ứng viên (Nhóm: {user_group} - ID: {user_id})
       </h1>
 
+      {/* TẠM THỜI CHƯA LỌC QUYỀN NÚT TẠO MỚI */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <input
           type="text"
