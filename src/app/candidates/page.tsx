@@ -62,12 +62,12 @@ function CandidatesContent() {
     }
   };
 
-  // CHỈ GỌI N8N 1 LẦN KHI VÀO TRANG, VÀ KHI user_group/userId đã có
+  // CHỈ GỌI N8N 1 LẦN KHI VÀO TRANG, VÀ KHI user_group/user_id đã có
   useEffect(() => {
     if (user_group && user_id) {
       fetchAllCandidates();
     }
-  }, [user_group, userId, isAuthLoading]); // Phụ thuộc vào user_group và userId
+  }, [user_group, user_id, isAuthLoading]); // Phụ thuộc vào user_group và user_id
 
   // Search realtime trên dữ liệu đã load
   useEffect(() => {
