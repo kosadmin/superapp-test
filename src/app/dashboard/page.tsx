@@ -1,68 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // Import Link từ next/link
+import Link from 'next/link';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth';
+// Tách nội dung Dashboard ra một component riêng
+function DashboardContent() {
+  const { user_id, name, username, logout, isLoading } = useAuth();
 
-export default function DashboardPage() {
-  // Thêm state để lưu tên thật (name) thay vì chỉ username
-  const [displayName, setDisplayName] = useState<string>('...');
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  // Xác định tên hiển thị: Ưu tiên tên thật (name), nếu không có thì dùng username
+  const displayName = name && name.trim() !== '' ? name : (username || 'User');
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
-
-    // Bước 1: Verify token như cũ để lấy username
-    fetch(N8N_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'verify', token }),
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (!data.success || !data.username) throw new Error();
-
-        // Bước 2: Lấy thêm thông tin user (dùng action get_user_info đã có sẵn)
-        return fetch(N8N_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'get_user_info',
-            username: data.username
-          }),
-        }).then(r => r.json());
-      })
-      .then(info => {
-        // Lấy tên thật từ sheet users
-        const name = info.user?.name?.trim();
-        setDisplayName(name && name !== '' ? name : info.user?.username || 'User');
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-        router.replace('/login');
-      })
-      .finally(() => setLoading(false));
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
-  };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-xl">Đang tải...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xl">
+        Đang tải thông tin...
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white p-10 rounded-2xl shadow-2xl text-center max-w-md w-full">
+        {/* Icon Success */}
         <div className="w-20 h-20 bg-green-500 rounded-full mx-auto mb-6 flex items-center justify-center">
           <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -75,7 +35,6 @@ export default function DashboardPage() {
         </p>
 
         <div className="space-y-4">
-          {/* Nút mới: Dẫn đến trang Quản lý Ứng viên */}
           <Link
             href="/candidates"
             className="block w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium text-lg transition shadow-md"
@@ -83,21 +42,33 @@ export default function DashboardPage() {
             Quản lý Ứng viên
           </Link>
 
-          <a
+          <Link
             href="/profile"
-            className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg transition"
+            className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg transition shadow-md"
           >
             Thông tin tài khoản
-          </a>
+          </Link>
 
           <button
-            onClick={handleLogout}
+            onClick={logout}
             className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 font-medium text-lg transition"
           >
             Đăng xuất
           </button>
         </div>
+        
+        {/* Hiển thị ID để debug nếu cần */}
+        <p className="mt-6 text-xs text-gray-400">User ID: {user_id}</p>
       </div>
     </div>
+  );
+}
+
+// Export mặc định được bọc trong ProtectedRoute
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }
