@@ -1,56 +1,55 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';   // ← ĐÃ SỬA ĐÚNG DẤU NGOẶC
+import { useRouter } from 'next/navigation';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
-// URL n8n của bạn (đúng rồi)
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth';
 
-export default function ProfilePage() {
-  const [userInfo, setUserInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+function ProfileContent() {
   const router = useRouter();
+  const { username, isLoading: isAuthLoading } = useAuth(); // Lấy username từ Context
+
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
+    const fetchFullUserInfo = async () => {
+      // Chỉ chạy khi ProtectedRoute đã xác thực xong và có username
+      if (isAuthLoading || !username) return;
 
-    fetch(N8N_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'verify', token }),
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (!data.success) throw new Error();
-        return fetch(N8N_URL, {
+      setDataLoading(true);
+      try {
+        const res = await fetch(N8N_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'get_user_info',
-            username: data.username
+            username: username,
           }),
-        }).then(r => r.json());
-      })
-      .then(res => {
-        if (res.user) {
-          setUserInfo(res.user);
-        } else {
-          throw new Error();
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          setUserInfo(data.user);
         }
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-        router.replace('/login');
-      })
-      .finally(() => setLoading(false));
-  }, [router]);
+      } catch (err) {
+        console.error('Lỗi khi lấy thông tin chi tiết:', err);
+      } finally {
+        setDataLoading(false);
+      }
+    };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-xl">Đang tải thông tin...</div>;
+    fetchFullUserInfo();
+  }, [username, isAuthLoading]);
+
+  // Hiển thị loading kết hợp
+  if (isAuthLoading || dataLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xl">
+        {isAuthLoading ? 'Đang xác thực...' : 'Đang tải thông tin chi tiết...'}
+      </div>
+    );
   }
 
   return (
@@ -86,11 +85,20 @@ export default function ProfilePage() {
 
         <button
           onClick={() => router.push('/dashboard')}
-          className="mt-10 w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg"
+          className="mt-10 w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium text-lg transition shadow-md"
         >
           ← Quay lại Dashboard
         </button>
       </div>
     </div>
+  );
+}
+
+// Bọc toàn bộ trong ProtectedRoute
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
+    </ProtectedRoute>
   );
 }
