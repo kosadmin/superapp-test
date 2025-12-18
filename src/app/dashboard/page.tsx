@@ -1,20 +1,59 @@
+// src/app/dashboard/page.tsx
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Tách nội dung Dashboard ra một component riêng
+const N8N_AUTH_URL = 'https://n8n.koutsourcing.vn/webhook/auth';
+
 function DashboardContent() {
-  const { user_id, name, username, logout, isLoading } = useAuth();
+  // Lấy dữ liệu từ AuthContext (đã được ProtectedRoute điền vào sau khi verify thành công)
+  const { username, logout, isLoading: isAuthLoading } = useAuth();
+  
+  const [displayName, setDisplayName] = useState<string>('...');
+  const [infoLoading, setInfoLoading] = useState(true);
 
-  // Xác định tên hiển thị: Ưu tiên tên thật (name), nếu không có thì dùng username
-  const displayName = name && name.trim() !== '' ? name : (username || 'User');
+  // Bước 2: Lấy thêm thông tin user chi tiết (name)
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (!username) return;
 
-  if (isLoading) {
+      setInfoLoading(true);
+      try {
+        const res = await fetch(N8N_AUTH_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'get_user_info',
+            username: username
+          }),
+        });
+        const data = await res.json();
+        
+        if (data.success && data.user) {
+          const name = data.user.name?.trim();
+          setDisplayName(name && name !== '' ? name : username);
+        }
+      } catch (err) {
+        console.error("Lỗi lấy thông tin user:", err);
+        setDisplayName(username); // Fallback về username nếu lỗi
+      } finally {
+        setInfoLoading(false);
+      }
+    };
+
+    if (!isAuthLoading) {
+        fetchUserInfo();
+    }
+  }, [username, isAuthLoading]);
+
+  // Hiển thị trạng thái chờ
+  if (isAuthLoading || infoLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-xl">
-        Đang tải thông tin...
+        {isAuthLoading ? 'Đang xác thực phiên...' : 'Đang tải thông tin cá nhân...'}
       </div>
     );
   }
@@ -22,7 +61,7 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white p-10 rounded-2xl shadow-2xl text-center max-w-md w-full">
-        {/* Icon Success */}
+        {/* Icon */}
         <div className="w-20 h-20 bg-green-500 rounded-full mx-auto mb-6 flex items-center justify-center">
           <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -51,14 +90,11 @@ function DashboardContent() {
 
           <button
             onClick={logout}
-            className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 font-medium text-lg transition"
+            className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 font-medium text-lg transition shadow-md"
           >
             Đăng xuất
           </button>
         </div>
-        
-        {/* Hiển thị ID để debug nếu cần */}
-        <p className="mt-6 text-xs text-gray-400">User ID: {user_id}</p>
       </div>
     </div>
   );
