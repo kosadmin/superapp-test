@@ -33,6 +33,7 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
           const user = {
             username: data.username || null,
             user_id: data.user_id || null, 
+            name: data.name || null, 
             user_group: data.user_group || null,
             isAuthenticated: true,
             isLoading: false,
