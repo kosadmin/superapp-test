@@ -6,7 +6,7 @@ import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 
-const N8N_STATS_URL = 'https://n8n.koutsourcing.vn/webhook/dashboard-stats';
+const N8N_STATS_URL = 'https://n8n.koutsourcing.vn/webhook-test/dashboard';
 
 function DashboardContent() {
   const { name, user_group, user_id, logout, isLoading: authLoading } = useAuth();
