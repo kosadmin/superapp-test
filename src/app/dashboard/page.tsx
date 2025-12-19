@@ -13,6 +13,12 @@ interface DashboardStats {
   new_this_month_count: number;
   applied_permission: string;
   today: { interview: number; onboard: number };
+  funnel: {
+    new: number;
+    scheduled: number;
+    pass: number;
+    onboard: number;
+  };
   source_distribution_monthly: { name: string; count: number; percentage: number }[];
 }
 
@@ -53,7 +59,7 @@ function DashboardContent() {
           <span className="text-[10px] font-bold text-gray-400 uppercase">Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}</span>
         </div>
 
-        {/* 4 Ô SỐ LIỆU CHÍNH (QUICK STATS) */}
+        {/* 4 Ô QUICK STATS */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100">
             <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Dự án đang tuyển</p>
@@ -76,20 +82,45 @@ function DashboardContent() {
         {/* LỊCH TRÌNH HÔM NAY */}
         <div className="bg-indigo-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-[10px] font-bold opacity-70 uppercase mb-3 tracking-widest">Lịch trình hôm nay</p>
+            <p className="text-[10px] font-bold opacity-70 uppercase mb-3 tracking-widest">Hôm nay bạn có</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-2xl font-black">{loading ? '..' : stats?.today.interview}</p>
-                <p className="text-[10px] font-medium opacity-80">Phỏng vấn</p>
+                <p className="text-[10px] font-medium opacity-80">Đăng ký Phỏng vấn</p>
               </div>
               <div>
                 <p className="text-2xl font-black">{loading ? '..' : stats?.today.onboard}</p>
-                <p className="text-[10px] font-medium opacity-80">Nhận việc</p>
+                <p className="text-[10px] font-medium opacity-80">Đăng ký Nhận việc</p>
               </div>
             </div>
           </div>
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" /></svg>
+          </div>
+        </div>
+
+        {/* PHỄU TUYỂN DỤNG THÁNG */}
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Phễu tuyển dụng (Tháng)</h4>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label: 'Mới', value: stats?.funnel.new, color: 'bg-slate-100 text-slate-600' },
+              { label: 'Hẹn PV', value: stats?.funnel.scheduled, color: 'bg-blue-50 text-blue-600' },
+              { label: 'Đỗ PV', value: stats?.funnel.pass, color: 'bg-indigo-50 text-indigo-600' },
+              { label: 'Onboard', value: stats?.funnel.onboard, color: 'bg-emerald-50 text-emerald-600' },
+            ].map((item, i) => (
+              <div key={i} className={`${item.color} p-3 rounded-xl text-center`}>
+                <p className="text-lg font-black">{loading ? '..' : item.value}</p>
+                <p className="text-[9px] font-bold uppercase whitespace-nowrap">{item.label}</p>
+              </div>
+            ))}
+          </div>
+          {/* Một thanh bar biểu diễn tỉ lệ nhỏ dần nếu bạn thích */}
+          <div className="mt-4 flex h-1.5 gap-1">
+             <div className="flex-[4] bg-slate-200 rounded-full"></div>
+             <div className="flex-[3] bg-blue-300 rounded-full"></div>
+             <div className="flex-[2] bg-indigo-400 rounded-full"></div>
+             <div className="flex-[1] bg-emerald-500 rounded-full"></div>
           </div>
         </div>
 
@@ -129,7 +160,8 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 lg:p-8 font-sans">
       <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* LEFT: PROFILE - GIỮ NGUYÊN HOẶC TINH CHỈNH NHẸ */}
+        
+        {/* LEFT: PROFILE */}
         <div className="bg-white p-8 lg:p-12 rounded-[2rem] shadow-xl border border-gray-200/50 text-center flex flex-col justify-center items-center">
           <div className="w-24 h-24 bg-gradient-to-tr from-emerald-400 to-teal-600 rounded-3xl mb-6 flex items-center justify-center shadow-2xl rotate-3 transform transition hover:rotate-0">
             <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
