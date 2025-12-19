@@ -143,7 +143,7 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* SECTION MỚI: XẾP HẠNG NHÂN VIÊN */}
+        {/* SECTION: XẾP HẠNG NHÂN VIÊN */}
         <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
           <div className="mb-4">
             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Xếp hạng nhân viên (Tháng)</h4>
@@ -175,6 +175,19 @@ function DashboardContent() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* SECTION: DỰ ÁN ĐANG TRIỂN KHAI (TRỐNG) */}
+        <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
+          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Dự án đang triển khai</h4>
+          <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-slate-100 rounded-xl">
+             <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mb-2">
+                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+             </div>
+             <p className="text-[11px] text-slate-400 font-medium italic">Hiện chưa có dữ liệu dự án</p>
           </div>
         </div>
 
