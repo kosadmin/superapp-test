@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, AuthProvider } from '@/contexts/AuthContext'; 
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // webhook verify của bạn
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/auth'; // webhook verify của bạn
 
 // Component con chịu trách nhiệm xác thực
 function AuthCheck({ children }: { children: React.ReactNode }) {
