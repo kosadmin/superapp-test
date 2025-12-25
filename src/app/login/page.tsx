@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 // THAY URL WEBHOOK N8N CỦA BẠN VÀO ĐÂY
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // ← DÁN URL THẬT CỦA BẠN VÀO ĐÂY
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/auth'; // ← DÁN URL THẬT CỦA BẠN VÀO ĐÂY
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
