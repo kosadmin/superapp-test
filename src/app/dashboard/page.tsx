@@ -18,7 +18,7 @@ interface DashboardStats {
   onboard_this_month: number;
   new_this_month_count: number;
   applied_permission: string;
-  total_revenue?: number;
+  commission_report?: { mkt: number; recruiter: number; vendor: number };
   today: { interview: number; onboard: number };
   funnel: {
     new: number;
@@ -40,7 +40,8 @@ function DashboardContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isManager = user_group === 'manager';
+  const isAdmin = user_group === 'admin';
+  const isManager = user_group === 'manager' || isAdmin;
   const isVendor = user_group === 'vendor';
 
   useEffect(() => {
@@ -93,6 +94,7 @@ function DashboardContent() {
   const renderSection2 = () => {
     return (
       <div className="space-y-6">
+        {/* Header Scope */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
@@ -101,6 +103,31 @@ function DashboardContent() {
           <span className="text-[10px] font-bold text-gray-400 uppercase">Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}</span>
         </div>
 
+        {/* SECTION: ADMIN COMMISSION REPORT */}
+        {isAdmin && (
+          <div className="bg-slate-900 rounded-[2rem] p-6 text-white shadow-2xl relative overflow-hidden border border-slate-700">
+            <div className="relative z-10">
+              <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-4">Tổng phí tuyển dụng trong năm qua</h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                  <span className="text-xs font-medium text-slate-400">Hoa hồng tạo nguồn MKT</span>
+                  <span className="text-sm font-bold text-white">{loading ? '...' : (stats?.commission_report?.mkt || 0).toLocaleString()} đ</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                  <span className="text-xs font-medium text-slate-400">Hoa hồng nhân viên tuyển dụng</span>
+                  <span className="text-sm font-bold text-white">{loading ? '...' : (stats?.commission_report?.recruiter || 0).toLocaleString()} đ</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-slate-400">Hoa hồng CTV/vendor</span>
+                  <span className="text-sm font-bold text-emerald-400">{loading ? '...' : (stats?.commission_report?.vendor || 0).toLocaleString()} đ</span>
+                </div>
+              </div>
+            </div>
+            <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-3xl"></div>
+          </div>
+        )}
+
+        {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100">
             <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Dự án đang tuyển</p>
@@ -120,23 +147,11 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* PHÍ TUYỂN DỤNG - Chỉ hiển thị cho Vendor */}
-        {isVendor && (
-          <div className="bg-emerald-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
-             <div className="relative z-10">
-                <p className="text-[10px] font-bold opacity-70 uppercase mb-1 tracking-widest">Tổng phí tuyển dụng đã nhận</p>
-                <p className="text-2xl font-black">{loading ? '...' : (stats?.total_revenue || 0).toLocaleString()} VNĐ</p>
-             </div>
-             <div className="absolute top-0 right-0 p-4 opacity-10">
-                <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" /></svg>
-             </div>
-          </div>
-        )}
-
+        {/* Schedule Today Card */}
         <div className="bg-indigo-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-[10px] font-bold opacity-70 uppercase mb-3 tracking-widest">
-              {isManager ? 'Hôm nay đội ngũ của bạn có' : isVendor ? 'Hôm nay đối tác có' : 'Hôm nay bạn có'}
+              {isAdmin ? 'Hệ thống hôm nay có' : isManager ? 'Đội ngũ của bạn có' : 'Hôm nay bạn có'}
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -154,6 +169,7 @@ function DashboardContent() {
           </div>
         </div>
 
+        {/* Recruitment Funnel */}
         <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
           <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Phễu tuyển dụng (Tháng)</h4>
           <div className="grid grid-cols-4 gap-2">
@@ -171,7 +187,7 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* ẨN NGUỒN ỨNG VIÊN CHO VENDOR */}
+        {/* Sources Distribution - Hide for Vendors */}
         {!isVendor && (
           <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
             <div className="flex justify-between items-center mb-4">
@@ -194,7 +210,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ẨN XẾP HẠNG NHÂN VIÊN CHO VENDOR */}
+        {/* Leaderboards */}
         {!isVendor && (
           <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
             <div className="mb-4">
@@ -227,6 +243,7 @@ function DashboardContent() {
 
         {isManager && RenderLeaderboard("Xếp hạng CTV / Vendor", stats?.ranking.vendor_leaderboard)}
 
+        {/* Empty State Projects */}
         <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
           <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Dự án đang triển khai</h4>
           <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-slate-100 rounded-xl">
@@ -245,6 +262,7 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 lg:p-8 font-sans">
       <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left Profile Panel */}
         <div className="bg-white p-8 lg:p-12 rounded-[2rem] shadow-xl border border-gray-200/50 text-center flex flex-col justify-center items-center h-fit sticky top-8">
           <div className="w-24 h-24 bg-gradient-to-tr from-emerald-400 to-teal-600 rounded-3xl mb-6 flex items-center justify-center shadow-2xl rotate-3 transform transition hover:rotate-0">
             <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -264,6 +282,8 @@ function DashboardContent() {
             </button>
           </div>
         </div>
+        
+        {/* Right Dashboard Data */}
         <div className="bg-white p-8 lg:p-10 rounded-[2rem] shadow-xl border border-gray-200/50">
           {renderSection2()}
         </div>
