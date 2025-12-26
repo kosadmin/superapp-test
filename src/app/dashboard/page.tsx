@@ -7,6 +7,12 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const N8N_STATS_URL = 'https://n8n.koutsourcing.vn/webhook-test/dashboard';
 
+interface LeaderboardItem {
+  id: string;
+  name: string;
+  onboardCount: number;
+}
+
 interface DashboardStats {
   total_all_time: number;
   onboard_this_month: number;
@@ -23,7 +29,8 @@ interface DashboardStats {
   ranking: {
     my_rank: number;
     my_group: string;
-    leaderboard: { id: string; name: string; onboardCount: number }[];
+    leaderboard: LeaderboardItem[];
+    vendor_leaderboard?: LeaderboardItem[]; // Thêm dữ liệu cho Manager
   };
 }
 
@@ -31,6 +38,8 @@ function DashboardContent() {
   const { name, user_group, user_id, logout, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const isManager = user_group === 'manager';
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -52,6 +61,39 @@ function DashboardContent() {
     fetchStats();
   }, [user_group, user_id, authLoading]);
 
+  // Component render danh sách xếp hạng dùng chung cho cả Nhân viên và CTV/Vendor
+  const RenderLeaderboard = (title: string, data: LeaderboardItem[] | undefined) => (
+    <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm mt-4">
+      <div className="mb-4">
+        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{title} (Tháng)</h4>
+      </div>
+      <div className="space-y-3">
+        {!loading && data?.map((user, idx) => (
+          <div 
+            key={user.id} 
+            className={`flex items-center justify-between p-3 rounded-xl transition-all ${user.id === user_id ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}
+          >
+            <div className="flex items-center gap-3">
+              <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black ${idx === 0 ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-orange-400 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                {idx + 1}
+              </span>
+              <div className="flex flex-col">
+                <span className={`text-xs font-bold ${user.id === user_id ? 'text-blue-700' : 'text-slate-700'}`}>
+                  {user.name}
+                </span>
+                <span className="text-[9px] text-slate-400 font-mono">ID: {user.id}</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-sm font-black text-slate-800">{user.onboardCount}</span>
+              <span className="text-[9px] block font-bold text-slate-400 uppercase">Onboard</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderSection2 = () => {
     return (
       <div className="space-y-6">
@@ -59,7 +101,7 @@ function DashboardContent() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-            Scope: {stats?.applied_permission || '...'}
+            Scope: {stats?.applied_permission || '...'} ({user_group})
           </div>
           <span className="text-[10px] font-bold text-gray-400 uppercase">Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}</span>
         </div>
@@ -84,10 +126,12 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* LỊCH TRÌNH HÔM NAY */}
+        {/* LỊCH TRÌNH HÔM NAY - Logic đổi text theo user_group */}
         <div className="bg-indigo-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-[10px] font-bold opacity-70 uppercase mb-3 tracking-widest">Hôm nay bạn có</p>
+            <p className="text-[10px] font-bold opacity-70 uppercase mb-3 tracking-widest">
+              {isManager ? 'Hôm nay đội ngũ của bạn có' : 'Hôm nay bạn có'}
+            </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-2xl font-black">{loading ? '..' : stats?.today.interview}</p>
@@ -147,9 +191,13 @@ function DashboardContent() {
         <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
           <div className="mb-4">
             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Xếp hạng nhân viên (Tháng)</h4>
-            <p className="text-xs text-slate-600">
-              Bạn đang đứng <span className="text-blue-600 font-black">Top {stats?.ranking.my_rank}</span> trong nhóm <span className="font-bold">{stats?.ranking.my_group}</span>. Hãy tiếp tục cố gắng!
-            </p>
+            
+            {/* Ẩn dòng chào mừng nếu là Manager */}
+            {!isManager && (
+               <p className="text-xs text-slate-600">
+                Bạn đang đứng <span className="text-blue-600 font-black">Top {stats?.ranking.my_rank}</span> trong nhóm <span className="font-bold">{stats?.ranking.my_group}</span>. Hãy tiếp tục cố gắng!
+              </p>
+            )}
           </div>
 
           <div className="space-y-3 mt-4">
@@ -177,6 +225,9 @@ function DashboardContent() {
             ))}
           </div>
         </div>
+
+        {/* SECTION: XẾP HẠNG CTV / VENDOR - Chỉ hiển thị cho Manager */}
+        {isManager && RenderLeaderboard("Xếp hạng CTV / Vendor", stats?.ranking.vendor_leaderboard)}
 
         {/* SECTION: DỰ ÁN ĐANG TRIỂN KHAI (TRỐNG) */}
         <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
