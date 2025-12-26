@@ -14,7 +14,7 @@ interface LeaderboardItem {
 }
 
 interface DashboardStats {
-  total_all_time: number;
+  total_this_month: number;
   onboard_this_month: number;
   new_this_month_count: number;
   applied_permission: string;
@@ -135,7 +135,7 @@ function DashboardContent() {
           </div>
           <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100">
             <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Tổng ứng viên</p>
-            <p className="text-xl font-black text-slate-800">{loading ? '...' : stats?.total_all_time}</p>
+            <p className="text-xl font-black text-slate-800">{loading ? '...' : stats?.total_this_month}</p>
           </div>
           <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
             <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Nhận việc mới (Tháng)</p>
