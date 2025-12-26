@@ -18,6 +18,7 @@ interface DashboardStats {
   onboard_this_month: number;
   new_this_month_count: number;
   applied_permission: string;
+  total_revenue?: number;
   today: { interview: number; onboard: number };
   funnel: {
     new: number;
@@ -30,7 +31,7 @@ interface DashboardStats {
     my_rank: number;
     my_group: string;
     leaderboard: LeaderboardItem[];
-    vendor_leaderboard?: LeaderboardItem[]; // Thêm dữ liệu cho Manager
+    vendor_leaderboard?: LeaderboardItem[];
   };
 }
 
@@ -40,6 +41,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
 
   const isManager = user_group === 'manager';
+  const isVendor = user_group === 'vendor';
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -61,7 +63,6 @@ function DashboardContent() {
     fetchStats();
   }, [user_group, user_id, authLoading]);
 
-  // Component render danh sách xếp hạng dùng chung cho cả Nhân viên và CTV/Vendor
   const RenderLeaderboard = (title: string, data: LeaderboardItem[] | undefined) => (
     <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm mt-4">
       <div className="mb-4">
@@ -69,18 +70,13 @@ function DashboardContent() {
       </div>
       <div className="space-y-3">
         {!loading && data?.map((user, idx) => (
-          <div 
-            key={user.id} 
-            className={`flex items-center justify-between p-3 rounded-xl transition-all ${user.id === user_id ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}
-          >
+          <div key={user.id} className={`flex items-center justify-between p-3 rounded-xl transition-all ${user.id === user_id ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}>
             <div className="flex items-center gap-3">
               <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black ${idx === 0 ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-orange-400 text-white' : 'bg-slate-200 text-slate-500'}`}>
                 {idx + 1}
               </span>
               <div className="flex flex-col">
-                <span className={`text-xs font-bold ${user.id === user_id ? 'text-blue-700' : 'text-slate-700'}`}>
-                  {user.name}
-                </span>
+                <span className={`text-xs font-bold ${user.id === user_id ? 'text-blue-700' : 'text-slate-700'}`}>{user.name}</span>
                 <span className="text-[9px] text-slate-400 font-mono">ID: {user.id}</span>
               </div>
             </div>
@@ -97,7 +93,6 @@ function DashboardContent() {
   const renderSection2 = () => {
     return (
       <div className="space-y-6">
-        {/* Header trạng thái */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
@@ -106,7 +101,6 @@ function DashboardContent() {
           <span className="text-[10px] font-bold text-gray-400 uppercase">Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}</span>
         </div>
 
-        {/* 4 Ô QUICK STATS */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100">
             <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Dự án đang tuyển</p>
@@ -126,11 +120,23 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* LỊCH TRÌNH HÔM NAY - Logic đổi text theo user_group */}
+        {/* PHÍ TUYỂN DỤNG - Chỉ hiển thị cho Vendor */}
+        {isVendor && (
+          <div className="bg-emerald-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+             <div className="relative z-10">
+                <p className="text-[10px] font-bold opacity-70 uppercase mb-1 tracking-widest">Tổng phí tuyển dụng đã nhận</p>
+                <p className="text-2xl font-black">{loading ? '...' : (stats?.total_revenue || 0).toLocaleString()} VNĐ</p>
+             </div>
+             <div className="absolute top-0 right-0 p-4 opacity-10">
+                <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" /></svg>
+             </div>
+          </div>
+        )}
+
         <div className="bg-indigo-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-[10px] font-bold opacity-70 uppercase mb-3 tracking-widest">
-              {isManager ? 'Hôm nay đội ngũ của bạn có' : 'Hôm nay bạn có'}
+              {isManager ? 'Hôm nay đội ngũ của bạn có' : isVendor ? 'Hôm nay đối tác có' : 'Hôm nay bạn có'}
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -148,7 +154,6 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* PHỄU TUYỂN DỤNG THÁNG */}
         <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
           <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Phễu tuyển dụng (Tháng)</h4>
           <div className="grid grid-cols-4 gap-2">
@@ -166,82 +171,71 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* THỐNG KÊ NGUỒN MỚI TRONG THÁNG */}
-        <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nguồn ứng viên mới (Tháng)</h4>
-            <span className="text-xs font-bold text-slate-800">{loading ? '...' : stats?.new_this_month_count} hồ sơ</span>
-          </div>
-          <div className="space-y-2">
-            {!loading && stats?.source_distribution_monthly.map((item, idx) => (
-              <div key={idx} className="group flex flex-col gap-1">
-                <div className="flex justify-between text-[11px] font-bold text-gray-600">
-                  <span>{item.name}</span>
-                  <span>{item.count}</span>
-                </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%` }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* SECTION: XẾP HẠNG NHÂN VIÊN */}
-        <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
-          <div className="mb-4">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Xếp hạng nhân viên (Tháng)</h4>
-            
-            {/* Ẩn dòng chào mừng nếu là Manager */}
-            {!isManager && (
-               <p className="text-xs text-slate-600">
-                Bạn đang đứng <span className="text-blue-600 font-black">Top {stats?.ranking.my_rank}</span> trong nhóm <span className="font-bold">{stats?.ranking.my_group}</span>. Hãy tiếp tục cố gắng!
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-3 mt-4">
-            {!loading && stats?.ranking.leaderboard.map((user, idx) => (
-              <div 
-                key={user.id} 
-                className={`flex items-center justify-between p-3 rounded-xl transition-all ${user.id === user_id ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black ${idx === 0 ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-orange-400 text-white' : 'bg-slate-200 text-slate-500'}`}>
-                    {idx + 1}
-                  </span>
-                  <div className="flex flex-col">
-                    <span className={`text-xs font-bold ${user.id === user_id ? 'text-blue-700' : 'text-slate-700'}`}>
-                      {user.name}
-                    </span>
-                    <span className="text-[9px] text-slate-400 font-mono">ID: {user.id}</span>
+        {/* ẨN NGUỒN ỨNG VIÊN CHO VENDOR */}
+        {!isVendor && (
+          <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nguồn ứng viên mới (Tháng)</h4>
+              <span className="text-xs font-bold text-slate-800">{loading ? '...' : stats?.new_this_month_count} hồ sơ</span>
+            </div>
+            <div className="space-y-2">
+              {!loading && stats?.source_distribution_monthly.map((item, idx) => (
+                <div key={idx} className="group flex flex-col gap-1">
+                  <div className="flex justify-between text-[11px] font-bold text-gray-600">
+                    <span>{item.name}</span>
+                    <span>{item.count}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-500 h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%` }}></div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-sm font-black text-slate-800">{user.onboardCount}</span>
-                  <span className="text-[9px] block font-bold text-slate-400 uppercase">Onboard</span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* SECTION: XẾP HẠNG CTV / VENDOR - Chỉ hiển thị cho Manager */}
+        {/* ẨN XẾP HẠNG NHÂN VIÊN CHO VENDOR */}
+        {!isVendor && (
+          <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
+            <div className="mb-4">
+              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Xếp hạng nhân viên (Tháng)</h4>
+              {!isManager && (
+                 <p className="text-xs text-slate-600">
+                  Bạn đang đứng <span className="text-blue-600 font-black">Top {stats?.ranking.my_rank}</span> trong nhóm <span className="font-bold">{stats?.ranking.my_group}</span>.
+                </p>
+              )}
+            </div>
+            <div className="space-y-3 mt-4">
+              {!loading && stats?.ranking.leaderboard.map((user, idx) => (
+                <div key={user.id} className={`flex items-center justify-between p-3 rounded-xl transition-all ${user.id === user_id ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}>
+                  <div className="flex items-center gap-3">
+                    <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black ${idx === 0 ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-orange-400 text-white' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</span>
+                    <div className="flex flex-col">
+                      <span className={`text-xs font-bold ${user.id === user_id ? 'text-blue-700' : 'text-slate-700'}`}>{user.name}</span>
+                      <span className="text-[9px] text-slate-400 font-mono">ID: {user.id}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-black text-slate-800">{user.onboardCount}</span>
+                    <span className="text-[9px] block font-bold text-slate-400 uppercase">Onboard</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isManager && RenderLeaderboard("Xếp hạng CTV / Vendor", stats?.ranking.vendor_leaderboard)}
 
-        {/* SECTION: DỰ ÁN ĐANG TRIỂN KHAI (TRỐNG) */}
         <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
           <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Dự án đang triển khai</h4>
           <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-slate-100 rounded-xl">
              <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mb-2">
-                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
+                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
              </div>
              <p className="text-[11px] text-slate-400 font-medium italic">Hiện chưa có dữ liệu dự án</p>
           </div>
         </div>
-
       </div>
     );
   };
@@ -251,8 +245,6 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 lg:p-8 font-sans">
       <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* LEFT: PROFILE */}
         <div className="bg-white p-8 lg:p-12 rounded-[2rem] shadow-xl border border-gray-200/50 text-center flex flex-col justify-center items-center h-fit sticky top-8">
           <div className="w-24 h-24 bg-gradient-to-tr from-emerald-400 to-teal-600 rounded-3xl mb-6 flex items-center justify-center shadow-2xl rotate-3 transform transition hover:rotate-0">
             <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -272,8 +264,6 @@ function DashboardContent() {
             </button>
           </div>
         </div>
-
-        {/* RIGHT: DASHBOARD DATA */}
         <div className="bg-white p-8 lg:p-10 rounded-[2rem] shadow-xl border border-gray-200/50">
           {renderSection2()}
         </div>
