@@ -5,7 +5,7 @@ import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 
-const N8N_STATS_URL = 'https://n8n.koutsourcing.vn/webhook-test/dashboard';
+const N8N_STATS_URL = 'https://n8n.koutsourcing.vn/webhook/dashboard';
 
 interface LeaderboardItem {
   id: string;
