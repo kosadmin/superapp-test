@@ -69,7 +69,7 @@ function CandidatesContent() {
       const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get', id }),
+        body: JSON.stringify({ action: 'get', id ,user_group}),
       });
       const data = await res.json();
       if (data.success) setDetailData(data.data);
