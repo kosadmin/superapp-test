@@ -4,16 +4,13 @@ import { useState, useEffect, ChangeEvent } from 'react';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { X, Save, Trash2, Calendar, User, MapPin, Briefcase } from 'lucide-react'; // Cần cài lucide-react hoặc dùng icon khác
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate'; // Đã thống nhất 1 URL điều hướng bằng action
 
 interface Candidate {
   candidate_id: string;
   candidate_name: string;
   phone: string;
-  position?: string;
-  project?: string;
   onboard?: boolean;
   pass_interview?: boolean;
   show_up_for_interview?: boolean;
@@ -22,6 +19,8 @@ interface Candidate {
   new?: boolean;
   reject_offer?: boolean;
   unqualified?: boolean;
+  position?: string;
+  project?: string;
   interview_date?: string;
   onboard_date?: string;
   created_at: string;
@@ -30,13 +29,20 @@ interface Candidate {
 
 function CandidatesContent() {
   const { user_group, user_id, isLoading: isAuthLoading } = useAuth();
+  
+  // States cho danh sách
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [search, setSearch] = useState('');
 
+  // States cho Chi tiết (Detail)
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailData, setDetailData] = useState<Candidate | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 1. Fetch Danh sách
   const fetchAllCandidates = async () => {
     if (isAuthLoading || !user_group || !user_id) return;
     setDataLoading(true);
@@ -44,214 +50,230 @@ function CandidatesContent() {
       const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'list',
-          user_group,
-          user_id,
-        }),
+        body: JSON.stringify({ action: 'list', user_group, user_id }),
       });
       const data = await res.json();
       if (data.success) {
         setAllCandidates(data.data || []);
         setCandidates(data.data || []);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDataLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setDataLoading(false); }
   };
 
   useEffect(() => {
     if (user_group && user_id) fetchAllCandidates();
   }, [user_group, user_id, isAuthLoading]);
 
+  // 2. Fetch Chi tiết khi chọn 1 ứng viên
   useEffect(() => {
-    const filtered = allCandidates.filter(cand =>
-      cand.candidate_name.toLowerCase().includes(search.toLowerCase()) ||
-      cand.phone.includes(search)
+    if (!selectedId) {
+      setDetailData(null);
+      return;
+    }
+    const loadDetail = async () => {
+      setIsDetailLoading(true);
+      try {
+        const res = await fetch(N8N_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get', id: selectedId }),
+        });
+        const data = await res.json();
+        if (data.success) setDetailData(data.data);
+      } catch (err) { console.error(err); }
+      finally { setIsDetailLoading(false); }
+    };
+    loadDetail();
+  }, [selectedId]);
+
+  // Search logic
+  useEffect(() => {
+    const lowerSearch = search.toLowerCase();
+    const filtered = allCandidates.filter(c => 
+      c.candidate_name.toLowerCase().includes(lowerSearch) || c.phone.includes(search)
     );
     setCandidates(filtered);
   }, [search, allCandidates]);
 
-  const handleUpdateField = (field: keyof Candidate, value: any) => {
-    if (!selectedCandidate) return;
-    setSelectedCandidate({ ...selectedCandidate, [field]: value });
+  // Handle Update Detail
+  const handleUpdateDetail = (field: keyof Candidate, value: any) => {
+    setDetailData(prev => prev ? { ...prev, [field]: value } : null);
   };
 
   const handleSaveDetail = async () => {
-    if (!selectedCandidate) return;
+    if (!detailData) return;
     setIsSaving(true);
     try {
       const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update',
-          id: selectedCandidate.candidate_id,
-          updates: selectedCandidate,
-        }),
+        body: JSON.stringify({ action: 'update', id: detailData.candidate_id, updates: detailData }),
       });
       const data = await res.json();
       if (data.success) {
-        alert('Đã cập nhật!');
-        // Cập nhật lại list local để không cần reload trang
-        setAllCandidates(prev => prev.map(c => c.candidate_id === selectedCandidate.candidate_id ? selectedCandidate : c));
+        alert('Lưu thành công!');
+        // Cập nhật lại list nhỏ bên trái để đồng bộ status
+        setAllCandidates(prev => prev.map(c => c.candidate_id === detailData.candidate_id ? detailData : c));
       }
-    } catch (err) {
-      alert('Lỗi khi lưu');
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (err) { alert('Lỗi lưu dữ liệu'); }
+    finally { setIsSaving(false); }
   };
 
-  if (isAuthLoading || dataLoading) return <div className="h-screen flex items-center justify-center">Đang tải...</div>;
+  if (isAuthLoading || dataLoading) return <div className="p-10 text-center text-xl">Đang tải dữ liệu...</div>;
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* PHẦN 1: DANH SÁCH (Bên trái) */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${selectedCandidate ? 'mr-[450px]' : ''}`}>
-        <header className="bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm">
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">Quản lý Ứng viên</h1>
-            <p className="text-xs text-slate-500">Nhóm: {user_group} | ID: {user_id}</p>
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
+      {/* CỘT TRÁI: DANH SÁCH (40%) */}
+      <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col bg-white border-r shadow-xl z-10">
+        <div className="p-4 border-b bg-slate-50">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-xl text-slate-800">Ứng viên ({candidates.length})</h2>
+            <Link href="/dashboard" className="text-xs text-blue-600">Dashboard</Link>
           </div>
-          <Link href="/candidates/new" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-            + Thêm mới
-          </Link>
-        </header>
-
-        <div className="p-4 border-b bg-white">
           <input
             type="text"
-            placeholder="Tìm theo tên hoặc SĐT..."
+            placeholder="Tìm tên, SĐT..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-1 gap-3">
-            {candidates.map((cand) => (
-              <div
-                key={cand.candidate_id}
-                onClick={() => setSelectedCandidate(cand)}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                  selectedCandidate?.candidate_id === cand.candidate_id 
-                  ? 'bg-blue-50 border-blue-400 shadow-md ring-1 ring-blue-400' 
-                  : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-slate-800 text-lg">{cand.candidate_name}</h3>
-                    <p className="text-sm text-slate-500 font-medium">{cand.phone} • {cand.position || 'Chưa có vị trí'}</p>
-                  </div>
-                  <StatusBadge cand={cand} />
-                </div>
+        <div className="flex-1 overflow-y-auto bg-white">
+          {candidates.map((cand) => (
+            <div
+              key={cand.candidate_id}
+              onClick={() => setSelectedId(cand.candidate_id)}
+              className={`p-4 border-b cursor-pointer transition-all hover:bg-blue-50 ${
+                selectedId === cand.candidate_id ? 'bg-blue-100 border-l-4 border-l-blue-600' : ''
+              }`}
+            >
+              <div className="flex justify-between items-start mb-1">
+                <span className="font-bold text-slate-900">{cand.candidate_name}</span>
+                <span className="text-[10px] text-gray-400 font-mono">#{cand.candidate_id}</span>
               </div>
-            ))}
-          </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">{cand.phone}</span>
+                <StatusBadge candidate={cand} />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* PHẦN 2: CHI TIẾT (Side Panel bên phải) */}
-      {selectedCandidate && (
-        <div className="fixed right-0 top-0 h-screen w-[450px] bg-white shadow-2xl border-l flex flex-col z-50 animate-in slide-in-from-right duration-300">
-          <div className="p-6 border-b flex justify-between items-center bg-slate-50">
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">Chi tiết ứng viên</h2>
-              <span className="text-xs font-mono bg-slate-200 px-2 py-1 rounded">ID: {selectedCandidate.candidate_id}</span>
+      {/* CỘT PHẢI: CHI TIẾT (60%) */}
+      <div className="flex-1 overflow-y-auto bg-slate-50">
+        {!selectedId ? (
+          <div className="h-full flex flex-col items-center justify-center text-gray-400">
+            <div className="w-20 h-20 mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             </div>
-            <button onClick={() => setSelectedCandidate(null)} className="p-2 hover:bg-slate-200 rounded-full transition">
-              <X size={20} />
-            </button>
+            <p className="text-lg">Chọn một ứng viên để xem chi tiết</p>
           </div>
+        ) : isDetailLoading ? (
+          <div className="h-full flex items-center justify-center">Đang tải chi tiết...</div>
+        ) : detailData ? (
+          <div className="p-8 max-w-4xl mx-auto">
+            {/* Header Detail */}
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h1 className="text-3xl font-black text-slate-800">{detailData.candidate_name}</h1>
+                <p className="text-gray-500 font-medium">Cập nhật lần cuối: {detailData.last_updated_at ? new Date(detailData.last_updated_at).toLocaleDateString() : '---'}</p>
+              </div>
+              <button
+                onClick={handleSaveDetail}
+                disabled={isSaving}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-bold shadow-lg transition disabled:bg-gray-400"
+              >
+                {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-8">
-            {/* Trạng thái Phễu */}
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Quy trình tuyển dụng</p>
-              <div className="grid grid-cols-2 gap-2">
+            {/* Quy trình nhanh */}
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-6">
+              <h3 className="text-xs font-bold text-gray-400 uppercase mb-4 tracking-widest">Quy trình tuyển dụng</h3>
+              <div className="grid grid-cols-4 gap-3">
                 {['new', 'interested', 'scheduled_for_interview', 'show_up_for_interview', 'pass_interview', 'onboard', 'reject_offer', 'unqualified'].map(step => (
-                  <label key={step} className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition ${selectedCandidate[step] ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'}`}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!selectedCandidate[step]} 
-                      onChange={(e) => handleUpdateField(step, e.target.checked)}
-                      className="rounded text-blue-600"
-                    />
-                    <span className="text-xs capitalize">{step.replace(/_/g, ' ')}</span>
-                  </label>
+                   <label key={step} className={`flex flex-col items-center p-3 rounded-2xl border cursor-pointer transition ${detailData[step] ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-gray-50 border-transparent text-gray-400'}`}>
+                      <input 
+                        type="checkbox" className="hidden" 
+                        checked={!!detailData[step]} 
+                        onChange={(e) => handleUpdateDetail(step, e.target.checked)} 
+                      />
+                      <span className="text-[10px] font-bold text-center leading-tight">{translateStep(step)}</span>
+                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Thông tin chính */}
-            <div className="space-y-4">
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thông tin cá nhân</p>
-               <InputGroup label="Họ tên" value={selectedCandidate.candidate_name} onChange={(v) => handleUpdateField('candidate_name', v)} />
-               <InputGroup label="Số điện thoại" value={selectedCandidate.phone} onChange={(v) => handleUpdateField('phone', v)} />
-               <div className="grid grid-cols-2 gap-4">
-                 <InputGroup type="date" label="Ngày phỏng vấn" value={formatDateForInput(selectedCandidate.interview_date)} onChange={(v) => handleUpdateField('interview_date', formatToDDMMYYYY(v))} />
-                 <InputGroup type="date" label="Ngày nhận việc" value={formatDateForInput(selectedCandidate.onboard_date)} onChange={(v) => handleUpdateField('onboard_date', formatToDDMMYYYY(v))} />
-               </div>
-               <InputGroup label="Dự án" value={selectedCandidate.project} onChange={(v) => handleUpdateField('project', v)} />
-               <InputGroup label="Vị trí" value={selectedCandidate.position} onChange={(v) => handleUpdateField('position', v)} />
+            {/* Form thông tin */}
+            <div className="grid grid-cols-2 gap-6">
+                <InputGroup label="Dự án" value={detailData.project} onChange={(v) => handleUpdateDetail('project', v)} />
+                <InputGroup label="Vị trí" value={detailData.position} onChange={(v) => handleUpdateDetail('position', v)} />
+                <InputGroup label="Số điện thoại" value={detailData.phone} onChange={(v) => handleUpdateDetail('phone', v)} />
+                <InputGroup label="Ngày phỏng vấn" type="date" value={formatToInputDate(detailData.interview_date)} onChange={(v) => handleUpdateDetail('interview_date', formatFromInputDate(v))} />
             </div>
-          </div>
 
-          <div className="p-6 border-t bg-slate-50 flex gap-3">
-            <button
-              onClick={handleSaveDetail}
-              disabled={isSaving}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition"
-            >
-              <Save size={18} /> {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
+            {/* Lý do thất bại (Nếu có) */}
+            {(detailData.reject_offer || detailData.unqualified) && (
+              <div className="mt-6 p-4 bg-red-50 rounded-2xl border border-red-100">
+                <p className="text-red-700 font-bold text-sm mb-2">Lý do từ chối / Không đạt:</p>
+                <textarea 
+                  className="w-full p-3 rounded-xl border border-red-200 focus:outline-red-400" 
+                  rows={3}
+                  value={detailData.reason_unqualified || detailData.reason_rejected_offer || ''}
+                  onChange={(e) => handleUpdateDetail('reason_unqualified', e.target.value)}
+                />
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        ) : null}
+      </div>
     </div>
   );
 }
 
-// Sub-components giúp code sạch hơn
-function StatusBadge({ cand }: { cand: Candidate }) {
-  if (cand.onboard) return <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[10px] font-bold uppercase">Nhận việc</span>;
-  if (cand.pass_interview) return <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-bold uppercase">Đỗ PV</span>;
-  if (cand.unqualified) return <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold uppercase">Loại</span>;
-  return <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded text-[10px] font-bold uppercase">Mới</span>;
+// Sub-components & Helpers
+function StatusBadge({ candidate }: { candidate: Candidate }) {
+  if (candidate.onboard) return <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">ONBOARD</span>;
+  if (candidate.unqualified) return <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">LOẠI</span>;
+  if (candidate.pass_interview) return <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">ĐỖ PV</span>;
+  if (candidate.scheduled_for_interview) return <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">LỊCH PV</span>;
+  return <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-bold">MỚI</span>;
 }
 
 function InputGroup({ label, value, onChange, type = "text" }: any) {
   return (
-    <div>
-      <label className="block text-[11px] font-bold text-slate-500 mb-1 ml-1">{label}</label>
+    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 tracking-wider">{label}</label>
       <input 
-        type={type}
+        type={type} 
         value={value || ''} 
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+        className="w-full font-bold text-slate-700 focus:outline-none"
       />
     </div>
   );
 }
 
-// Helpers chuyển đổi ngày tháng
-const formatDateForInput = (v: string | undefined) => {
-  if (!v) return "";
-  const parts = v.split('/');
-  return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : v;
-};
-const formatToDDMMYYYY = (v: string) => {
-  if (!v) return "";
-  const parts = v.split('-');
-  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : v;
-};
+const translateStep = (s: string) => {
+    const map: any = { new: 'MỚI', interested: 'QUAN TÂM', scheduled_for_interview: 'LỊCH PV', show_up_for_interview: 'ĐI PV', pass_interview: 'ĐỖ PV', onboard: 'ONBOARD', reject_offer: 'TC OFFER', unqualified: 'LOẠI' };
+    return map[s] || s;
+}
 
-export default function CandidatesList() {
+const formatToInputDate = (d?: string) => {
+    if(!d) return '';
+    const parts = d.split('/');
+    return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : d;
+}
+const formatFromInputDate = (d: string) => {
+    if(!d) return '';
+    const parts = d.split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : d;
+}
+
+export default function CandidatesPage() {
   return (
     <ProtectedRoute>
       <CandidatesContent />
