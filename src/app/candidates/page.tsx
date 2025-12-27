@@ -111,11 +111,25 @@ function CandidatesContent() {
 
   useEffect(() => { if (user_group && user_id) fetchAllCandidates(); }, [user_group, user_id, isAuthLoading]);
 
-  useEffect(() => {
-    const lowerSearch = search.toLowerCase();
-    const filtered = allCandidates.filter(c => c.candidate_name.toLowerCase().includes(lowerSearch) || c.phone.includes(search));
-    setCandidates(filtered);
-  }, [search, allCandidates]);
+useEffect(() => {
+  // 1. Nếu không có nội dung search, hiển thị toàn bộ danh sách gốc
+  if (!search.trim()) {
+    setCandidates(allCandidates);
+    return;
+  }
+
+  const lowerSearch = search.toLowerCase().trim();
+
+  // 2. Lọc an toàn
+  const filtered = allCandidates.filter(c => {
+    const nameMatch = c.candidate_name ? c.candidate_name.toLowerCase().includes(lowerSearch) : false;
+    const phoneMatch = c.phone ? c.phone.includes(lowerSearch) : false;
+    
+    return nameMatch || phoneMatch;
+  });
+
+  setCandidates(filtered);
+}, [search, allCandidates]);
 
   const handleChange = (field: keyof Candidate, value: any) => {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
