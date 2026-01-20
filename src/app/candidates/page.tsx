@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 const ITEMS_PER_PAGE = 50;
 
-// --- UTILS FORMAT DATE ---
+// --- UTILS ---
 const formatDateToISO = (dateString: string | undefined): string => {
   if (!dateString) return '';
   if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
@@ -24,7 +24,7 @@ const formatISOToDDMMYYYY = (isoString: string): string => {
   return '';
 };
 
-// --- ĐỊNH NGHĨA CẤU TRÚC CỘT ---
+// --- ĐỊNH NGHĨA CẤU TRÚC CỘT ĐẦY ĐỦ ---
 interface ColumnConfig {
   id: string;
   label: string;
@@ -34,18 +34,33 @@ interface ColumnConfig {
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'candidate_name', label: 'Họ tên', width: 180, visible: true },
-  { id: 'phone', label: 'Số điện thoại', width: 130, visible: true },
   { id: 'status', label: 'Trạng thái', width: 120, visible: true },
+  { id: 'phone', label: 'Số điện thoại', width: 130, visible: true },
   { id: 'project', label: 'Dự án', width: 150, visible: true },
   { id: 'position', label: 'Vị trí', width: 150, visible: true },
   { id: 'company', label: 'Công ty', width: 150, visible: true },
   { id: 'interview_date', label: 'Ngày PV', width: 110, visible: true },
   { id: 'onboard_date', label: 'Ngày Onboard', width: 110, visible: true },
-  { id: 'id_card_number', label: 'CCCD', width: 130, visible: true },
-  { id: 'date_of_birth', label: 'Ngày sinh', width: 100, visible: true },
-  { id: 'address_full', label: 'Địa chỉ', width: 250, visible: true },
-  { id: 'data_source_type', label: 'Nguồn', width: 100, visible: true },
   { id: 'assigned_user_name', label: 'Người phụ trách', width: 150, visible: true },
+  { id: 'candidate_id', label: 'Mã UV', width: 120, visible: false },
+  { id: 'id_card_number', label: 'CCCD', width: 130, visible: false },
+  { id: 'date_of_birth', label: 'Ngày sinh', width: 100, visible: false },
+  { id: 'birth_year', label: 'Năm sinh', width: 80, visible: false },
+  { id: 'address_street', label: 'Số nhà/Tên đường', width: 150, visible: false },
+  { id: 'address_ward', label: 'Phường/Xã', width: 120, visible: false },
+  { id: 'address_city', label: 'Tỉnh/Thành', width: 120, visible: false },
+  { id: 'address_full', label: 'Địa chỉ đầy đủ', width: 250, visible: false },
+  { id: 'project_id', label: 'Mã dự án', width: 120, visible: false },
+  { id: 'project_type', label: 'Loại dự án', width: 120, visible: false },
+  { id: 'department', label: 'Phòng ban', width: 120, visible: false },
+  { id: 'data_source_dept', label: 'Bộ phận nguồn', width: 120, visible: false },
+  { id: 'data_source_type_group', label: 'Nhóm nguồn', width: 120, visible: false },
+  { id: 'data_source_type', label: 'Loại nguồn', width: 100, visible: false },
+  { id: 'created_at', label: 'Ngày tạo', width: 140, visible: false },
+  { id: 'created_by', label: 'Người tạo', width: 120, visible: false },
+  { id: 'last_updated_at', label: 'Cập nhật cuối', width: 140, visible: false },
+  { id: 'assigned_user', label: 'ID Người phụ trách', width: 120, visible: false },
+  { id: 'assigned_user_group', label: 'Nhóm phụ trách', width: 130, visible: false },
 ];
 
 interface Candidate {
@@ -68,27 +83,20 @@ const funnelSteps = [
 
 function CandidatesContent() {
   const { user_group, user_id, isLoading: isAuthLoading } = useAuth();
-  
-  // States cho danh sách
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
   const [listLoading, setListLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  
-  // States cho tùy chỉnh View
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS);
   const [frozenCount, setFrozenCount] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
-
-  // States cho chi tiết ứng viên
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Candidate | null>(null);
   const [originalData, setOriginalData] = useState<Candidate | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 1. Load Cấu hình Table từ LocalStorage
   useEffect(() => {
     const savedCols = localStorage.getItem('table_columns_config');
     const savedFrozen = localStorage.getItem('table_frozen_count');
@@ -103,7 +111,6 @@ function CandidatesContent() {
     localStorage.setItem('table_frozen_count', newFrozen.toString());
   };
 
-  // 2. Fetch Danh sách
   const fetchAllCandidates = async () => {
     if (isAuthLoading || !user_group || !user_id) return;
     setListLoading(true);
@@ -124,7 +131,6 @@ function CandidatesContent() {
 
   useEffect(() => { if (user_group && user_id) fetchAllCandidates(); }, [user_group, user_id, isAuthLoading]);
 
-  // 3. Logic Tìm kiếm
   useEffect(() => {
     const lowerSearch = search.toLowerCase().trim();
     const filtered = allCandidates.filter(cand => 
@@ -143,7 +149,6 @@ function CandidatesContent() {
 
   const totalPages = Math.ceil(filteredCandidates.length / ITEMS_PER_PAGE);
 
-  // 4. Logic Fetch Chi tiết
   const fetchDetail = async (id: string) => {
     if (selectedId === id) return;
     setSelectedId(id);
@@ -163,7 +168,6 @@ function CandidatesContent() {
     finally { setDetailLoading(false); }
   };
 
-  // 5. Logic Xử lý Form chi tiết
   const handleChange = (field: string, value: any) => {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
   };
@@ -189,7 +193,6 @@ function CandidatesContent() {
 
   const hasChanges = JSON.stringify(originalData) !== JSON.stringify(formData);
 
-  // 6. Logic Table (Move, Toggle, Width, Freeze)
   const moveColumn = (index: number, direction: 'up' | 'down') => {
     const newCols = [...columns];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -220,55 +223,55 @@ function CandidatesContent() {
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden text-sm relative">
+    <div className="flex h-screen bg-gray-100 overflow-hidden text-sm p-4 gap-4">
       
-      {/* --- CỘT TRÁI: DANH SÁCH --- */}
-      <div className={`flex flex-col border-r bg-white transition-all duration-300 ${selectedId ? 'w-1/3 min-w-[350px]' : 'w-full'}`}>
-        <div className="p-4 border-b">
+      {/* --- CỘT TRÁI: DANH SÁCH (1/2 TRANG KHI MỞ CHI TIẾT) --- */}
+      <div className={`flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-500 overflow-hidden ${selectedId ? 'w-1/2' : 'w-full'}`}>
+        <div className="p-4 border-b bg-white">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-xl font-bold text-blue-700">Ứng viên ({filteredCandidates.length})</h1>
+            <h1 className="text-xl font-bold text-blue-700 uppercase tracking-tight">Quản lý Ứng viên</h1>
             <div className="flex gap-2">
                 <button 
                   onClick={() => setShowSettings(!showSettings)}
-                  className={`px-3 py-1.5 rounded border text-xs font-medium transition ${showSettings ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                >⚙️ Xem</button>
-                <Link href="/dashboard" className="p-1.5 text-gray-400 hover:text-blue-600">✕</Link>
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${showSettings ? 'bg-blue-600 text-white' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >⚙️ CẤU HÌNH CỘT</button>
+                <Link href="/dashboard" className="p-1.5 text-gray-400 hover:text-red-500 transition">✕</Link>
             </div>
           </div>
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Tìm tên, SĐT..."
-              className="flex-1 px-3 py-2 border rounded-md outline-none focus:border-blue-500"
+              placeholder="Tìm theo tên, SĐT hoặc mã ứng viên..."
+              className="flex-1 px-4 py-2 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            {!selectedId && <Link href="/candidates/new" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Thêm</Link>}
+            {!selectedId && <Link href="/candidates/new" className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">THÊM MỚI</Link>}
           </div>
         </div>
 
         {/* --- TABLE AREA --- */}
-        <div className="flex-1 overflow-auto relative">
-          <table className="text-left border-separate border-spacing-0" style={{ width: 'max-content' }}>
-            <thead className="bg-gray-100 sticky top-0 z-30 shadow-sm">
+        <div className="flex-1 overflow-auto relative bg-white">
+          <table className="text-left border-separate border-spacing-0 w-full">
+            <thead className="bg-gray-50 sticky top-0 z-30 shadow-sm">
               <tr>
                 {columns.map((col, idx) => col.visible && (
                   <th 
                     key={col.id}
                     style={{ width: col.width, minWidth: col.width, ...getFrozenStyle(col.id, idx) }}
-                    className="p-3 border-b border-r text-[10px] uppercase text-gray-600 bg-gray-100"
+                    className="p-3 border-b border-r text-[10px] uppercase font-bold text-gray-500 bg-gray-50"
                   >
                     {col.label}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y bg-white">
+            <tbody className="divide-y">
               {paginatedData.map((cand) => (
                 <tr 
                   key={cand.candidate_id} 
                   onClick={() => fetchDetail(cand.candidate_id)}
-                  className={`cursor-pointer hover:bg-blue-50 transition-colors ${selectedId === cand.candidate_id ? 'bg-blue-100' : ''}`}
+                  className={`cursor-pointer transition-colors ${selectedId === cand.candidate_id ? 'bg-blue-50' : 'hover:bg-gray-50 bg-white'}`}
                 >
                   {columns.map((col, idx) => col.visible && (
                     <td 
@@ -286,51 +289,56 @@ function CandidatesContent() {
         </div>
 
         {/* --- PHÂN TRANG --- */}
-        <div className="p-3 border-t bg-gray-50 flex items-center justify-between">
-           <span className="text-[10px] text-gray-400 uppercase font-bold">Trang {currentPage}/{totalPages || 1}</span>
+        <div className="p-3 border-t bg-white flex items-center justify-between">
+           <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Tổng: {filteredCandidates.length} | Trang {currentPage}/{totalPages || 1}</span>
            <div className="flex gap-1">
-             <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-2 py-1 border rounded bg-white disabled:opacity-50">‹</button>
-             <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-2 py-1 border rounded bg-white disabled:opacity-50">›</button>
+             <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 border rounded-lg bg-white hover:bg-gray-50 disabled:opacity-30 transition">‹</button>
+             <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 border rounded-lg bg-white hover:bg-gray-50 disabled:opacity-30 transition">›</button>
            </div>
         </div>
       </div>
 
-      {/* --- CỘT PHẢI: CHI TIẾT --- */}
+      {/* --- CỘT PHẢI: CHI TIẾT (CHIẾM 1/2 TRANG) --- */}
       {selectedId && (
-        <div className="flex-1 flex flex-col bg-white shadow-2xl border-l z-40 animate-in slide-in-from-right duration-300">
+        <div className="w-1/2 flex flex-col bg-white rounded-xl shadow-xl border overflow-hidden animate-in slide-in-from-right duration-500">
            {detailLoading ? (
-             <div className="flex-1 flex items-center justify-center italic text-gray-400">Đang tải chi tiết...</div>
+             <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="italic text-gray-400">Đang tải dữ liệu...</span>
+             </div>
            ) : formData && (
              <>
                {/* Header Detail */}
                <div className="p-4 border-b flex justify-between items-center bg-gray-50 sticky top-0 z-10">
                   <div className="flex items-center gap-3">
-                    <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-200 rounded-full">✕</button>
+                    <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-200 rounded-full transition">✕</button>
                     <div>
-                        <h2 className="font-bold text-lg uppercase leading-none">{formData.candidate_name}</h2>
+                        <h2 className="font-bold text-lg uppercase text-blue-800 leading-none">{formData.candidate_name}</h2>
                         <span className="text-[10px] font-mono text-gray-400">{formData.candidate_id}</span>
                     </div>
                   </div>
-                  <button
-                    onClick={handleSave}
-                    disabled={isSaving || !hasChanges}
-                    className={`px-6 py-2 rounded-md font-bold transition ${hasChanges ? 'bg-green-600 text-white hover:bg-green-700 shadow-md' : 'bg-gray-200 text-gray-400'}`}
-                  >
-                    {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
-                  </button>
+                  <div className="flex gap-2">
+                      <button
+                        onClick={handleSave}
+                        disabled={isSaving || !hasChanges}
+                        className={`px-6 py-2 rounded-xl font-bold transition shadow-lg ${hasChanges ? 'bg-green-600 text-white hover:bg-green-700 shadow-green-100' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                      >
+                        {isSaving ? 'ĐANG LƯU...' : 'LƯU THAY ĐỔI'}
+                      </button>
+                  </div>
                </div>
 
-               {/* Body Detail */}
-               <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24">
+               {/* Body Detail - Render toàn bộ các trường dữ liệu */}
+               <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24 scrollbar-thin">
                   
-                  {/* STEPPER / FUNNEL */}
-                  <section className="bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300">
-                    <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-3 tracking-widest">Tiến độ ứng tuyển</h3>
+                  {/* QUY TRÌNH TRẠNG THÁI */}
+                  <section className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
+                    <h3 className="text-[10px] font-black text-blue-400 uppercase mb-4 tracking-[0.2em]">Tiến độ tuyển dụng (Phễu)</h3>
                     <div className="grid grid-cols-4 gap-2">
                       {funnelSteps.map(step => (
-                        <label key={step.key} className={`flex flex-col items-center p-2 rounded-lg border cursor-pointer transition ${formData[step.key] ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold' : 'bg-white border-gray-200 text-gray-400'}`}>
-                          <span className="text-[9px] mb-1">{step.label}</span>
-                          <input type="checkbox" checked={!!formData[step.key]} onChange={(e) => handleChange(step.key, e.target.checked)} className="w-4 h-4 rounded text-blue-600" />
+                        <label key={step.key} className={`flex flex-col items-center p-3 rounded-xl border-2 cursor-pointer transition-all ${formData[step.key] ? 'border-blue-600 bg-white text-blue-700 shadow-sm font-bold' : 'bg-transparent border-blue-100 text-blue-300'}`}>
+                          <span className="text-[9px] mb-2 uppercase">{step.label}</span>
+                          <input type="checkbox" checked={!!formData[step.key]} onChange={(e) => handleChange(step.key, e.target.checked)} className="w-5 h-5 rounded-md text-blue-600 focus:ring-blue-500" />
                         </label>
                       ))}
                     </div>
@@ -338,38 +346,61 @@ function CandidatesContent() {
 
                   {/* THÔNG TIN CÔNG VIỆC */}
                   <section>
-                    <h3 className="text-blue-600 font-bold mb-4 border-b pb-1 text-xs uppercase">Thông tin ứng tuyển</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><label className="text-[10px] text-gray-400 uppercase">Dự án</label><input className="w-full p-2 border rounded mt-1" value={formData.project || ''} onChange={e => handleChange('project', e.target.value)} /></div>
-                      <div><label className="text-[10px] text-gray-400 uppercase">Vị trí</label><input className="w-full p-2 border rounded mt-1" value={formData.position || ''} onChange={e => handleChange('position', e.target.value)} /></div>
-                      <div><label className="text-[10px] text-gray-400 uppercase">Công ty</label><input className="w-full p-2 border rounded mt-1" value={formData.company || ''} onChange={e => handleChange('company', e.target.value)} /></div>
-                      <div><label className="text-[10px] text-gray-400 uppercase">Nguồn dữ liệu</label><input className="w-full p-2 border rounded mt-1" value={formData.data_source_type || ''} onChange={e => handleChange('data_source_type', e.target.value)} /></div>
+                    <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Thông tin hồ sơ & Công việc</h3>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      {['project', 'project_id', 'project_type', 'position', 'company', 'department', 'data_source_dept', 'data_source_type_group', 'data_source_type', 'assigned_user_name', 'assigned_user_group'].map(field => (
+                        <div key={field}>
+                          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{DEFAULT_COLUMNS.find(c => c.id === field)?.label || field}</label>
+                          <input className="w-full p-2.5 border rounded-xl mt-1 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition" value={formData[field] || ''} onChange={e => handleChange(field, e.target.value)} />
+                        </div>
+                      ))}
                     </div>
                   </section>
 
-                  {/* THỜI GIAN QUAN TRỌNG */}
-                  <section>
-                    <h3 className="text-blue-600 font-bold mb-4 border-b pb-1 text-xs uppercase">Ngày quan trọng</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[10px] text-gray-400 uppercase">Ngày phỏng vấn</label>
-                        <input type="date" className="w-full p-2 border rounded mt-1" value={formatDateToISO(formData.interview_date)} onChange={e => handleChange('interview_date', formatISOToDDMMYYYY(e.target.value))} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-gray-400 uppercase">Ngày nhận việc</label>
-                        <input type="date" className="w-full p-2 border rounded mt-1" value={formatDateToISO(formData.onboard_date)} onChange={e => handleChange('onboard_date', formatISOToDDMMYYYY(e.target.value))} />
-                      </div>
+                  {/* THỜI GIAN & HỆ THỐNG */}
+                  <section className="grid grid-cols-2 gap-8">
+                    <div>
+                        <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-emerald-500 pl-3 text-xs uppercase tracking-wider">Ngày quan trọng</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày phỏng vấn</label>
+                                <input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-gray-50 focus:bg-white" value={formatDateToISO(formData.interview_date)} onChange={e => handleChange('interview_date', formatISOToDDMMYYYY(e.target.value))} />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày nhận việc (Onboard)</label>
+                                <input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-gray-50 focus:bg-white" value={formatDateToISO(formData.onboard_date)} onChange={e => handleChange('onboard_date', formatISOToDDMMYYYY(e.target.value))} />
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-orange-400 pl-3 text-xs uppercase tracking-wider">Thông tin hệ thống</h3>
+                        <div className="space-y-4">
+                            {['created_at', 'created_by', 'last_updated_at'].map(field => (
+                                <div key={field}>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{DEFAULT_COLUMNS.find(c => c.id === field)?.label || field}</label>
+                                    <input className="w-full p-2.5 border rounded-xl mt-1 bg-gray-100 text-gray-500 cursor-not-allowed" value={formData[field] || ''} readOnly />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                   </section>
 
-                  {/* THÔNG TIN CÁ NHÂN */}
+                  {/* THÔNG TIN CÁ NHÂN & ĐỊA CHỈ */}
                   <section>
-                    <h3 className="text-blue-600 font-bold mb-4 border-b pb-1 text-xs uppercase">Thông tin cá nhân</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><label className="text-[10px] text-gray-400 uppercase">Số điện thoại</label><input className="w-full p-2 border rounded mt-1 font-bold text-blue-800" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
-                      <div><label className="text-[10px] text-gray-400 uppercase">Số CCCD</label><input className="w-full p-2 border rounded mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
-                      <div><label className="text-[10px] text-gray-400 uppercase">Ngày sinh</label><input className="w-full p-2 border rounded mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
-                      <div className="col-span-2"><label className="text-[10px] text-gray-400 uppercase">Địa chỉ đầy đủ</label><textarea className="w-full p-2 border rounded mt-1 h-20" value={formData.address_full || ''} onChange={e => handleChange('address_full', e.target.value)} /></div>
+                    <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-purple-500 pl-3 text-xs uppercase tracking-wider">Thông tin cá nhân & Địa chỉ</h3>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
+                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
+                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
+                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label><input type="number" className="w-full p-2.5 border rounded-xl mt-1" value={formData.birth_year || ''} onChange={e => handleChange('birth_year', e.target.value)} /></div>
+                      
+                      <div className="col-span-2 grid grid-cols-3 gap-4">
+                         <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Đường/Số nhà</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.address_street || ''} onChange={e => handleChange('address_street', e.target.value)} /></div>
+                         <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Phường/Xã</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.address_ward || ''} onChange={e => handleChange('address_ward', e.target.value)} /></div>
+                         <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tỉnh/Thành</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.address_city || ''} onChange={e => handleChange('address_city', e.target.value)} /></div>
+                      </div>
+                      
+                      <div className="col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Địa chỉ đầy đủ (Tự động/Nhập tay)</label><textarea className="w-full p-3 border rounded-xl mt-1 h-20 outline-none focus:ring-2 focus:ring-blue-500" value={formData.address_full || ''} onChange={e => handleChange('address_full', e.target.value)} /></div>
                     </div>
                   </section>
                </div>
@@ -378,32 +409,32 @@ function CandidatesContent() {
         </div>
       )}
 
-      {/* --- PANEL TÙY CHỈNH TABLE --- */}
+      {/* --- PANEL TÙY CHỈNH TABLE (OVERLAY) --- */}
       {showSettings && (
-        <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl z-[100] border-l flex flex-col animate-in slide-in-from-right duration-200">
+        <div className="absolute right-4 top-4 bottom-4 w-80 bg-white shadow-2xl z-[100] border rounded-2xl flex flex-col animate-in slide-in-from-right overflow-hidden">
             <div className="p-4 border-b flex justify-between items-center bg-blue-600 text-white">
-                <h3 className="font-bold">Cấu hình hiển thị</h3>
-                <button onClick={() => setShowSettings(false)}>✕</button>
+                <h3 className="font-bold uppercase text-xs tracking-widest">Cấu hình hiển thị</h3>
+                <button onClick={() => setShowSettings(false)} className="hover:rotate-90 transition duration-200 text-xl">✕</button>
             </div>
             
-            <div className="p-4 border-b space-y-3">
-                <label className="text-[10px] font-bold text-gray-400 uppercase">Cố định cột (Freeze)</label>
-                <div className="flex items-center gap-2">
-                    <input type="number" min="0" max="5" value={frozenCount} onChange={(e) => saveViewSettings(columns, parseInt(e.target.value) || 0)} className="w-16 p-1 border rounded text-center text-sm" />
-                    <span className="text-[11px] text-gray-500 italic">Số cột ghim trái</span>
+            <div className="p-5 border-b space-y-3 bg-gray-50">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ghim cột đầu tiên (Freeze)</label>
+                <div className="flex items-center gap-3">
+                    <input type="number" min="0" max="5" value={frozenCount} onChange={(e) => saveViewSettings(columns, parseInt(e.target.value) || 0)} className="w-20 p-2 border rounded-xl text-center font-bold text-blue-600 shadow-inner" />
+                    <span className="text-[11px] text-gray-500 italic">Cố định n cột bên trái</span>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Thứ tự & Ẩn hiện cột</label>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-white scrollbar-thin">
+                <label className="text-[10px] font-black text-gray-400 uppercase block mb-3 ml-1 tracking-widest">Danh sách & Thứ tự cột</label>
                 {columns.map((col, idx) => (
-                    <div key={col.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 border rounded text-[11px] bg-white">
-                        <input type="checkbox" checked={col.visible} onChange={() => toggleColumn(col.id)} />
-                        <span className="flex-1 font-medium truncate">{col.label}</span>
-                        <input type="number" value={col.width} onChange={(e) => updateWidth(col.id, parseInt(e.target.value) || 50)} className="w-12 p-0.5 border text-center text-[10px] rounded" />
-                        <div className="flex flex-col gap-0.5">
-                            <button onClick={() => moveColumn(idx, 'up')} className="bg-gray-100 px-1 rounded hover:bg-gray-200">▲</button>
-                            <button onClick={() => moveColumn(idx, 'down')} className="bg-gray-100 px-1 rounded hover:bg-gray-200">▼</button>
+                    <div key={col.id} className={`flex items-center gap-3 p-2.5 border rounded-xl text-[11px] transition ${col.visible ? 'border-blue-100 bg-blue-50/30' : 'opacity-50 grayscale bg-gray-50'}`}>
+                        <input type="checkbox" checked={col.visible} onChange={() => toggleColumn(col.id)} className="w-4 h-4 rounded text-blue-600" />
+                        <span className="flex-1 font-bold text-gray-700 truncate">{col.label}</span>
+                        <input type="number" value={col.width} onChange={(e) => updateWidth(col.id, parseInt(e.target.value) || 50)} className="w-12 p-1 border rounded text-[10px] text-center bg-white" />
+                        <div className="flex flex-col gap-1">
+                            <button onClick={() => moveColumn(idx, 'up')} className="bg-white border shadow-sm px-1.5 rounded-md hover:text-blue-600">▲</button>
+                            <button onClick={() => moveColumn(idx, 'down')} className="bg-white border shadow-sm px-1.5 rounded-md hover:text-blue-600">▼</button>
                         </div>
                     </div>
                 ))}
@@ -414,30 +445,32 @@ function CandidatesContent() {
   );
 }
 
-// Hàm render ô dữ liệu
+// --- HÀM RENDER Ô DỮ LIỆU ---
 function renderCell(colId: string, cand: any) {
     switch (colId) {
         case 'candidate_name': return (
             <div>
                 <div className="font-bold text-blue-900 leading-tight">{cand.candidate_name}</div>
-                <div className="text-[9px] text-gray-400 font-mono italic">{cand.candidate_id}</div>
+                <div className="text-[9px] text-gray-400 font-mono italic tracking-tighter">{cand.candidate_id}</div>
             </div>
         );
         case 'status': return <StatusBadge cand={cand} />;
-        case 'interview_date': return <span className="text-blue-600 font-semibold">{cand.interview_date || '—'}</span>;
-        case 'onboard_date': return <span className="text-emerald-600 font-semibold">{cand.onboard_date || '—'}</span>;
-        default: return cand[colId] || <span className="text-gray-300">—</span>;
+        case 'interview_date': return <span className="text-blue-600 font-bold">{cand.interview_date || '—'}</span>;
+        case 'onboard_date': return <span className="text-emerald-600 font-bold">{cand.onboard_date || '—'}</span>;
+        case 'phone': return <span className="font-mono font-medium">{cand.phone}</span>;
+        default: return <span className="text-gray-600">{cand[colId] || <span className="text-gray-200">—</span>}</span>;
     }
 }
 
 // Badge Status
 function StatusBadge({ cand }: { cand: any }) {
-    if (cand.onboard) return <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[9px] font-bold">ONBOARD</span>;
-    if (cand.unqualified) return <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[9px] font-bold">LOẠI</span>;
-    if (cand.pass_interview) return <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[9px] font-bold">ĐỖ PV</span>;
-    if (cand.show_up_for_interview) return <span className="bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded text-[9px] font-bold">THAM GIA PV</span>;
-    if (cand.interested) return <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[9px] font-bold">QUAN TÂM</span>;
-    return <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[9px]">MỚI</span>;
+    const common = "px-2 py-0.5 rounded-md text-[9px] font-black tracking-tighter shadow-sm inline-block";
+    if (cand.onboard) return <span className={`${common} bg-green-600 text-white`}>ONBOARD</span>;
+    if (cand.unqualified) return <span className={`${common} bg-red-500 text-white`}>LOẠI</span>;
+    if (cand.pass_interview) return <span className={`${common} bg-blue-600 text-white`}>PASS PV</span>;
+    if (cand.show_up_for_interview) return <span className={`${common} bg-cyan-500 text-white`}>ĐI PV</span>;
+    if (cand.interested) return <span className={`${common} bg-amber-500 text-white`}>QUAN TÂM</span>;
+    return <span className={`${common} bg-gray-200 text-gray-500`}>MỚI</span>;
 }
 
 export default function CandidatesList() {
