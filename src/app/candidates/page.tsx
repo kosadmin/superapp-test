@@ -51,12 +51,19 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'assigned_user_name', label: 'Người phụ trách', width: 150, visible: true, sortable: true },
   { id: 'candidate_id', label: 'Mã UV', width: 120, visible: false, sortable: true },
   { id: 'id_card_number', label: 'CCCD', width: 130, visible: false, sortable: false }, // Thường không sort CCCD
+  { id: 'id_card_issued_date', label: 'Ngày cấp CCCD', width: 130, visible: false, sortable: true },
+{ id: 'id_card_issued_place', label: 'Nơi cấp CCCD', width: 150, visible: false, sortable: true },
+  { id: 'attachment_url', label: 'File đính kèm', width: 120, visible: false, sortable: false },
   { id: 'date_of_birth', label: 'Ngày sinh', width: 100, visible: false, sortable: true },
   { id: 'birth_year', label: 'Năm sinh', width: 80, visible: false, sortable: true },
   { id: 'address_street', label: 'Số nhà/Tên đường', width: 150, visible: false, sortable: false },
   { id: 'address_ward', label: 'Phường/Xã', width: 120, visible: false, sortable: false },
   { id: 'address_city', label: 'Tỉnh/Thành', width: 120, visible: false, sortable: true },
   { id: 'address_full', label: 'Địa chỉ đầy đủ', width: 250, visible: false, sortable: false },
+  { id: 'email', label: 'Email', width: 180, visible: false, sortable: true },
+{ id: 'education_level', label: 'Học vấn', width: 150, visible: false, sortable: true },
+  { id: 'experience_summary', label: 'Tóm tắt kinh nghiệm', width: 250, visible: false, sortable: false },
+{ id: 'job_wish', label: 'Nguyện vọng', width: 200, visible: false, sortable: false },
   { id: 'project_id', label: 'Mã dự án', width: 120, visible: false, sortable: true },
   { id: 'project_type', label: 'Loại dự án', width: 120, visible: false, sortable: true },
   { id: 'department', label: 'Phòng ban', width: 120, visible: false, sortable: true },
@@ -547,15 +554,70 @@ function CandidatesContent() {
                   {/* 4. PERSONAL INFO */}
                   <section>
                     <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-purple-500 pl-3 text-xs uppercase tracking-wider">Thông tin cá nhân</h3>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
-                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
-                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
-                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label><input type="number" className="w-full p-2.5 border rounded-xl mt-1" value={formData.birth_year || ''} onChange={e => handleChange('birth_year', e.target.value)} /></div>
-                      <div className="col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Địa chỉ đầy đủ</label><textarea className="w-full p-3 border rounded-xl mt-1 h-20 outline-none focus:ring-2 focus:ring-blue-500" value={formData.address_full || ''} onChange={e => handleChange('address_full', e.target.value)} /></div>
-                    </div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
+  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Email</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
+  
+  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
+  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày cấp CCCD</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formatDateToISO(formData.id_card_issued_date)} onChange={e => handleChange('id_card_issued_date', formatISOToDDMMYYYY(e.target.value))} /></div>
+  
+  <div className="col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nơi cấp CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_place || ''} onChange={e => handleChange('id_card_issued_place', e.target.value)} /></div>
+  
+  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
+  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label><input type="number" className="w-full p-2.5 border rounded-xl mt-1" value={formData.birth_year || ''} onChange={e => handleChange('birth_year', e.target.value)} /></div>
+</div>
                   </section>
 
+                 <section>
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-orange-500 pl-3 text-xs uppercase tracking-wider">Học vấn & Sự nghiệp</h3>
+  <div className="space-y-4">
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Trình độ học vấn</label>
+      <input className="w-full p-2.5 border rounded-xl mt-1" value={formData.education_level || ''} onChange={e => handleChange('education_level', e.target.value)} />
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tóm tắt kinh nghiệm</label>
+      <textarea className="w-full p-3 border rounded-xl mt-1 h-24 outline-none focus:ring-2 focus:ring-blue-500" value={formData.experience_summary || ''} onChange={e => handleChange('experience_summary', e.target.value)} />
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nguyện vọng công việc</label>
+      <textarea className="w-full p-3 border rounded-xl mt-1 h-20 outline-none focus:ring-2 focus:ring-blue-500 text-blue-800" value={formData.job_wish || ''} onChange={e => handleChange('job_wish', e.target.value)} />
+    </div>
+  </div>
+</section>
+                 <section className="bg-blue-50/30 p-4 rounded-xl border border-blue-100">
+  <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-blue-400 pl-3 text-xs uppercase tracking-wider">Tài liệu đính kèm</h3>
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase">Mặt trước CCCD</label>
+        {formData.id_card_front_img ? (
+          <img src={formData.id_card_front_img} alt="CCCD Trước" className="mt-2 w-full h-32 object-cover rounded-lg border shadow-sm" />
+        ) : (
+          <div className="mt-2 w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs italic">Chưa có ảnh</div>
+        )}
+      </div>
+      <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase">Mặt sau CCCD</label>
+        {formData.id_card_back_img ? (
+          <img src={formData.id_card_back_img} alt="CCCD Sau" className="mt-2 w-full h-32 object-cover rounded-lg border shadow-sm" />
+        ) : (
+          <div className="mt-2 w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs italic">Chưa có ảnh</div>
+        )}
+      </div>
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase">CV / File đính kèm</label>
+      {formData.attachment_url ? (
+        <a href={formData.attachment_url} target="_blank" className="mt-2 flex items-center gap-2 p-3 bg-white border border-blue-200 rounded-xl text-blue-600 hover:bg-blue-50 transition font-bold">
+          📄 XEM FILE ĐÍNH KÈM
+        </a>
+      ) : (
+        <div className="mt-2 p-3 bg-gray-50 border border-dashed rounded-xl text-gray-400 text-center text-xs">Không có file</div>
+      )}
+    </div>
+  </div>
+</section>
                   {/* 5. SYSTEM INFO */}
                   <section className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                       <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-gray-400 pl-3 text-xs uppercase tracking-wider">Thông tin hệ thống</h3>
