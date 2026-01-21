@@ -5,26 +5,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext'; // Hoặc đường dẫn hook Auth của bạn
 import ProtectedRoute from '@/components/ProtectedRoute'; 
-*/
 
-const useRouter = () => ({
-  push: (path: string) => console.log(`[Router] Navigating to: ${path}`),
-  back: () => console.log('[Router] Going back')
-});
 
-// Giả lập useAuth trả về thông tin user đang đăng nhập
-const useAuth = () => {
-  return {
-    user: {
-      id: 'USER_12345',      // ID giả lập
-      group: 'admin',        // Group giả lập
-      name: 'Admin User'
-    }
-  };
-};
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-// -----------------------------------------------------
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
