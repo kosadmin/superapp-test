@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { 
   UserPlus, 
@@ -52,8 +54,21 @@ export default function App() {
 
       if (response.ok) {
         setStatus('success');
-        // Reset form sau khi gửi thành công nếu muốn
-        // setForm({...initialState});
+        // Reset form sau khi gửi thành công
+        setForm({
+          candidate_name: '',
+          phone: '',
+          id_card_number: '',
+          date_of_birth: '',
+          address_street: '',
+          address_ward: '',
+          address_city: '',
+          project: '',
+          position: '',
+          company: '',
+          data_source_type: '',
+          assigned_user: '',
+        });
       } else {
         throw new Error('Gửi dữ liệu thất bại');
       }
@@ -74,7 +89,11 @@ export default function App() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <button className="flex items-center text-sm text-gray-500 hover:text-blue-600 transition-colors mb-2">
+            <button 
+              type="button"
+              onClick={() => window.history.back()}
+              className="flex items-center text-sm text-gray-500 hover:text-blue-600 transition-colors mb-2"
+            >
               <ArrowLeft className="w-4 h-4 mr-1" /> Quay lại danh sách
             </button>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -189,6 +208,7 @@ export default function App() {
           <div className="flex items-center justify-end gap-4 pt-4 border-t">
             <button
               type="button"
+              onClick={() => window.history.back()}
               className="px-6 py-2.5 rounded-xl text-gray-600 font-semibold hover:bg-gray-100 transition-all active:scale-95"
             >
               Hủy bỏ
