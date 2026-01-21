@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute'; // Import ProtectedRoute
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
 interface FormData {
   candidate_name: string;
