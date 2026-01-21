@@ -1,8 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/context/AuthContext'; // Hoặc đường dẫn hook Auth của bạn
+import ProtectedRoute from '@/components/ProtectedRoute'; 
+*/
+
+const useRouter = () => ({
+  push: (path: string) => console.log(`[Router] Navigating to: ${path}`),
+  back: () => console.log('[Router] Going back')
+});
+
+// Giả lập useAuth trả về thông tin user đang đăng nhập
+const useAuth = () => {
+  return {
+    user: {
+      id: 'USER_12345',      // ID giả lập
+      group: 'admin',        // Group giả lập
+      name: 'Admin User'
+    }
+  };
+};
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+// -----------------------------------------------------
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
@@ -21,6 +43,10 @@ const Icons = {
 
 export default function NewCandidate() {
   const router = useRouter();
+  
+  // SỬ DỤNG HOOK AUTH ĐỂ LẤY THÔNG TIN USER
+  const { user } = useAuth(); 
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -65,24 +91,27 @@ export default function NewCandidate() {
       ].filter(Boolean);
       const addressFull = addressParts.join(', ');
 
-      // 2. LẤY THÔNG TIN USER TỪ LOCALSTORAGE (Logic Mới)
-      // Lấy chuỗi JSON từ localStorage, parse ra object, nếu không có thì trả về object rỗng
-      const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
-      const userId = storedUser.id || '';     // Lấy id, nếu không có thì để rỗng
-      const userGroup = storedUser.group || ''; // Lấy group, nếu không có thì để rỗng
+      // 2. LẤY THÔNG TIN USER TỪ HOOK AUTH
+      // Đảm bảo user tồn tại trước khi lấy
+      const userId = user?.id || '';
+      const userGroup = user?.group || '';
+
+      if (!userId) {
+        console.warn('Cảnh báo: Không tìm thấy User ID. Vui lòng kiểm tra trạng thái đăng nhập.');
+      }
 
       // 3. TẠO PAYLOAD GỬI ĐI
       const payload = {
-        action: 'create',      // Hard-coded theo yêu cầu
-        user_id: userId,       // Thêm user_id
-        user_group: userGroup, // Thêm user_group
+        action: 'create',      
+        user_id: userId,       
+        user_group: userGroup, 
         ...formData,
         birth_year: birthYear,
         address_full: addressFull,
-        contacted: true // Mặc định đã liên hệ khi tạo mới (hoặc tuỳ chỉnh logic của bạn)
+        contacted: true 
       };
 
-      console.log('Sending payload:', payload); // Log để kiểm tra
+      console.log('Sending payload:', payload); 
 
       // 4. GỬI REQUEST
       const res = await fetch(N8N_URL, {
@@ -95,8 +124,6 @@ export default function NewCandidate() {
       
       const data = await res.json();
       
-      // Giả sử API trả về { id: "..." } của ứng viên mới tạo
-      // Chuyển hướng về trang danh sách hoặc chi tiết
       if (data.id) {
           router.push(`/candidates/${data.id}`); 
       } else {
