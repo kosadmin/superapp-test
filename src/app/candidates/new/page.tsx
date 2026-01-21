@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+
+
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
@@ -86,6 +89,8 @@ export default function NewCandidate() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Kiểm tra thông tin người thực hiện trước khi gửi
     if (!user_id || !user_group) {
       alert("Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại.");
       return;
@@ -99,17 +104,18 @@ export default function NewCandidate() {
       .join(' - ');
 
     try {
+      // Payload bao gồm action, thông tin form, thông tin user và các trường tính toán
       const payload = {
         action: 'create',
         ...form,
         birth_year: birthYear,
         address_full: addressFull,
-        user_id,        // Gửi thông tin user_id
-        user_group,     // Gửi thông tin user_group
+        user_id,        // Gửi thông tin user_id người tạo
+        user_group,     // Gửi thông tin user_group người tạo
         contacted: true,
       };
 
-      console.log("Gửi Payload:", payload);
+      console.log("Gửi Payload tạo mới:", payload);
 
       const res = await fetch(N8N_URL, {
         method: 'POST',
@@ -126,6 +132,7 @@ export default function NewCandidate() {
         alert('Lỗi: ' + (data.message || 'Không thể tạo ứng viên'));
       }
     } catch (err) {
+      console.error("Lỗi khi gửi form:", err);
       alert('Lỗi kết nối server');
     } finally {
       setLoading(false);
@@ -136,7 +143,7 @@ export default function NewCandidate() {
   const labelClass = "block text-sm font-semibold text-gray-700 mb-1";
   const uploadBoxClass = "border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer text-gray-500 min-h-[120px]";
 
-  if (authLoading) return <div className="h-screen flex items-center justify-center">Đang kiểm tra quyền truy cập...</div>;
+  if (authLoading) return <div className="h-screen flex items-center justify-center font-sans text-gray-500">Đang kiểm tra quyền truy cập...</div>;
 
   return (
     <ProtectedRoute>
