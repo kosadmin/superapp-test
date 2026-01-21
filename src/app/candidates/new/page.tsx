@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext'; // Hoặc đường dẫn hook Auth của bạn
+import { useAuth } from '@/contexts/AuthContext'; // Hoặc đường dẫn hook Auth của bạn
 import ProtectedRoute from '@/components/ProtectedRoute'; 
 
 
