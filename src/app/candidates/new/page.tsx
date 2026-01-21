@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
-// SVG Icons nội bộ
 const Icons = {
   UserPlus: () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>
@@ -28,59 +29,43 @@ const Icons = {
 interface FormData {
   candidate_name: string;
   phone: string;
-  gender: string;
-  email: string;
   id_card_number: string;
-  id_card_issued_date: string;
-  id_card_issued_place: string;
   date_of_birth: string;
   address_street: string;
   address_ward: string;
   address_city: string;
-  education_level: string;
-  experience_summary: string;
-  job_wish: string;
   project: string;
   position: string;
   company: string;
-  data_source_dept: string;
-  data_source_type_group: string;
   data_source_type: string;
-  assigned_user: string;
+  assigned_user?: string;
 }
 
-export default function NewCandidate() {
+export default function App() {
+  const router = useRouter();
+  const auth = useAuth();
+  
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState<FormData>({
     candidate_name: '',
     phone: '',
-    gender: '',
-    email: '',
     id_card_number: '',
-    id_card_issued_date: '',
-    id_card_issued_place: '',
     date_of_birth: '',
     address_street: '',
     address_ward: '',
     address_city: '',
-    education_level: '',
-    experience_summary: '',
-    job_wish: '',
     project: '',
     position: '',
     company: '',
-    data_source_dept: '',
-    data_source_type_group: '',
     data_source_type: '',
     assigned_user: '',
   });
 
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const birthYear = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
-  const addressFull = [form.address_street, form.address_ward, form.address_city]
-    .filter(Boolean)
-    .join(' - ');
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleChange = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -88,20 +73,30 @@ export default function NewCandidate() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const user_id = auth?.user_id;
+    const user_group = auth?.user_group;
+
+    if (!user_id || !user_group) {
+      alert("Lỗi: Không tìm thấy thông tin định danh người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
+
     setLoading(true);
 
-    try {
-      // Lấy thông tin User từ localStorage (giả định lưu khi login)
-      const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : '';
-      const storedUserGroup = typeof window !== 'undefined' ? localStorage.getItem('user_group') : '';
+    const birthYear = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
+    const addressFull = [form.address_street, form.address_ward, form.address_city]
+      .filter(Boolean)
+      .join(' - ');
 
+    try {
       const payload = {
         action: 'create',
         ...form,
         birth_year: birthYear,
         address_full: addressFull,
-        user_id: storedUserId || 'unknown',
-        user_group: storedUserGroup || 'unknown',
+        user_id,
+        user_group,
         contacted: true,
       };
 
@@ -111,63 +106,82 @@ export default function NewCandidate() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-
       const data = await res.json();
 
-      if (data.success && data.id) {
+      if (data.success) {
         alert('Tạo ứng viên thành công!');
-        router.push(`/candidates/${data.id}`);
+        router.push('/candidates');
       } else {
         alert('Lỗi: ' + (data.message || 'Không thể tạo ứng viên'));
       }
     } catch (err) {
-      console.error("Submit error:", err);
-      alert('Lỗi kết nối server hoặc lỗi CORS. Hãy đảm bảo n8n Webhook đã được kích hoạt.');
+      console.error(err);
+      alert('Lỗi kết nối server n8n');
     } finally {
       setLoading(false);
     }
   };
 
   const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white text-gray-900";
-  const readOnlyClass = "w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed";
-  const labelClass = "block text-sm font-semibold text-gray-700 mb-1";
-  const uploadBoxClass = "border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer text-gray-500 min-h-[120px]";
+  const labelClass = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1";
+  const cardClass = "bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6";
+  const uploadBoxClass = "border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer text-gray-400 min-h-[100px]";
+
+  if (!mounted || auth?.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 text-blue-600"><Icons.Loader2 /></div>
+          <span className="text-sm text-gray-400 font-medium">Đang tải hệ thống...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-            <div className="w-8 h-8 text-blue-600"><Icons.UserPlus /></div>
-            Tạo Mới Ứng Viên
-          </h1>
+          
+          <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <h1 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+              <div className="p-2 bg-blue-600 text-white rounded-lg shadow-blue-200 shadow-lg">
+                <Icons.UserPlus />
+              </div>
+              TẠO MỚI ỨNG VIÊN
+            </h1>
+            <div className="bg-white px-4 py-2 rounded-xl border border-gray-200 flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none">Người thực hiện</p>
+                <p className="text-sm font-black text-gray-700">{auth?.user_id}</p>
+              </div>
+              <div className="w-[1px] h-6 bg-gray-200 mx-1"></div>
+              <span className="px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-black rounded uppercase">
+                {auth?.user_group}
+              </span>
+            </div>
+          </header>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit}>
             
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-blue-700 mb-6 border-b pb-2">Thông tin cơ bản</h2>
+            {/* THÔNG TIN CÁ NHÂN */}
+            <div className={cardClass}>
+              <h2 className="text-sm font-black text-blue-600 mb-6 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
+                THÔNG TIN CÁ NHÂN
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className={labelClass}>Họ và tên *</label>
-                  <input required type="text" value={form.candidate_name} onChange={(e) => handleChange('candidate_name', e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Giới tính</label>
-                  <select value={form.gender} onChange={(e) => handleChange('gender', e.target.value)} className={inputClass}>
-                    <option value="">Chọn giới tính</option>
-                    <option value="Nam">Nam</option>
-                    <option value="Nữ">Nữ</option>
-                    <option value="Khác">Khác</option>
-                  </select>
+                <div className="md:col-span-2">
+                  <label className={labelClass}>Họ và tên ứng viên *</label>
+                  <input required type="text" value={form.candidate_name} onChange={(e) => handleChange('candidate_name', e.target.value)} placeholder="VD: NGUYỄN VĂN A" className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Số điện thoại *</label>
-                  <input required type="text" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} className={inputClass} />
+                  <input required type="text" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="09xxxxxxxx" className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Email</label>
-                  <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} className={inputClass} />
+                  <label className={labelClass}>Số CCCD</label>
+                  <input type="text" value={form.id_card_number} onChange={(e) => handleChange('id_card_number', e.target.value)} placeholder="Nhập số thẻ..." className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Ngày sinh</label>
@@ -175,67 +189,39 @@ export default function NewCandidate() {
                 </div>
                 <div>
                   <label className={labelClass}>Năm sinh (Tự động)</label>
-                  <input type="text" value={birthYear} readOnly className={readOnlyClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Số CCCD</label>
-                  <input type="text" value={form.id_card_number} onChange={(e) => handleChange('id_card_number', e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Ngày cấp CCCD</label>
-                  <input type="date" value={form.id_card_issued_date} onChange={(e) => handleChange('id_card_issued_date', e.target.value)} className={inputClass} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className={labelClass}>Nơi cấp CCCD</label>
-                  <input type="text" value={form.id_card_issued_place} onChange={(e) => handleChange('id_card_issued_place', e.target.value)} className={inputClass} />
+                  <input readOnly type="text" value={form.date_of_birth ? form.date_of_birth.split('-')[0] : ''} className="w-full px-4 py-2 border border-gray-100 rounded-lg bg-gray-50 text-gray-400 outline-none" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-emerald-700 mb-6 border-b pb-2">Địa chỉ</h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className={labelClass}>Số nhà/Tên đường</label>
-                    <input type="text" value={form.address_street} onChange={(e) => handleChange('address_street', e.target.value)} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Phường/Xã</label>
-                    <input type="text" value={form.address_ward} onChange={(e) => handleChange('address_ward', e.target.value)} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Tỉnh/Thành</label>
-                    <input type="text" value={form.address_city} onChange={(e) => handleChange('address_city', e.target.value)} className={inputClass} />
-                  </div>
+            {/* ĐỊA CHỈ */}
+            <div className={cardClass}>
+              <h2 className="text-sm font-black text-emerald-600 mb-6 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-emerald-600 rounded-full"></div>
+                ĐỊA CHỈ THƯỜNG TRÚ
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Số nhà / Đường</label>
+                  <input type="text" value={form.address_street} onChange={(e) => handleChange('address_street', e.target.value)} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Địa chỉ đầy đủ (Tự động)</label>
-                  <input type="text" value={addressFull} readOnly className={readOnlyClass} />
+                  <label className={labelClass}>Phường / Xã</label>
+                  <input type="text" value={form.address_ward} onChange={(e) => handleChange('address_ward', e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Thành phố / Tỉnh</label>
+                  <input type="text" value={form.address_city} onChange={(e) => handleChange('address_city', e.target.value)} className={inputClass} />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-orange-700 mb-6 border-b pb-2">Học vấn & Sự nghiệp</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className={labelClass}>Trình độ học vấn</label>
-                  <input type="text" value={form.education_level} onChange={(e) => handleChange('education_level', e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Tóm tắt kinh nghiệm</label>
-                  <textarea rows={3} value={form.experience_summary} onChange={(e) => handleChange('experience_summary', e.target.value)} className={inputClass}></textarea>
-                </div>
-                <div>
-                  <label className={labelClass}>Nguyện vọng công việc</label>
-                  <textarea rows={2} value={form.job_wish} onChange={(e) => handleChange('job_wish', e.target.value)} className={inputClass}></textarea>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-purple-700 mb-6 border-b pb-2">Thông tin tuyển dụng</h2>
+            {/* CÔNG VIỆC */}
+            <div className={cardClass}>
+              <h2 className="text-sm font-black text-orange-600 mb-6 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-orange-600 rounded-full"></div>
+                VỊ TRÍ ỨNG TUYỂN
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Dự án</label>
@@ -252,78 +238,86 @@ export default function NewCandidate() {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-pink-700 mb-6 border-b pb-2">Thông tin tạo nguồn & Phân công công việc</h2>
+            {/* NGUỒN DỮ LIỆU */}
+            <div className={cardClass}>
+              <h2 className="text-sm font-black text-purple-600 mb-6 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-purple-600 rounded-full"></div>
+                PHÂN LOẠI NGUỒN
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>Bộ phận tạo nguồn</label>
-                  <input type="text" value={form.data_source_dept} onChange={(e) => handleChange('data_source_dept', e.target.value)} className={inputClass} />
+                  <label className={labelClass}>Loại nguồn dữ liệu</label>
+                  <input type="text" value={form.data_source_type} onChange={(e) => handleChange('data_source_type', e.target.value)} placeholder="VD: Facebook, TikTok..." className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Nhóm nguồn</label>
-                  <input type="text" value={form.data_source_type_group} onChange={(e) => handleChange('data_source_type_group', e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Loại nguồn</label>
-                  <input type="text" value={form.data_source_type} onChange={(e) => handleChange('data_source_type', e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>ID người phụ trách</label>
-                  <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass} />
+                  <label className={labelClass}>Phân công cho (ID User)</label>
+                  <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} placeholder="Nhập mã nhân viên..." className={inputClass} />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-700 mb-6 border-b pb-2">Hồ sơ đính kèm</h2>
+            {/* HỒ SƠ ĐÍNH KÈM */}
+            <div className={cardClass}>
+              <h2 className="text-sm font-black text-gray-700 mb-6 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-gray-700 rounded-full"></div>
+                HỒ SƠ ĐÍNH KÈM (DỰ KIẾN)
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>Ảnh CCCD mặt trước</label>
+                  <label className={labelClass}>Ảnh CCCD Mặt trước</label>
                   <div className={uploadBoxClass}>
                     <Icons.Upload />
-                    <span className="mt-2 text-xs">Tải lên ảnh mặt trước</span>
+                    <span className="mt-2 text-[10px] font-black uppercase text-gray-300 tracking-tighter">Chưa thêm logic upload</span>
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}>Ảnh CCCD mặt sau</label>
+                  <label className={labelClass}>Ảnh CCCD Mặt sau</label>
                   <div className={uploadBoxClass}>
                     <Icons.Upload />
-                    <span className="mt-2 text-xs">Tải lên ảnh mặt sau</span>
+                    <span className="mt-2 text-[10px] font-black uppercase text-gray-300 tracking-tighter">Chưa thêm logic upload</span>
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <label className={labelClass}>File đính kèm khác</label>
+                  <label className={labelClass}>Tài liệu khác (CV, Bằng cấp...)</label>
                   <div className={`${uploadBoxClass} min-h-[80px]`}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-gray-300">
                       <Icons.FileText />
-                      <span className="text-sm">Chọn file</span>
+                      <span className="text-[10px] font-black uppercase tracking-tighter">Click để chọn file đính kèm</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-4 pt-6 pb-12">
+            {/* NÚT BẤM */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 py-10">
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-4 px-12 rounded-xl text-lg transition shadow-lg flex items-center gap-2 min-w-[200px] justify-center"
+                className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-black py-4 px-16 rounded-2xl shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-3 active:scale-95"
               >
                 {loading ? (
-                  <><div className="w-5 h-5"><Icons.Loader2 /></div>Đang tạo...</>
+                  <>
+                    <div className="w-5 h-5"><Icons.Loader2 /></div>
+                    ĐANG XỬ LÝ...
+                  </>
                 ) : (
-                  <><div className="w-5 h-5"><Icons.Save /></div>TẠO ỨNG VIÊN</>
+                  <>
+                    <Icons.Save />
+                    TẠO ỨNG VIÊN MỚI
+                  </>
                 )}
               </button>
-
+              
               <button
                 type="button"
                 onClick={() => router.push('/candidates')}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-12 rounded-xl text-lg transition"
+                className="w-full md:w-auto bg-white border border-gray-200 text-gray-500 font-bold py-4 px-10 rounded-2xl hover:bg-gray-50 transition-all"
               >
-                Hủy
+                Hủy bỏ
               </button>
             </div>
+
           </form>
         </div>
       </div>
