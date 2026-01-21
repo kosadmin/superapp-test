@@ -1,279 +1,218 @@
-'use client';
-
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState } from 'react';
+import { 
+  UserPlus, 
+  Phone, 
+  IdCard, 
+  MapPin, 
+  Briefcase, 
+  Calendar, 
+  ArrowLeft,
+  Save,
+  Loader2,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 
-// --- UTILS ---
-const formatISOToDDMMYYYY = (isoString: string): string => {
-  if (!isoString) return '';
-  const parts = isoString.split('-');
-  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  return '';
-};
-
-interface FormData {
-  candidate_name: string;
-  phone: string;
-  email: string;
-  id_card_number: string;
-  id_card_issued_date: string;
-  id_card_issued_place: string;
-  date_of_birth: string;
-  birth_year: string;
-  address_full: string;
-  
-  project: string;
-  position: string;
-  company: string;
-  data_source_type: string;
-  
-  education_level: string;
-  experience_summary: string;
-  job_wish: string;
-  
-  id_card_front_img: string;
-  id_card_back_img: string;
-  attachment_url: string;
-}
-
-export default function NewCandidate() {
-  const { user_id, user_group } = useAuth();
-  const router = useRouter();
+export default function App() {
   const [loading, setLoading] = useState(false);
-
-  const [form, setForm] = useState<FormData>({
+  const [status, setStatus] = useState(null); // 'success' | 'error' | null
+  const [form, setForm] = useState({
     candidate_name: '',
     phone: '',
-    email: '',
     id_card_number: '',
-    id_card_issued_date: '',
-    id_card_issued_place: '',
     date_of_birth: '',
-    birth_year: '',
-    address_full: '',
+    address_street: '',
+    address_ward: '',
+    address_city: '',
     project: '',
     position: '',
     company: '',
     data_source_type: '',
-    education_level: '',
-    experience_summary: '',
-    job_wish: '',
-    id_card_front_img: '',
-    id_card_back_img: '',
-    attachment_url: '',
+    assigned_user: '',
   });
 
-  const handleChange = (field: keyof FormData, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    // Chuẩn bị payload gửi đi
-    const payload = {
-      action: 'create',
-      user_id,
-      user_group,
-      ...form,
-      // Convert các trường ngày tháng sang định dạng DD/MM/YYYY cho Sheet
-      id_card_issued_date: formatISOToDDMMYYYY(form.id_card_issued_date),
-      // Mặc định các trạng thái phễu là false khi tạo mới
-      interested: false,
-      scheduled_for_interview: false,
-      show_up_for_interview: false,
-      pass_interview: false,
-      onboard: false,
-      reject_offer: false,
-      unqualified: false,
-    };
+    setStatus(null);
 
     try {
-      const res = await fetch(N8N_URL, {
+      const response = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(form),
       });
 
-      const data = await res.json();
-
-      if (data.success) {
-        alert('Tạo ứng viên thành công!');
-        router.push('/candidates'); // Quay lại danh sách
+      if (response.ok) {
+        setStatus('success');
+        // Reset form sau khi gửi thành công nếu muốn
+        // setForm({...initialState});
       } else {
-        alert('Lỗi: ' + (data.message || 'Không thể tạo ứng viên'));
+        throw new Error('Gửi dữ liệu thất bại');
       }
-    } catch (err) {
-      alert('Lỗi kết nối server');
+    } catch (error) {
+      console.error(error);
+      setStatus('error');
     } finally {
       setLoading(false);
     }
   };
 
+  const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 bg-white text-gray-900 placeholder:text-gray-400";
+  const labelClass = "block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-2";
+
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-black text-blue-800 uppercase tracking-tight">Thêm Ứng Viên Mới</h1>
-              <p className="text-gray-500 text-sm">Điền thông tin chi tiết để khởi tạo hồ sơ trên hệ thống.</p>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <button className="flex items-center text-sm text-gray-500 hover:text-blue-600 transition-colors mb-2">
+              <ArrowLeft className="w-4 h-4 mr-1" /> Quay lại danh sách
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <UserPlus className="w-8 h-8 text-blue-600" />
+              Tạo Mới Ứng Viên
+            </h1>
+            <p className="text-gray-500 mt-1">Nhập thông tin chi tiết của ứng viên mới vào hệ thống.</p>
+          </div>
+        </div>
+
+        {/* Status Messages */}
+        {status === 'success' && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+            <CheckCircle2 className="w-5 h-5" />
+            <p className="font-medium">Ứng viên đã được tạo thành công!</p>
+          </div>
+        )}
+        {status === 'error' && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-3">
+            <AlertCircle className="w-5 h-5" />
+            <p className="font-medium">Có lỗi xảy ra. Vui lòng thử lại sau.</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Section: Thông tin cá nhân */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-3">
+              <span className="bg-blue-100 text-blue-600 p-1 rounded-md"><UserPlus className="w-4 h-4" /></span>
+              Thông tin cơ bản
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelClass}><UserPlus className="w-4 h-4 text-gray-400" /> Họ và tên *</label>
+                <input required type="text" name="candidate_name" value={form.candidate_name} onChange={handleChange} placeholder="VD: Nguyễn Văn A" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}><Phone className="w-4 h-4 text-gray-400" /> Số điện thoại *</label>
+                <input required type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="09xxxxxxxx" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}><IdCard className="w-4 h-4 text-gray-400" /> Số CCCD</label>
+                <input type="text" name="id_card_number" value={form.id_card_number} onChange={handleChange} placeholder="Nhập số CCCD" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}><Calendar className="w-4 h-4 text-gray-400" /> Ngày sinh</label>
+                <input type="date" name="date_of_birth" value={form.date_of_birth} onChange={handleChange} className={inputClass} />
+              </div>
             </div>
-            <Link href="/candidates" className="text-gray-400 hover:text-gray-600 transition p-2">
-               <span className="text-2xl">✕</span>
-            </Link>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* 1. THÔNG TIN CÁ NHÂN */}
-            <div className="bg-white shadow-sm border rounded-2xl p-6">
-              <h3 className="text-blue-600 font-bold mb-6 flex items-center gap-2 border-b pb-3 uppercase text-xs tracking-widest">
-                <span className="bg-blue-100 p-1.5 rounded-lg">👤</span> Thông tin cá nhân
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-1">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Họ và tên *</label>
-                  <input required type="text" value={form.candidate_name} onChange={e => handleChange('candidate_name', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Nguyễn Văn A" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Số điện thoại *</label>
-                  <input required type="text" value={form.phone} onChange={e => handleChange('phone', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="090..." />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Email</label>
-                  <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="example@gmail.com" />
-                </div>
-                
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Số CCCD</label>
-                  <input type="text" value={form.id_card_number} onChange={e => handleChange('id_card_number', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Ngày cấp CCCD</label>
-                  <input type="date" value={form.id_card_issued_date} onChange={e => handleChange('id_card_issued_date', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Nơi cấp</label>
-                  <input type="text" value={form.id_card_issued_place} onChange={e => handleChange('id_card_issued_place', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Cục CS QLHC..." />
-                </div>
-
-                <div>
-                   <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Ngày sinh (Text)</label>
-                   <input type="text" value={form.date_of_birth} onChange={e => handleChange('date_of_birth', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="VD: 01/01/1995" />
-                </div>
-                <div>
-                   <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Năm sinh</label>
-                   <input type="number" value={form.birth_year} onChange={e => handleChange('birth_year', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="1995" />
-                </div>
-                <div className="md:col-span-3">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Địa chỉ đầy đủ</label>
-                  <textarea value={form.address_full} onChange={e => handleChange('address_full', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition h-20" placeholder="Số nhà, tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành..." />
-                </div>
+          {/* Section: Địa chỉ */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-3">
+              <span className="bg-emerald-100 text-emerald-600 p-1 rounded-md"><MapPin className="w-4 h-4" /></span>
+              Địa chỉ liên lạc
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-1">
+                <label className={labelClass}>Đường / Số nhà</label>
+                <input type="text" name="address_street" value={form.address_street} onChange={handleChange} placeholder="Tên đường..." className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Phường / Xã</label>
+                <input type="text" name="address_ward" value={form.address_ward} onChange={handleChange} placeholder="Phường/Xã..." className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Thành phố / Tỉnh</label>
+                <input type="text" name="address_city" value={form.address_city} onChange={handleChange} placeholder="Tỉnh/TP..." className={inputClass} />
               </div>
             </div>
+          </div>
 
-            {/* 2. THÔNG TIN CÔNG VIỆC */}
-            <div className="bg-white shadow-sm border rounded-2xl p-6">
-              <h3 className="text-emerald-600 font-bold mb-6 flex items-center gap-2 border-b pb-3 uppercase text-xs tracking-widest">
-                <span className="bg-emerald-100 p-1.5 rounded-lg">💼</span> Thông tin công việc
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Dự án/Khách hàng</label>
-                  <input type="text" value={form.project} onChange={e => handleChange('project', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Vị trí ứng tuyển</label>
-                  <input type="text" value={form.position} onChange={e => handleChange('position', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Công ty</label>
-                  <input type="text" value={form.company} onChange={e => handleChange('company', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Nguồn dữ liệu</label>
-                  <input type="text" value={form.data_source_type} onChange={e => handleChange('data_source_type', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Tiktok, Facebook,..." />
-                </div>
+          {/* Section: Công việc & Nguồn */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-3">
+              <span className="bg-purple-100 text-purple-600 p-1 rounded-md"><Briefcase className="w-4 h-4" /></span>
+              Thông tin tuyển dụng
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelClass}>Dự án</label>
+                <input type="text" name="project" value={form.project} onChange={handleChange} placeholder="VD: Dự án Samsung" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Vị trí ứng tuyển</label>
+                <input type="text" name="position" value={form.position} onChange={handleChange} placeholder="VD: Công nhân sản xuất" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Công ty</label>
+                <input type="text" name="company" value={form.company} onChange={handleChange} placeholder="Tên công ty" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Nguồn ứng viên</label>
+                <select name="data_source_type" value={form.data_source_type} onChange={handleChange} className={inputClass}>
+                  <option value="">-- Chọn nguồn --</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="TikTok">TikTok</option>
+                  <option value="Zalo">Zalo</option>
+                  <option value="Website">Website</option>
+                  <option value="Referral">Người giới thiệu</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className={labelClass}>Nhân viên phụ trách</label>
+                <input type="text" name="assigned_user" value={form.assigned_user} onChange={handleChange} placeholder="Tên nhân viên phụ trách" className={inputClass} />
               </div>
             </div>
+          </div>
 
-            {/* 3. HỌC VẤN & KINH NGHIỆM */}
-            <div className="bg-white shadow-sm border rounded-2xl p-6">
-              <h3 className="text-purple-600 font-bold mb-6 flex items-center gap-2 border-b pb-3 uppercase text-xs tracking-widest">
-                <span className="bg-purple-100 p-1.5 rounded-lg">🎓</span> Học vấn & Kinh nghiệm
-              </h3>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Trình độ học vấn</label>
-                  <input type="text" value={form.education_level} onChange={e => handleChange('education_level', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="VD: Cao đẳng Điện" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Tóm tắt kinh nghiệm</label>
-                  <textarea value={form.experience_summary} onChange={e => handleChange('experience_summary', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition h-24" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Nguyện vọng</label>
-                  <textarea value={form.job_wish} onChange={e => handleChange('job_wish', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition h-20 text-blue-700 font-medium" />
-                </div>
-              </div>
-            </div>
-
-            {/* 4. TÀI LIỆU ĐÍNH KÈM (URL) */}
-            <div className="bg-white shadow-sm border rounded-2xl p-6">
-              <h3 className="text-orange-600 font-bold mb-6 flex items-center gap-2 border-b pb-3 uppercase text-xs tracking-widest">
-                <span className="bg-orange-100 p-1.5 rounded-lg">📎</span> Link tài liệu & Hình ảnh
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Link Ảnh mặt trước CCCD</label>
-                  <input type="text" value={form.id_card_front_img} onChange={e => handleChange('id_card_front_img', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-xs" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Link Ảnh mặt sau CCCD</label>
-                  <input type="text" value={form.id_card_back_img} onChange={e => handleChange('id_card_back_img', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-xs" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Link File CV / Đính kèm khác</label>
-                  <input type="text" value={form.attachment_url} onChange={e => handleChange('attachment_url', e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-xs text-blue-600 underline" />
-                </div>
-              </div>
-            </div>
-
-            {/* ACTION BUTTONS */}
-            <div className="flex items-center justify-end gap-4 pt-6 pb-12">
-              <button
-                type="button"
-                onClick={() => router.push('/candidates')}
-                className="px-8 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-200 transition"
-              >
-                HỦY BỎ
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-12 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition disabled:opacity-50 flex items-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ĐANG XỬ LÝ...
-                  </>
-                ) : (
-                  'TẠO HỒ SƠ ỨNG VIÊN'
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-4 pt-4 border-t">
+            <button
+              type="button"
+              className="px-6 py-2.5 rounded-xl text-gray-600 font-semibold hover:bg-gray-100 transition-all active:scale-95"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  Lưu ứng viên
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }
