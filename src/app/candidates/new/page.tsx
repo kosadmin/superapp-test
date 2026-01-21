@@ -7,7 +7,6 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 
 
-
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
 const Icons = {
@@ -54,8 +53,13 @@ interface FormData {
 
 export default function NewCandidate() {
   const router = useRouter();
-  // Lấy thông tin user từ context
-  const { user_id, user_group, isLoading: authLoading } = useAuth();
+  const auth = useAuth();
+  const user_id = auth?.user_id;
+  const user_group = auth?.user_group;
+  const authLoading = auth?.isLoading;
+
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState<FormData>({
     candidate_name: '',
@@ -81,7 +85,9 @@ export default function NewCandidate() {
     assigned_user: '',
   });
 
-  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleChange = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -90,7 +96,6 @@ export default function NewCandidate() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Kiểm tra thông tin người thực hiện trước khi gửi
     if (!user_id || !user_group) {
       alert("Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại.");
       return;
@@ -104,18 +109,15 @@ export default function NewCandidate() {
       .join(' - ');
 
     try {
-      // Payload bao gồm action, thông tin form, thông tin user và các trường tính toán
       const payload = {
         action: 'create',
         ...form,
         birth_year: birthYear,
         address_full: addressFull,
-        user_id,        // Gửi thông tin user_id người tạo
-        user_group,     // Gửi thông tin user_group người tạo
+        user_id,
+        user_group,
         contacted: true,
       };
-
-      console.log("Gửi Payload tạo mới:", payload);
 
       const res = await fetch(N8N_URL, {
         method: 'POST',
@@ -143,20 +145,23 @@ export default function NewCandidate() {
   const labelClass = "block text-sm font-semibold text-gray-700 mb-1";
   const uploadBoxClass = "border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer text-gray-500 min-h-[120px]";
 
-  if (authLoading) return <div className="h-screen flex items-center justify-center font-sans text-gray-500">Đang kiểm tra quyền truy cập...</div>;
+  if (!mounted || authLoading) {
+    return <div className="h-screen flex items-center justify-center font-sans text-gray-400">Đang khởi tạo hệ thống...</div>;
+  }
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
         <div className="max-w-4xl mx-auto">
-          <header className="flex justify-between items-center mb-8">
-             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <header className="flex justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               <div className="w-8 h-8 text-blue-600"><Icons.UserPlus /></div>
               Tạo Mới Ứng Viên
             </h1>
-            <div className="text-right">
-              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Người thực hiện</p>
-              <p className="text-sm font-medium text-gray-600">{user_id} ({user_group})</p>
+            <div className="text-right border-l pl-4">
+              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">User hiện tại</p>
+              <p className="text-sm font-bold text-blue-600">{user_id || '---'}</p>
+              <p className="text-[10px] text-gray-500">{user_group || '---'}</p>
             </div>
           </header>
 
@@ -164,7 +169,10 @@ export default function NewCandidate() {
             
             {/* Nhóm: Thông tin cơ bản */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-blue-700 mb-6 border-b pb-2">Thông tin cơ bản</h2>
+              <h2 className="text-lg font-bold text-blue-700 mb-6 border-b pb-2 flex justify-between items-center">
+                Thông tin cơ bản
+                <span className="text-[10px] text-gray-400 font-normal">* Bắt buộc</span>
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Họ và tên *</label>
@@ -206,20 +214,20 @@ export default function NewCandidate() {
 
             {/* Nhóm: Hồ sơ đính kèm */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-700 mb-6 border-b pb-2">Hồ sơ đính kèm (Dự kiến)</h2>
+              <h2 className="text-lg font-bold text-gray-700 mb-6 border-b pb-2">Hồ sơ đính kèm</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
                 <div>
                   <label className={labelClass}>CCCD Mặt trước</label>
                   <div className={uploadBoxClass}>
                     <Icons.Upload />
-                    <span className="mt-2 text-[10px] font-bold uppercase text-gray-400">Chưa thêm logic upload</span>
+                    <span className="mt-2 text-[10px] font-bold uppercase text-gray-400">Chọn ảnh mặt trước</span>
                   </div>
                 </div>
                 <div>
                   <label className={labelClass}>CCCD Mặt sau</label>
                   <div className={uploadBoxClass}>
                     <Icons.Upload />
-                    <span className="mt-2 text-[10px] font-bold uppercase text-gray-400">Chưa thêm logic upload</span>
+                    <span className="mt-2 text-[10px] font-bold uppercase text-gray-400">Chọn ảnh mặt sau</span>
                   </div>
                 </div>
                 <div className="md:col-span-2">
@@ -244,7 +252,7 @@ export default function NewCandidate() {
                 {loading ? (
                   <>
                     <div className="w-5 h-5"><Icons.Loader2 /></div>
-                    ĐANG XỬ LÝ...
+                    ĐANG GỬI DỮ LIỆU...
                   </>
                 ) : (
                   <>
