@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
 // SVG Icons nội bộ
 const Icons = {
