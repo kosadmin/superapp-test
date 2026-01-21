@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 
 // SVG Icons nội bộ
 const Icons = {
@@ -26,7 +26,6 @@ const Icons = {
 };
 
 interface FormData {
-  // Cơ bản
   candidate_name: string;
   phone: string;
   gender: string;
@@ -35,19 +34,15 @@ interface FormData {
   id_card_issued_date: string;
   id_card_issued_place: string;
   date_of_birth: string;
-  // Địa chỉ
   address_street: string;
   address_ward: string;
   address_city: string;
-  // Học vấn
   education_level: string;
   experience_summary: string;
   job_wish: string;
-  // Tuyển dụng
   project: string;
   position: string;
   company: string;
-  // Nguồn & Phân công
   data_source_dept: string;
   data_source_type_group: string;
   data_source_type: string;
@@ -82,7 +77,6 @@ export default function NewCandidate() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Tự động tính Năm sinh và Địa chỉ đầy đủ
   const birthYear = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
   const addressFull = [form.address_street, form.address_ward, form.address_city]
     .filter(Boolean)
@@ -97,17 +91,27 @@ export default function NewCandidate() {
     setLoading(true);
 
     try {
+      // Lấy thông tin User từ localStorage (giả định lưu khi login)
+      const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : '';
+      const storedUserGroup = typeof window !== 'undefined' ? localStorage.getItem('user_group') : '';
+
+      const payload = {
+        action: 'create',
+        ...form,
+        birth_year: birthYear,
+        address_full: addressFull,
+        user_id: storedUserId || 'unknown',
+        user_group: storedUserGroup || 'unknown',
+        contacted: true,
+      };
+
       const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'create',
-          ...form,
-          birth_year: birthYear,
-          address_full: addressFull,
-          contacted: true,
-        }),
+        body: JSON.stringify(payload),
       });
+
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
 
       const data = await res.json();
 
@@ -118,7 +122,8 @@ export default function NewCandidate() {
         alert('Lỗi: ' + (data.message || 'Không thể tạo ứng viên'));
       }
     } catch (err) {
-      alert('Lỗi kết nối server');
+      console.error("Submit error:", err);
+      alert('Lỗi kết nối server hoặc lỗi CORS. Hãy đảm bảo n8n Webhook đã được kích hoạt.');
     } finally {
       setLoading(false);
     }
@@ -140,13 +145,12 @@ export default function NewCandidate() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             
-            {/* Nhóm: Thông tin cơ bản */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-blue-700 mb-6 border-b pb-2">Thông tin cơ bản</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Họ và tên *</label>
-                  <input required type="text" value={form.candidate_name} onChange={(e) => handleChange('candidate_name', e.target.value)} placeholder="Nguyễn Văn A" className={inputClass} />
+                  <input required type="text" value={form.candidate_name} onChange={(e) => handleChange('candidate_name', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Giới tính</label>
@@ -159,11 +163,11 @@ export default function NewCandidate() {
                 </div>
                 <div>
                   <label className={labelClass}>Số điện thoại *</label>
-                  <input required type="text" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="09xxxxxxxx" className={inputClass} />
+                  <input required type="text" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Email</label>
-                  <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="example@gmail.com" className={inputClass} />
+                  <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Ngày sinh</label>
@@ -171,7 +175,7 @@ export default function NewCandidate() {
                 </div>
                 <div>
                   <label className={labelClass}>Năm sinh (Tự động)</label>
-                  <input type="text" value={birthYear} readOnly className={readOnlyClass} placeholder="YYYY" />
+                  <input type="text" value={birthYear} readOnly className={readOnlyClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Số CCCD</label>
@@ -188,14 +192,13 @@ export default function NewCandidate() {
               </div>
             </div>
 
-            {/* Nhóm: Địa chỉ */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-emerald-700 mb-6 border-b pb-2">Địa chỉ</h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className={labelClass}>Số nhà/Tên đường</label>
-                    <input type="text" value={form.address_street} onChange={(e) => handleChange('address_street', e.target.value)} placeholder="123 Đường ABC..." className={inputClass} />
+                    <input type="text" value={form.address_street} onChange={(e) => handleChange('address_street', e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Phường/Xã</label>
@@ -208,37 +211,35 @@ export default function NewCandidate() {
                 </div>
                 <div>
                   <label className={labelClass}>Địa chỉ đầy đủ (Tự động)</label>
-                  <input type="text" value={addressFull} readOnly className={readOnlyClass} placeholder="Sẽ tự động nối các trường trên" />
+                  <input type="text" value={addressFull} readOnly className={readOnlyClass} />
                 </div>
               </div>
             </div>
 
-            {/* Nhóm: Học vấn & Sự nghiệp */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-orange-700 mb-6 border-b pb-2">Học vấn & Sự nghiệp</h2>
               <div className="space-y-4">
                 <div>
                   <label className={labelClass}>Trình độ học vấn</label>
-                  <input type="text" value={form.education_level} onChange={(e) => handleChange('education_level', e.target.value)} placeholder="VD: Đại học, 12/12..." className={inputClass} />
+                  <input type="text" value={form.education_level} onChange={(e) => handleChange('education_level', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Tóm tắt kinh nghiệm</label>
-                  <textarea rows={3} value={form.experience_summary} onChange={(e) => handleChange('experience_summary', e.target.value)} placeholder="Mô tả ngắn gọn kinh nghiệm làm việc..." className={inputClass}></textarea>
+                  <textarea rows={3} value={form.experience_summary} onChange={(e) => handleChange('experience_summary', e.target.value)} className={inputClass}></textarea>
                 </div>
                 <div>
                   <label className={labelClass}>Nguyện vọng công việc</label>
-                  <textarea rows={2} value={form.job_wish} onChange={(e) => handleChange('job_wish', e.target.value)} placeholder="Mong muốn về lương, khu vực làm việc..." className={inputClass}></textarea>
+                  <textarea rows={2} value={form.job_wish} onChange={(e) => handleChange('job_wish', e.target.value)} className={inputClass}></textarea>
                 </div>
               </div>
             </div>
 
-            {/* Nhóm: Tuyển dụng */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-purple-700 mb-6 border-b pb-2">Thông tin tuyển dụng</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Dự án</label>
-                  <input type="text" value={form.project} onChange={(e) => handleChange('project', e.target.value)} placeholder="VD: VinFast" className={inputClass} />
+                  <input type="text" value={form.project} onChange={(e) => handleChange('project', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Công ty</label>
@@ -246,12 +247,11 @@ export default function NewCandidate() {
                 </div>
                 <div className="md:col-span-2">
                   <label className={labelClass}>Vị trí</label>
-                  <input type="text" value={form.position} onChange={(e) => handleChange('position', e.target.value)} placeholder="VD: Công nhân sản xuất" className={inputClass} />
+                  <input type="text" value={form.position} onChange={(e) => handleChange('position', e.target.value)} className={inputClass} />
                 </div>
               </div>
             </div>
 
-            {/* Nhóm: Tạo nguồn & Phân công */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-pink-700 mb-6 border-b pb-2">Thông tin tạo nguồn & Phân công công việc</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -265,16 +265,15 @@ export default function NewCandidate() {
                 </div>
                 <div>
                   <label className={labelClass}>Loại nguồn</label>
-                  <input type="text" value={form.data_source_type} onChange={(e) => handleChange('data_source_type', e.target.value)} placeholder="Facebook, Tiktok..." className={inputClass} />
+                  <input type="text" value={form.data_source_type} onChange={(e) => handleChange('data_source_type', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>ID người phụ trách</label>
-                  <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} placeholder="ID nhân viên..." className={inputClass} />
+                  <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass} />
                 </div>
               </div>
             </div>
 
-            {/* Nhóm mới: Hồ sơ đính kèm */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-gray-700 mb-6 border-b pb-2">Hồ sơ đính kèm</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -282,29 +281,28 @@ export default function NewCandidate() {
                   <label className={labelClass}>Ảnh CCCD mặt trước</label>
                   <div className={uploadBoxClass}>
                     <Icons.Upload />
-                    <span className="mt-2 text-xs">Tải lên hoặc kéo thả ảnh mặt trước</span>
+                    <span className="mt-2 text-xs">Tải lên ảnh mặt trước</span>
                   </div>
                 </div>
                 <div>
                   <label className={labelClass}>Ảnh CCCD mặt sau</label>
                   <div className={uploadBoxClass}>
                     <Icons.Upload />
-                    <span className="mt-2 text-xs">Tải lên hoặc kéo thả ảnh mặt sau</span>
+                    <span className="mt-2 text-xs">Tải lên ảnh mặt sau</span>
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <label className={labelClass}>File đính kèm khác (CV, Bằng cấp...)</label>
+                  <label className={labelClass}>File đính kèm khác</label>
                   <div className={`${uploadBoxClass} min-h-[80px]`}>
                     <div className="flex items-center gap-2">
                       <Icons.FileText />
-                      <span className="text-sm">Chọn file để đính kèm</span>
+                      <span className="text-sm">Chọn file</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Nút hành động */}
             <div className="flex items-center justify-center gap-4 pt-6 pb-12">
               <button
                 type="submit"
@@ -312,15 +310,9 @@ export default function NewCandidate() {
                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-4 px-12 rounded-xl text-lg transition shadow-lg flex items-center gap-2 min-w-[200px] justify-center"
               >
                 {loading ? (
-                  <>
-                    <div className="w-5 h-5"><Icons.Loader2 /></div>
-                    Đang tạo...
-                  </>
+                  <><div className="w-5 h-5"><Icons.Loader2 /></div>Đang tạo...</>
                 ) : (
-                  <>
-                    <div className="w-5 h-5"><Icons.Save /></div>
-                    TẠO ỨNG VIÊN
-                  </>
+                  <><div className="w-5 h-5"><Icons.Save /></div>TẠO ỨNG VIÊN</>
                 )}
               </button>
 
