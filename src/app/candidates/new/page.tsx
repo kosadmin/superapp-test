@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'; 
+import { MASTER_DATA } from '@/constants/masterData';
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
@@ -87,24 +88,26 @@ function NewCandidateForm() {
     .filter(Boolean)
     .join(' - ');
 
-  const validate = () => {
-    const newErrors: { [key: string]: string } = {};
-    
-    // Kiểm tra số điện thoại (phải đúng 10 số)
-    if (!form.phone) {
-        newErrors.phone = "Số điện thoại không được để trống";
-    } else if (!/^\d{10}$/.test(form.phone)) {
-        newErrors.phone = "Số điện thoại phải bao gồm 10 chữ số";
-    }
+const validate = () => {
+  const newErrors: { [key: string]: string } = {};
+  
+  // 1. Validation cơ bản (độ dài, bắt buộc)
+  if (!form.phone || form.phone.length !== 10) {
+    newErrors.phone = "Số điện thoại phải đúng 10 số";
+  }
 
-    // Kiểm tra họ tên
-    if (!form.candidate_name.trim()) {
-        newErrors.candidate_name = "Họ và tên là bắt buộc";
-    }
+  // 2. Validation dựa trên Master Data
+  if (form.project && !MASTER_DATA.projects.includes(form.project)) {
+    newErrors.project = "Dự án không hợp lệ";
+  }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  if (form.address_city && !MASTER_DATA.cities.includes(form.address_city)) {
+    newErrors.address_city = "Tỉnh/Thành phố không nằm trong danh sách";
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   const handleChange = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -199,15 +202,20 @@ function NewCandidateForm() {
                   <input type="text" value={form.candidate_name} onChange={(e) => handleChange('candidate_name', e.target.value)} className={inputClass('candidate_name')} placeholder="Nguyễn Văn A" />
                   {errors.candidate_name && <p className={errorMsgClass}>{errors.candidate_name}</p>}
                 </div>
-                <div>
-                  <label className={labelClass}>Giới tính</label>
-                  <select value={form.gender} onChange={(e) => handleChange('gender', e.target.value)} className={inputClass('gender')}>
-                    <option value="">Chọn giới tính</option>
-                    <option value="Nam">Nam</option>
-                    <option value="Nữ">Nữ</option>
-                    <option value="Khác">Khác</option>
-                  </select>
-                </div>
+<div>
+  <label className={labelClass}>Giới tính</label>
+  <select 
+    value={form.gender} 
+    onChange={(e) => handleChange('gender', e.target.value)} 
+    className={inputClass('gender')}
+  >
+    <option value="">-- Chọn giới tính --</option>
+    {MASTER_DATA.genders.map((item) => (
+      <option key={item} value={item}>{item}</option>
+    ))}
+  </select>
+  {errors.gender && <p className={errorMsgClass}>{errors.gender}</p>}
+</div>
                 <div>
                   <label className={labelClass}>Số điện thoại * (10 số)</label>
                   <input type="text" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} className={inputClass('phone')} placeholder="0901234567" />
@@ -260,10 +268,20 @@ function NewCandidateForm() {
                     <label className={labelClass}>Phường / Xã</label>
                     <input type="text" value={form.address_ward} onChange={(e) => handleChange('address_ward', e.target.value)} className={inputClass('address_ward')} />
                   </div>
-                  <div>
-                    <label className={labelClass}>Tỉnh / Thành phố</label>
-                    <input type="text" value={form.address_city} onChange={(e) => handleChange('address_city', e.target.value)} className={inputClass('address_city')} />
-                  </div>
+<div>
+  <label className={labelClass}>Tỉnh / Thành phố</label>
+  <select 
+    value={form.address_city} 
+    onChange={(e) => handleChange('address_city', e.target.value)} 
+    className={inputClass('address_city')}
+  >
+    <option value="">-- Chọn tỉnh / thành phố --</option>
+    {MASTER_DATA.cities.map((item) => (
+      <option key={item} value={item}>{item}</option>
+    ))}
+  </select>
+  {errors.address_city && <p className={errorMsgClass}>{errors.address_city}</p>}
+</div>
                 </div>
                 <div>
                   <label className={labelClass}>Địa chỉ hiển thị (Tự động)</label>
@@ -296,9 +314,19 @@ function NewCandidateForm() {
               <h2 className="text-lg font-bold text-purple-700 mb-6 border-l-4 border-purple-600 pl-3">Phân loại tuyển dụng</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>Dự án</label>
-                  <input type="text" value={form.project} onChange={(e) => handleChange('project', e.target.value)} className={inputClass('project')} />
-                </div>
+  <label className={labelClass}>Dự án</label>
+  <select 
+    value={form.project} 
+    onChange={(e) => handleChange('project', e.target.value)} 
+    className={inputClass('project')}
+  >
+    <option value="">-- Chọn dự án --</option>
+    {MASTER_DATA.projects.map((item) => (
+      <option key={item} value={item}>{item}</option>
+    ))}
+  </select>
+  {errors.project && <p className={errorMsgClass}>{errors.project}</p>}
+</div>
                 <div>
                   <label className={labelClass}>Công ty</label>
                   <input type="text" value={form.company} onChange={(e) => handleChange('company', e.target.value)} className={inputClass('company')} />
@@ -315,13 +343,19 @@ function NewCandidateForm() {
               <h2 className="text-lg font-bold text-pink-700 mb-6 border-l-4 border-pink-600 pl-3">Nguồn dữ liệu & Phụ trách</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>Bộ phận tạo nguồn</label>
-                  <input type="text" value={form.data_source_dept} onChange={(e) => handleChange('data_source_dept', e.target.value)} className={inputClass('data_source_dept')} />
-                </div>
-                <div>
-                  <label className={labelClass}>Nhóm nguồn</label>
-                  <input type="text" value={form.data_source_type_group} onChange={(e) => handleChange('data_source_type_group', e.target.value)} className={inputClass('data_source_type_group')} />
-                </div>
+  <label className={labelClass}>Bộ phận tạo nguồn</label>
+  <select 
+    value={form.data_source_dept} 
+    onChange={(e) => handleChange('data_source_dept', e.target.value)} 
+    className={inputClass('data_source_dept')}
+  >
+    <option value="">-- Chọn bộ phận --</option>
+    {MASTER_DATA.sourceDepartments.map((item) => (
+      <option key={item} value={item}>{item}</option>
+    ))}
+  </select>
+  {errors.data_source_dept && <p className={errorMsgClass}>{errors.data_source_dept}</p>}
+</div>
                 <div>
                   <label className={labelClass}>Loại nguồn cụ thể</label>
                   <input type="text" value={form.data_source_type} onChange={(e) => handleChange('data_source_type', e.target.value)} className={inputClass('data_source_type')} />
