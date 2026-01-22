@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-// Đảm bảo đường dẫn tương đối chính xác dựa trên cấu trúc thư mục thực tế của dự án
 import { useAuth } from '@/contexts/AuthContext'; 
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -48,7 +47,8 @@ interface FormData {
   assigned_user: string;
 }
 
-export default function NewCandidate() {
+// Tách logic Form ra component con để đảm bảo useAuth nằm trong Provider của ProtectedRoute
+function NewCandidateForm() {
   const { user_id, user_group } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<FormData>({
@@ -128,8 +128,7 @@ export default function NewCandidate() {
   const labelClass = "block text-sm font-semibold text-gray-700 mb-1";
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -313,6 +312,14 @@ export default function NewCandidate() {
           </form>
         </div>
       </div>
+  );
+}
+
+// Default export: Bọc logic Form vào ProtectedRoute
+export default function NewCandidate() {
+  return (
+    <ProtectedRoute>
+      <NewCandidateForm />
     </ProtectedRoute>
   );
 }
