@@ -15,7 +15,7 @@ export const MASTER_DATA = {
     "Yazaki Tuyển dụng",
     "ShinEtsu Tuyển dụng",
         "Stavian Packaging Tuyển dụng",
-    "Stavian Tissue Tuyển dụng"
+    "Stavian Tissue Tuyển dụng",
         "LG Display Outsourcing",
       "VinFast Test xe Outsourcing",
   "ORPC Outsourcing",
