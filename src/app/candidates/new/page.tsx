@@ -119,7 +119,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
     }
         if (field === 'project') {
       // Dò tìm công ty tương ứng từ master data, nếu không thấy thì để trống
-      const mappedProjectId = MASTER_DATA.projectIDMap[value] || '';
+      const mappedProjectId = MASTER_DATA.projectIdMap[value] || '';
       newForm.project_id = mappedProjectId;
     }
     if (field === 'project') {
