@@ -82,8 +82,8 @@ function NewCandidateForm() {
     position: '',
     company: '',
     data_source_dept: '',
-    data_source_type_group_group: '',
     data_source_type_group: '',
+    data_source_type: '',
     assigned_user: '',
   });
 
