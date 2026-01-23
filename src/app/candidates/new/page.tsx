@@ -53,7 +53,7 @@ const Icons = {
 };
 
 function NewCandidateForm() {
-  const { user_id, user_group } = useAuth();
+  const { name,user_id, user_group } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [form, setForm] = useState<CandidateForm>({
@@ -145,11 +145,12 @@ function NewCandidateForm() {
     try {
       const payload = {
         action: 'create',
+        name:user_id || 'unknown',
+                user_id: user_id || 'unknown',
+        user_group: user_group || 'unknown',
         ...form,
         birth_year: birthYear,
         address_full: addressFull,
-        user_id: user_id || 'unknown',
-        user_group: user_group || 'unknown',
         contacted: true,
       };
 
@@ -345,10 +346,10 @@ function NewCandidateForm() {
                   {availableSourceTypes.map(type => <option key={type} value={type}>{type}</option>)}
                 </select>
               </div>
-              <div>
-                <label className={labelClass}>ID nhân viên phụ trách (Tự động)</label>
-                <input type="text" value={form.assigned_user} readOnly className={readOnlyClass} />
-              </div>
+                                <div>
+<label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
+                  <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
+                </div>
             </div>
           </div>
 
