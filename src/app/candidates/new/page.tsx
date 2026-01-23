@@ -101,23 +101,33 @@ function NewCandidateForm() {
   const addressFull = [form.address_street, form.address_ward, form.address_city].filter(Boolean).join(' - ');
 
   // Xử lý thay đổi dữ liệu & Validation
-  const handleChange = (field: keyof CandidateForm, value: string) => {
-    setForm(prev => {
-      const newForm = { ...prev, [field]: value };
-      // Reset các cấp nguồn thấp hơn nếu cấp cao hơn thay đổi
-      if (field === 'data_source_dept') {
-        newForm.data_source_type_group = '';
-        newForm.data_source_type = '';
-      } else if (field === 'data_source_type_group') {
-        newForm.data_source_type = '';
-      }
-      return newForm;
-    });
+const handleChange = (field: keyof CandidateForm, value: string) => {
+  setForm(prev => {
+    const newForm = { ...prev, [field]: value };
 
-    // Xóa lỗi khi người dùng bắt đầu nhập lại
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+    // --- LOGIC AUTOFILL CÔNG TY ---
+    if (field === 'project') {
+      // Dò tìm công ty tương ứng từ master data, nếu không thấy thì để trống
+      const mappedCompany = MASTER_DATA.projectCompanyMap[value] || '';
+      newForm.company = mappedCompany;
     }
+
+    // Reset các cấp nguồn (Giữ nguyên logic cũ)
+    if (field === 'data_source_dept') {
+      newForm.data_source_type_group = '';
+      newForm.data_source_type = '';
+    } else if (field === 'data_source_type_group') {
+      newForm.data_source_type = '';
+    }
+    
+    return newForm;
+  });
+
+  // Xóa lỗi... (Giữ nguyên)
+  if (errors[field]) {
+    setErrors(prev => ({ ...prev, [field]: undefined }));
+  }
+};
 
     // Validation nhanh
     if (field === 'phone' && value && !/^\d{10}$/.test(value)) {
@@ -308,10 +318,16 @@ function NewCandidateForm() {
                     {MASTER_DATA.projects.map((item) => (<option key={item} value={item}>{item}</option>))}
                   </select>
                 </div>
-                <div>
-                  <label className={labelClass}>Công ty</label>
-                  <input type="text" value={form.company} onChange={(e) => handleChange('company', e.target.value)} className={inputClass('company')} />
-                </div>
+<div>
+  <label className={labelClass}>Công ty (Tự động theo dự án)</label>
+  <input 
+    type="text" 
+    value={form.company} 
+    readOnly // Khóa không cho nhập
+    className={readOnlyClass} // Sử dụng class xám màu của bạn
+    placeholder="Sẽ hiển thị khi chọn dự án"
+  />
+</div>
                                 <div className="md:col-span-2">
                   <label className={labelClass}>Vị trí ứng tuyển</label>
                   <input type="text" value={form.position} onChange={(e) => handleChange('position', e.target.value)} className={inputClass('position')} />
