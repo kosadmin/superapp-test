@@ -44,7 +44,7 @@ export const MASTER_DATA: MasterDataType = {
     "DH Vina Outsourcing"
   ],
 
-  projectIDMap: {
+  projectIdMap: {
     "Brother Tuyển dụng": "Recruit_BRO",
     "Sumidenso Tuyển dụng": "Recruit_SUMI",
     "Tinh Lợi Tuyển dụng": "Recruit_TINHLOI",
