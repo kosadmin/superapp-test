@@ -1,6 +1,7 @@
 // Định nghĩa cấu trúc cho đối tượng nguồn dữ liệu để tránh lỗi Index Signature
 interface MasterDataType {
   projects: string[];
+  projectCompanyMap: Record<string, string>;
   cities: string[];
   genders: string[];
   sourceDepartments: string[];
@@ -41,6 +42,31 @@ export const MASTER_DATA: MasterDataType = {
     "DH Vina Outsourcing"
   ],
 
+  // --- THÊM PHẦN MAPPING NÀY ---
+  projectCompanyMap: {
+    "Brother Tuyển dụng": "Brother - Hải Dương",
+    "Sumidenso Tuyển dụng": "Sumidenso - Hải Dương",
+    "Tinh Lợi Tuyển dụng": "Tinh Lợi - Hải Dương",
+    "Crystal Sweater Tuyển dụng": "Crystal Sweater - Hải Phòng",
+    "Heesung Tuyển dụng": "Heesung - Hải Dương",
+    "Canon Tuyển dụng": "Canon - Hưng Yên",
+    "Pegatron Tuyển dụng": "Pegatron - Hải Phòng",
+    "Taishodo Tuyển dụng": "Taishodo - Hải Dương",
+    "Meiko Tuyển dụng": "Meiko - Hà Nội",
+    "Yazaki Tuyển dụng": "Yazaki - Hải Phòng",
+    "ShinEtsu Tuyển dụng": "ShinEtsu - Quảng Ninh",
+    "Stavian Packaging Tuyển dụng": "Stavian Packaging - Hưng Yên",
+    "Stavian Tissue Tuyển dụng": "Stavian Tissue - Hưng Yên",
+    "LG Display Outsourcing": "LG Display - Hải Phòng",
+    "VinFast Test xe Outsourcing": "VinFast - Hải Phòng",
+    "ORPC Outsourcing": "ORPC - Hải Phòng",
+    "Michang Outsourcing": "Michang - Hải Phòng",
+    "Nissin Outsourcing": "Nissin - Hòa Bình",
+    "Kennametal Outsourcing": "Kennametal - Hà Nội",
+    "Fairmont Outsourcing": "Fairmont - Hà Nội",
+    "DH Vina Outsourcing": "DH Vina - Hải Phòng"
+  },
+
   // Danh sách tỉnh thành
   cities: [
     "An Giang", "Bắc Ninh", "Cà Mau", "Cần Thơ", "Cao Bằng​", "Đà Nẵng",
@@ -77,12 +103,12 @@ export const MASTER_DATA: MasterDataType = {
     ]
   },
   sourceTypesByGroup: {
-    "Ads": ["Facebook Ads", "Google Ads", "Zalo Ads"],
-    "Tiktok Organic": ["Video Viral", "Livestream", "Inbound Tiktok"],
-    "MKT Organic": ["Fanpage", "Group FB", "Website"],
-    "Seeding": ["Group Việc làm", "Comment dạo", "Zalo Group"],
-    "Vendor/CTV": ["CTV Tự do", "Đại lý cấp 1", "Vendor ngoài"],
-    "Offline": ["Ngày hội việc làm", "Tờ rơi", "Băng rôn"]
+    "Ads": ["Facebook Ads", "Tiktok Ads", "Zalo Ads"],
+    "Tiktok Organic": ["Tiktok Video", "Tiktok Live", "Tiktok Inbox"],
+    "MKT Organic": ["Hotline", "Zalo OA", "Website", "Group Facebook","Social khác"],
+    "Seeding": ["Seeding thường", "Seeding tự động"],
+    "Vendor/CTV": ["CTV cá nhân", "Vendor"],
+    "Offline": ["Trường học", "Sự kiện tuyển dụng", "Cơ quan địa phương"]
   }
 };
 
