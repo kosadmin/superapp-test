@@ -10,6 +10,9 @@ interface MasterDataType {
     "Tuyển dụng": string[];
     "Quản lý nguồn": string[];
   };
+sourceTypesByGroup: {
+    [key: string]: string[] | undefined;
+  };
 }
 
 export const MASTER_DATA: MasterDataType = {
@@ -72,6 +75,14 @@ export const MASTER_DATA: MasterDataType = {
       "Vendor/CTV",
       "Offline"
     ]
+  },
+  sourceTypesByGroup: {
+    "Ads": ["Facebook Ads", "Google Ads", "Zalo Ads"],
+    "Tiktok Organic": ["Video Viral", "Livestream", "Inbound Tiktok"],
+    "MKT Organic": ["Fanpage", "Group FB", "Website"],
+    "Seeding": ["Group Việc làm", "Comment dạo", "Zalo Group"],
+    "Vendor/CTV": ["CTV Tự do", "Đại lý cấp 1", "Vendor ngoài"],
+    "Offline": ["Ngày hội việc làm", "Tờ rơi", "Băng rôn"]
   }
 };
 
