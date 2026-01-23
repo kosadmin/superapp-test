@@ -127,7 +127,6 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
   if (errors[field]) {
     setErrors(prev => ({ ...prev, [field]: undefined }));
   }
-};
 
     // Validation nhanh
     if (field === 'phone' && value && !/^\d{10}$/.test(value)) {
