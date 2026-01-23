@@ -99,14 +99,16 @@ function NewCandidateForm() {
 // Tìm đến đoạn định nghĩa availableSourceTypes và bổ sung thêm:
 
 // Danh sách Loại nguồn dựa trên Bộ phận (Đã có của bạn)
-const availableSourceTypeGroups = form.data_source_dept 
-  ? (MASTER_DATA.sourceTypeGroupsByDept as any)[form.data_source_dept] || [] 
-  : [];
+// Thay vì: (MASTER_DATA.sourceTypesByGroup as any)
+// Hãy ép kiểu chính xác cho biến ở đầu hàm NewCandidateForm:
 
-// THÊM MỚI: Danh sách Nguồn cụ thể dựa trên Loại nguồn
-const availableSourceTypes = form.data_source_type_group
-  ? (MASTER_DATA.sourceTypesByGroup as any)[form.data_source_type_group] || []
-  : [];
+const availableSourceTypeGroups = (form.data_source_dept 
+  ? (MASTER_DATA.sourceTypeGroupsByDept as Record<string, string[]>)[form.data_source_dept] || [] 
+  : []) as string[];
+
+const availableSourceTypes = (form.data_source_type_group
+  ? (MASTER_DATA.sourceTypesByGroup as Record<string, string[]>)[form.data_source_type_group] || []
+  : []) as string[];
 
   const validate = () => {
     const newErrors: FormErrors = {};
@@ -367,7 +369,9 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                     disabled={!form.data_source_dept}
                   >
                     <option value="">-- Chọn loại nguồn --</option>
-                    {availableSourceTypes.map((item: string) => (<option key={item} value={item}>{item}</option>))}
+{availableSourceTypeGroups.map((item: string) => ( // Thêm : string ở đây
+  <option key={item} value={item}>{item}</option>
+))}
                   </select>
                 </div>
 <div>
@@ -378,11 +382,11 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
     className={`${inputClass('data_source_type')} ${!form.data_source_type_group ? 'bg-gray-100' : ''}`}
     disabled={!form.data_source_type_group}
   >
-    <option value="">-- Chọn nguồn cụ thể --</option>
-    {availableSourceTypes.map((item) => (
-      <option key={item} value={item}>{item}</option>
-    ))}
-  </select>
+<option value="">-- Chọn nguồn cụ thể --</option>
+  {availableSourceTypes.map((item: string) => ( // Thêm : string để hết lỗi
+    <option key={item} value={item}>{item}</option>
+  ))}
+</select>
 </div>
               </div>
             </div>
