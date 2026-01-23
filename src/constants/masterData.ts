@@ -64,6 +64,10 @@ export const MASTER_DATA = {
 "Vĩnh Long"
   ],
 
+  
+  // Giới tính (để đồng nhất)
+  genders: ["Nam", "Nữ", "Khác"],
+
   // Danh sách bộ phận tạo nguồn
   sourceDepartments: [
     "Tuyển dụng",
@@ -88,8 +92,6 @@ export const MASTER_DATA = {
     ]
   }
 
-  // Giới tính (để đồng nhất)
-  genders: ["Nam", "Nữ", "Khác"]
 };
 
 export type SourceDeptType = keyof typeof MASTER_DATA.sourceTypesByDept;
