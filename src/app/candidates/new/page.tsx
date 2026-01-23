@@ -120,8 +120,8 @@ function NewCandidateForm() {
     }
 
     // Validation nhanh
-    if (field === 'phone' && value && !/^\d{10,11}$/.test(value)) {
-      setErrors(prev => ({ ...prev, phone: 'Số điện thoại phải có 10-11 chữ số' }));
+    if (field === 'phone' && value && !/^\d{10}$/.test(value)) {
+      setErrors(prev => ({ ...prev, phone: 'Số điện thoại phải có 10 chữ số' }));
     }
     if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
       setErrors(prev => ({ ...prev, email: 'Email không đúng định dạng' }));
