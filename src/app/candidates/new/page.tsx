@@ -7,7 +7,7 @@ import { MASTER_DATA } from '@/constants/masterData';
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
-// --- 1. ĐỊNH NGHĨA KIỂU DỮ LIỆU (INTERFACE) ---
+// --- 1. ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
 interface CandidateForm {
   candidate_name: string;
   phone: string;
@@ -32,7 +32,6 @@ interface CandidateForm {
   assigned_user: string;
 }
 
-// Định nghĩa kiểu cho lỗi (Sửa lỗi "Property ... does not exist on type '{}'")
 interface FormErrors {
   [key: string]: string | undefined;
 }
@@ -56,11 +55,8 @@ const Icons = {
 function NewCandidateForm() {
   const { user_id, user_group } = useAuth();
   const [loading, setLoading] = useState(false);
-  
-  // Áp dụng Interface FormErrors
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // Áp dụng Interface CandidateForm
   const [form, setForm] = useState<CandidateForm>({
     candidate_name: '',
     phone: '',
@@ -96,15 +92,15 @@ function NewCandidateForm() {
     .filter(Boolean)
     .join(' - ');
 
-// Logic lấy danh sách Loại nguồn (Level 2)
-const availableSourceTypeGroups = form.data_source_dept 
-  ? (MASTER_DATA.sourceTypeGroupsByDept as any)[form.data_source_dept] || [] 
-  : [];
+  // Danh sách Loại nguồn (Level 2) dựa trên Bộ phận
+  const availableSourceTypeGroups = form.data_source_dept 
+    ? (MASTER_DATA.sourceTypeGroupsByDept as any)[form.data_source_dept] || [] 
+    : [];
 
-// THÊM MỚI: Logic lấy danh sách Nguồn cụ thể (Level 3)
-const availableSourceTypes = form.data_source_type_group
-  ? (MASTER_DATA.sourceTypesByGroup as any)[form.data_source_type_group] || []
-  : [];
+  // Danh sách Nguồn cụ thể (Level 3) dựa trên Loại nguồn
+  const availableSourceTypes = form.data_source_type_group
+    ? (MASTER_DATA.sourceTypesByGroup as any)[form.data_source_type_group] || []
+    : [];
 
   const validate = () => {
     const newErrors: FormErrors = {};
@@ -123,41 +119,41 @@ const availableSourceTypes = form.data_source_type_group
         newErrors.data_source_dept = "Bộ phận không hợp lệ";
     }
     
+    // Kiểm tra tính logic của nguồn dữ liệu
     if (form.data_source_dept && form.data_source_type_group) {
-        const validTypes = (MASTER_DATA.sourceTypeGroupsByDept as any)[form.data_source_dept] || [];
-        if (!validTypes.includes(form.data_source_type_group)) {
+        const validGroups = (MASTER_DATA.sourceTypeGroupsByDept as any)[form.data_source_dept] || [];
+        if (!validGroups.includes(form.data_source_type_group)) {
             newErrors.data_source_type_group = "Loại nguồn không khớp với Bộ phận";
         }
-      // Kiểm tra Nguồn cụ thể có thuộc Loại nguồn đang chọn không
-if (form.data_source_type_group && form.data_source_type) {
-    const validSpecificTypes = (MASTER_DATA.sourceTypesByGroup as any)[form.data_source_type_group] || [];
-    if (!validSpecificTypes.includes(form.data_source_type)) {
-        newErrors.data_source_type = "Nguồn cụ thể không khớp với Loại nguồn";
-    }
-    }
+
+        if (form.data_source_type) {
+            const validSpecificTypes = (MASTER_DATA.sourceTypesByGroup as any)[form.data_source_type_group] || [];
+            if (!validSpecificTypes.includes(form.data_source_type)) {
+                newErrors.data_source_type = "Nguồn cụ thể không khớp với Loại nguồn";
+            }
+        }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-const handleChange = (field: keyof CandidateForm, value: string) => {
-  setForm(prev => {
-    const newData = { ...prev, [field]: value };
-    
-    // Nếu đổi Bộ phận -> Reset cả 2 cấp dưới
-    if (field === 'data_source_dept') {
-      newData.data_source_type_group = ''; 
-      newData.data_source_type = '';
-    }
-    
-    // THÊM MỚI: Nếu đổi Loại nguồn -> Reset Nguồn cụ thể
-    if (field === 'data_source_type_group') {
-      newData.data_source_type = '';
-    }
-    
-    return newData;
-  });
+  const handleChange = (field: keyof CandidateForm, value: string) => {
+    setForm(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Reset cấp con khi cấp cha thay đổi
+      if (field === 'data_source_dept') {
+        newData.data_source_type_group = ''; 
+        newData.data_source_type = '';
+      }
+      
+      if (field === 'data_source_type_group') {
+        newData.data_source_type = '';
+      }
+      
+      return newData;
+    });
 
     if (errors[field]) {
       setErrors(prev => {
@@ -187,6 +183,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
         contacted: true,
       };
 
+      // Giả lập gọi API (Bạn có thể thay bằng fetch tới N8N_URL)
       await new Promise(resolve => setTimeout(resolve, 1500));
       console.log("PAYLOAD SENT:", payload);
       alert(`[THÀNH CÔNG] Đã tạo ứng viên: ${payload.candidate_name}`);
@@ -225,7 +222,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 pb-20">
-            {/* Thông tin cá nhân */}
+            {/* 1. Thông tin cá nhân */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin cá nhân</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -261,7 +258,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
               </div>
             </div>
 
-            {/* Căn cước công dân */}
+            {/* 2. Căn cước công dân */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin CCCD</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -280,7 +277,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
               </div>
             </div>
 
-            {/* Địa chỉ */}
+            {/* 3. Địa chỉ */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-emerald-700 mb-6 border-l-4 border-emerald-600 pl-3">Địa chỉ thường trú</h2>
               <div className="space-y-4">
@@ -305,7 +302,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
               </div>
             </div>
 
-                      {/* Học vấn & Kinh nghiệm */}
+            {/* 4. Học vấn & Kinh nghiệm */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-orange-700 mb-6 border-l-4 border-orange-600 pl-3">Học vấn & Kinh nghiệm</h2>
               <div className="space-y-4">
@@ -324,7 +321,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
               </div>
             </div>
 
-            {/* Tuyển dụng */}
+            {/* 5. Tuyển dụng */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-purple-700 mb-6 border-l-4 border-purple-600 pl-3">Phân loại tuyển dụng</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -339,20 +336,20 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                   <label className={labelClass}>Công ty</label>
                   <input type="text" value={form.company} onChange={(e) => handleChange('company', e.target.value)} className={inputClass('company')} />
                 </div>
-                                <div className="md:col-span-2">
+                <div className="md:col-span-2">
                   <label className={labelClass}>Vị trí ứng tuyển</label>
                   <input type="text" value={form.position} onChange={(e) => handleChange('position', e.target.value)} className={inputClass('position')} />
                 </div>
               </div>
             </div>
 
-            {/* Nguồn dữ liệu */}
+            {/* 6. Nguồn dữ liệu */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-pink-700 mb-6 border-l-4 border-pink-600 pl-3">Nguồn dữ liệu & Phụ trách</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Bộ phận tạo nguồn</label>
-                  <select value={form.data_source_dept} onChange={(e) => handleChange('data_source_dept', e.target.value)} className={inputClass('data_source_dept')}>
+                  <select value={form.data_source_dept} onChange={(e) => handleChange('form.data_source_dept' as any, e.target.value)} className={inputClass('data_source_dept')}>
                     <option value="">-- Chọn bộ phận --</option>
                     {MASTER_DATA.sourceDepartments.map((item) => (<option key={item} value={item}>{item}</option>))}
                   </select>
@@ -366,24 +363,22 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                     disabled={!form.data_source_dept}
                   >
                     <option value="">-- Chọn loại nguồn --</option>
-                    {availableSourceTypes.map((item: string) => (<option key={item} value={item}>{item}</option>))}
+                    {availableSourceTypeGroups.map((item: string) => (<option key={item} value={item}>{item}</option>))}
                   </select>
                 </div>
-<div>
-  <label className={labelClass}>Nguồn cụ thể</label>
-  <select 
-    value={form.data_source_type} 
-    onChange={(e) => handleChange('data_source_type', e.target.value)} 
-    className={`${inputClass('data_source_type')} ${!form.data_source_type_group ? 'bg-gray-100' : ''}`}
-    disabled={!form.data_source_type_group}
-  >
-    <option value="">-- Chọn nguồn cụ thể --</option>
-    {availableSourceTypes.map((item: string) => (
-      <option key={item} value={item}>{item}</option>
-    ))}
-  </select>
-  {errors.data_source_type && <p className={errorMsgClass}>{errors.data_source_type}</p>}
-</div>
+                <div>
+                  <label className={labelClass}>Nguồn cụ thể</label>
+                  <select 
+                    value={form.data_source_type} 
+                    onChange={(e) => handleChange('data_source_type', e.target.value)} 
+                    className={`${inputClass('data_source_type')} ${!form.data_source_type_group ? 'bg-gray-100' : ''}`}
+                    disabled={!form.data_source_type_group}
+                  >
+                    <option value="">-- Chọn nguồn cụ thể --</option>
+                    {availableSourceTypes.map((item: string) => (<option key={item} value={item}>{item}</option>))}
+                  </select>
+                  {errors.data_source_type && <p className={errorMsgClass}>{errors.data_source_type}</p>}
+                </div>
                 <div>
                   <label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
                   <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
@@ -391,7 +386,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer Buttons */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 flex justify-center gap-4 z-10">
               <button type="button" onClick={() => window.history.back()} className="bg-white border border-gray-300 py-3 px-8 rounded-xl font-bold">Hủy bỏ</button>
               <button type="submit" disabled={loading} className="bg-blue-600 text-white py-3 px-12 rounded-xl font-bold shadow-lg flex items-center gap-2">
