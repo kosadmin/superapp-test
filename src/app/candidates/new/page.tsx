@@ -388,6 +388,10 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
   ))}
 </select>
 </div>
+                                <div>
+                  <label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>                  <label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
+                  <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
+                </div>
               </div>
             </div>
 
