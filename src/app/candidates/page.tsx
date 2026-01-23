@@ -39,7 +39,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'status', label: 'Trạng thái', width: 120, visible: true, sortable: true },
   { id: 'phone', label: 'Số điện thoại', width: 130, visible: true, sortable: true }, // Sort số điện thoại
   { id: 'project', label: 'Dự án', width: 150, visible: true, sortable: true },
-  { id: 'position', label: 'Vị trí', width: 150, visible: true, sortable: true },
+  { id: 'position', label: 'Vị trí ứng tuyển', width: 150, visible: true, sortable: true },
   { id: 'company', label: 'Công ty', width: 150, visible: true, sortable: true },
   
   // Ngày tháng rất cần sort
@@ -58,21 +58,21 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'birth_year', label: 'Năm sinh', width: 80, visible: false, sortable: true },
   { id: 'address_street', label: 'Số nhà/Tên đường', width: 150, visible: false, sortable: false },
   { id: 'address_ward', label: 'Phường/Xã', width: 120, visible: false, sortable: false },
-  { id: 'address_city', label: 'Tỉnh/Thành', width: 120, visible: false, sortable: true },
+  { id: 'address_city', label: 'Tỉnh/Thành phố', width: 120, visible: false, sortable: true },
   { id: 'address_full', label: 'Địa chỉ đầy đủ', width: 250, visible: false, sortable: false },
   { id: 'email', label: 'Email', width: 180, visible: false, sortable: true },
-{ id: 'education_level', label: 'Học vấn', width: 150, visible: false, sortable: true },
-  { id: 'experience_summary', label: 'Tóm tắt kinh nghiệm', width: 250, visible: false, sortable: false },
-{ id: 'job_wish', label: 'Nguyện vọng', width: 200, visible: false, sortable: false },
-  { id: 'project_id', label: 'Mã dự án', width: 120, visible: false, sortable: true },
+{ id: 'education_level', label: 'Trình độ học vấn', width: 150, visible: false, sortable: true },
+  { id: 'experience_summary', label: 'Tóm tắt kinh nghiệm làm việc', width: 250, visible: false, sortable: false },
+{ id: 'job_wish', label: 'Nguyện vọng công việc', width: 200, visible: false, sortable: false },
+  { id: 'project_id', label: 'ID dự án', width: 120, visible: false, sortable: true },
   { id: 'project_type', label: 'Loại dự án', width: 120, visible: false, sortable: true },
-  { id: 'department', label: 'Phòng ban', width: 120, visible: false, sortable: true },
-  { id: 'data_source_dept', label: 'Bộ phận nguồn', width: 120, visible: false, sortable: true },
+  { id: 'department', label: 'Bộ phận ứng tuyển', width: 120, visible: false, sortable: true },
+  { id: 'data_source_dept', label: 'Bộ phận tạo nguồn', width: 120, visible: false, sortable: true },
   { id: 'data_source_type_group', label: 'Nhóm nguồn', width: 120, visible: false, sortable: true },
-  { id: 'data_source_type', label: 'Loại nguồn', width: 100, visible: false, sortable: true },
+  { id: 'data_source_type', label: 'Loại nguồn cụ thể', width: 100, visible: false, sortable: true },
   { id: 'created_by', label: 'Người tạo', width: 120, visible: false, sortable: true },
   { id: 'last_updated_at', label: 'Cập nhật cuối', width: 140, visible: false, sortable: true },
-  { id: 'assigned_user', label: 'ID Người phụ trách', width: 120, visible: false, sortable: true },
+  { id: 'assigned_user', label: 'ID Nhân viên phụ trách', width: 120, visible: false, sortable: true },
   { id: 'assigned_user_group', label: 'Nhóm phụ trách', width: 130, visible: false, sortable: true },
 ];
 
@@ -560,6 +560,7 @@ function CandidatesContent() {
   
   <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
   <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày cấp CCCD</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formatDateToISO(formData.id_card_issued_date)} onChange={e => handleChange('id_card_issued_date', formatISOToDDMMYYYY(e.target.value))} /></div>
+        <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nơi cấp CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_place || ''} onChange={e => handleChange('id_card_issued_place', e.target.value)} /></div>
   
   <div className="col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nơi cấp CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_place || ''} onChange={e => handleChange('id_card_issued_place', e.target.value)} /></div>
   
