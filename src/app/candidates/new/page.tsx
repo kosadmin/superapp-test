@@ -318,16 +318,10 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                     {MASTER_DATA.projects.map((item) => (<option key={item} value={item}>{item}</option>))}
                   </select>
                 </div>
-<div>
-  <label className={labelClass}>Công ty (Tự động theo dự án)</label>
-  <input 
-    type="text" 
-    value={form.company} 
-    readOnly // Khóa không cho nhập
-    className={readOnlyClass} // Sử dụng class xám màu của bạn
-    placeholder="Sẽ hiển thị khi chọn dự án"
-  />
-</div>
+                <div>
+                  <label className={labelClass}>Công ty</label>
+                  <input type="text" value={form.company} onChange={(e) => handleChange('company', e.target.value)} className={inputClass('company')} />
+                </div>
                                 <div className="md:col-span-2">
                   <label className={labelClass}>Vị trí ứng tuyển</label>
                   <input type="text" value={form.position} onChange={(e) => handleChange('position', e.target.value)} className={inputClass('position')} />
