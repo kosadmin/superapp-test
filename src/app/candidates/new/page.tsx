@@ -145,7 +145,7 @@ function NewCandidateForm() {
     try {
       const payload = {
         action: 'create',
-        name:user_id || 'unknown',
+        name:name || 'unknown',
                 user_id: user_id || 'unknown',
         user_group: user_group || 'unknown',
         ...form,
