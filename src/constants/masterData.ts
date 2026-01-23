@@ -1,6 +1,7 @@
 // Định nghĩa cấu trúc cho đối tượng nguồn dữ liệu để tránh lỗi Index Signature
 interface MasterDataType {
   projects: string[];
+    projectIdMap: Record<string, string>;
   projectCompanyMap: Record<string, string>;
   cities: string[];
   genders: string[];
@@ -42,6 +43,52 @@ export const MASTER_DATA: MasterDataType = {
     "DH Vina Outsourcing"
   ],
 
+  projectIDMap: {
+    "Brother Tuyển dụng": "Recruit_BRO",
+    "Sumidenso Tuyển dụng": "Recruit_SUMI",
+    "Tinh Lợi Tuyển dụng": "Recruit_TINHLOI",
+    "Crystal Sweater Tuyển dụng": "Recruit_CSVL",
+    "Heesung Tuyển dụng": "Recruit_HEESUNG",
+    "Canon Tuyển dụng": "Recruit_CANON",
+    "Pegatron Tuyển dụng": "Recruit_PEGATRON",
+    "Taishodo Tuyển dụng": "Recruit_TAISHODO",
+    "Meiko Tuyển dụng": "Recruit_MEIKO",
+    "Yazaki Tuyển dụng": "Recruit_YAZAKI",
+    "ShinEtsu Tuyển dụng": "Recruit_SHINETSU",
+    "Stavian Packaging Tuyển dụng": "Recruit_STAPACK",
+    "Stavian Tissue Tuyển dụng": "Recruit_STATIS",
+    "LG Display Outsourcing": "OS_LGD",
+    "VinFast Test xe Outsourcing": "OS_VFTEST",
+    "ORPC Outsourcing": "OS_ORPC",
+    "Michang Outsourcing": "OS_MICHANG",
+    "Nissin Outsourcing": "OS_NISSIN",
+    "Kennametal Outsourcing": "OS_KENNA",
+    "Fairmont Outsourcing": "OS_FAIRMONT",
+    "DH Vina Outsourcing": "OS_DHVINA"
+  },
+  projectTypeMap: {
+    "Brother Tuyển dụng": "Recruiting",
+    "Sumidenso Tuyển dụng": "Recruiting",
+    "Tinh Lợi Tuyển dụng": "Recruiting",
+    "Crystal Sweater Tuyển dụng": "Recruiting",
+    "Heesung Tuyển dụng": "Recruiting",
+    "Canon Tuyển dụng": "Recruiting",
+    "Pegatron Tuyển dụng": "Recruiting",
+    "Taishodo Tuyển dụng": "Recruiting",
+    "Meiko Tuyển dụng": "Recruiting",
+    "Yazaki Tuyển dụng": "Recruiting",
+    "ShinEtsu Tuyển dụng": "Recruiting",
+    "Stavian Packaging Tuyển dụng": "Recruiting",
+    "Stavian Tissue Tuyển dụng": "Recruiting",
+    "LG Display Outsourcing": "Outsourcing",
+    "VinFast Test xe Outsourcing": "Outsourcing",
+    "ORPC Outsourcing": "Outsourcing",
+    "Michang Outsourcing": "Outsourcing",
+    "Nissin Outsourcing": "Outsourcing",
+    "Kennametal Outsourcing": "Outsourcing",
+    "Fairmont Outsourcing": "Outsourcing",
+    "DH Vina Outsourcing": "Outsourcing"
+  },
   // --- THÊM PHẦN MAPPING NÀY ---
   projectCompanyMap: {
     "Brother Tuyển dụng": "Brother - Hải Dương",
