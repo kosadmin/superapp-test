@@ -77,7 +77,7 @@ export const MASTER_DATA = {
 
   // Danh sách Loại nguồn phụ thuộc vào Bộ phận
   // Key của object này phải trùng khớp với giá trị trong sourceDepartments
-  sourceTypesByDept: {
+  sourceTypeGroupsByDept: {
     "Marketing": [
       "Ads", 
       "Tiktok Organic", 
@@ -94,4 +94,4 @@ export const MASTER_DATA = {
 
 };
 
-export type SourceDeptType = keyof typeof MASTER_DATA.sourceTypesByDept;
+export type SourceDeptTypeGroup = keyof typeof MASTER_DATA.sourceTypesByDept;
