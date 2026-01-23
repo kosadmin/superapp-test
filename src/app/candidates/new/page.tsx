@@ -258,7 +258,7 @@ function NewCandidateForm() {
                 <label className={labelClass}>Bộ phận tạo nguồn</label>
                 <select value={form.data_source_dept} onChange={(e) => handleChange('data_source_dept', e.target.value)} className={inputClass('data_source_dept')}>
                   <option value="">-- Chọn bộ phận --</option>
-                  {MASTER_DATA.departments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
+                  {MASTER_DATA.sourceDepartments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
                 </select>
               </div>
               <div>
