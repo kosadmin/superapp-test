@@ -1,51 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
+import ProtectedRoute from '@/components/ProtectedRoute'
+import { useAuth } from '@/contexts/AuthContext'; 
 import { MASTER_DATA } from '@/constants/masterData';
-  import { useAuth } from '@/contexts/AuthContext';
-    import ProtectedRoute from '@/components/ProtectedRoute';
+
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
-
 // SVG Icons
 const Icons = {
-  UserPlus: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>,
-  Save: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
-  Loader2: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.21-8.58"/></svg>,
-  ArrowLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  UserPlus: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>
+  ),
+  Save: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+  ),
+  Loader2: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.21-8.58"/></svg>
+  ),
+  ArrowLeft: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  )
 };
-
-interface FormData {
-  candidate_name: string;
-  phone: string;
-  gender: string;
-  email: string;
-  id_card_number: string;
-  id_card_issued_date: string;
-  id_card_issued_place: string;
-  date_of_birth: string;
-  address_street: string;
-  address_ward: string;
-  address_city: string;
-  education_level: string;
-  experience_summary: string;
-  job_wish: string;
-  project: string;
-  position: string;
-  company: string;
-  data_source_dept: string;       // Bộ phận tạo nguồn
-  data_source_type_group: string; // Loại nguồn (Ads, Seeding...) - Phụ thuộc Bộ phận
-  data_source_type: string;       // Chi tiết nguồn (Text nhập tay nếu cần chi tiết hơn)
-  assigned_user: string;
-}
 
 function NewCandidateForm() {
   const { user_id, user_group } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState({});
 
-  const [form, setForm] = useState<FormData>({
+  const [form, setForm] = useState({
     candidate_name: '',
     phone: '',
     gender: '',
@@ -63,9 +48,9 @@ function NewCandidateForm() {
     project: '',
     position: '',
     company: '',
-    data_source_dept: '',
-    data_source_type_group: '',
-    data_source_type: '',
+    data_source_dept: '',      // Bộ phận tạo nguồn (Parent)
+    data_source_type_group: '', // Loại nguồn (Child - Dependent)
+    data_source_type: '',      // Chi tiết nguồn (Free text)
     assigned_user: '',
   });
 
@@ -81,16 +66,16 @@ function NewCandidateForm() {
     .filter(Boolean)
     .join(' - ');
 
-  // Lấy danh sách Loại nguồn dựa trên Bộ phận đã chọn
+  // Logic lấy danh sách Loại nguồn dựa trên Bộ phận đã chọn
   const availableSourceTypes = form.data_source_dept 
     ? MASTER_DATA.sourceTypeGroupsByDept[form.data_source_dept] || [] 
     : [];
 
   const validate = () => {
-    const newErrors: { [key: string]: string } = {};
+    const newErrors = {};
     
     // 1. Validation cơ bản
-    if (!form.candidate_name) newErrors.candidate_name = "Họ tên là bắt buộc";
+    if (!form.candidate_name) newErrors.candidate_name = "Vui lòng nhập họ tên";
     if (!form.phone || form.phone.length !== 10) newErrors.phone = "Số điện thoại phải đúng 10 số";
 
     // 2. Validation Master Data
@@ -98,19 +83,19 @@ function NewCandidateForm() {
       newErrors.project = "Dự án không hợp lệ";
     }
     if (form.address_city && !MASTER_DATA.cities.includes(form.address_city)) {
-      newErrors.address_city = "Tỉnh/Thành phố không nằm trong danh sách";
+      newErrors.address_city = "Tỉnh/Thành phố không hợp lệ";
     }
 
-    // 3. Validation Logic phụ thuộc (MỚI)
+    // 3. Validation Logic phụ thuộc
     if (form.data_source_dept && !MASTER_DATA.sourceDepartments.includes(form.data_source_dept)) {
-      newErrors.data_source_dept = "Bộ phận không hợp lệ";
+        newErrors.data_source_dept = "Bộ phận không hợp lệ";
     }
-
-    // Nếu đã chọn bộ phận nhưng loại nguồn không nằm trong danh sách của bộ phận đó
+    
+    // Nếu đã chọn bộ phận, bắt buộc chọn loại nguồn thuộc bộ phận đó
     if (form.data_source_dept && form.data_source_type_group) {
         const validTypes = MASTER_DATA.sourceTypeGroupsByDept[form.data_source_dept] || [];
         if (!validTypes.includes(form.data_source_type_group)) {
-            newErrors.data_source_type_group = `Loại nguồn này không thuộc bộ phận ${form.data_source_dept}`;
+            newErrors.data_source_type_group = "Loại nguồn không khớp với Bộ phận";
         }
     }
 
@@ -118,19 +103,19 @@ function NewCandidateForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (field: keyof FormData, value: string) => {
+  const handleChange = (field, value) => {
     setForm(prev => {
-        const newData = { ...prev, [field]: value };
-
-        // [LOGIC MỚI]: Nếu thay đổi Bộ phận (Dept), phải Reset Loại nguồn (Type Group)
-        if (field === 'data_source_dept') {
-            newData.data_source_type_group = ''; 
-        }
-
-        return newData;
+      const newData = { ...prev, [field]: value };
+      
+      // LOGIC ĐẶC BIỆT: Nếu thay đổi "Bộ phận", phải reset "Loại nguồn"
+      if (field === 'data_source_dept') {
+        newData.data_source_type_group = ''; 
+      }
+      
+      return newData;
     });
 
-    // Clear error khi user gõ
+    // Clear error khi user nhập liệu
     if (errors[field]) {
       setErrors(prev => {
         const next = { ...prev };
@@ -140,13 +125,17 @@ function NewCandidateForm() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    
+    if (!validate()) {
+        // Có thể thêm logic scroll to error tại đây
+        alert("Vui lòng kiểm tra lại thông tin nhập liệu");
+        return;
+    }
 
     setLoading(true);
 
-    // [PROD NOTE]: Thay thế alert bằng Toast notification nếu có
     try {
       const payload = {
         action: 'create',
@@ -158,30 +147,30 @@ function NewCandidateForm() {
         contacted: true,
       };
 
-      // [PROD NOTE]: Logic fetch giữ nguyên, nhưng trong Preview mình sẽ log ra console
-      console.log("Submitting payload:", payload);
-
-      // Giả lập delay mạng
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Giả lập thành công (Bỏ comment fetch thật khi chạy prod)
-      /* const res = await fetch(N8N_URL, {
+      // [PRODUCTION] Uncomment đoạn này để fetch thật
+      /*
+      const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
       if (!res.ok) throw new Error(`Lỗi server: ${res.status}`);
       const data = await res.json();
-      */
       
-      const data = { success: true }; // Mock result
-
       if (data.success) {
-        alert('Giả lập: Tạo ứng viên thành công! (Xem payload trong Console)');
-        // window.location.href = '/candidates'; // [PROD NOTE]: Uncomment dòng này
+        alert('Tạo ứng viên thành công!');
+        window.location.href = '/candidates';
       } else {
-        alert('Lỗi: Không thể tạo ứng viên');
+        alert('Lỗi: ' + (data.message || 'Không thể tạo ứng viên'));
       }
+      */
+
+      // [MOCK PREVIEW ONLY] Giả lập gọi API thành công sau 1.5s
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log("PAYLOAD SENT:", payload);
+      alert(`[MÔI TRƯỜNG TEST] Đã tạo thành công!\n\nBộ phận: ${payload.data_source_dept}\nLoại nguồn: ${payload.data_source_type_group}`);
+      
     } catch (err) {
       console.error("Submit error:", err);
       alert('Lỗi kết nối server.');
@@ -190,7 +179,7 @@ function NewCandidateForm() {
     }
   };
 
-  const inputClass = (fieldName: string) => `w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none transition-all bg-white text-gray-900 ${
+  const inputClass = (fieldName) => `w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none transition-all bg-white text-gray-900 ${
     errors[fieldName] ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500'
   }`;
   
@@ -201,7 +190,6 @@ function NewCandidateForm() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <div className="text-blue-600"><Icons.UserPlus /></div>
@@ -209,7 +197,7 @@ function NewCandidateForm() {
             </h1>
             <button 
                 type="button"
-                onClick={() => alert("Chuyển hướng về danh sách...")} // [PROD NOTE]: Thay bằng window.location.href
+                onClick={() => alert("Chuyển hướng về trang danh sách")} // [PRODUCTION] thay bằng window.location.href
                 className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
                 <Icons.ArrowLeft /> Quay lại
@@ -218,7 +206,7 @@ function NewCandidateForm() {
 
           <form onSubmit={handleSubmit} className="space-y-6 pb-20">
             
-            {/* 1. Thông tin cá nhân */}
+            {/* Thông tin cá nhân */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin cá nhân</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -229,7 +217,11 @@ function NewCandidateForm() {
                 </div>
                 <div>
                   <label className={labelClass}>Giới tính</label>
-                  <select value={form.gender} onChange={(e) => handleChange('gender', e.target.value)} className={inputClass('gender')}>
+                  <select 
+                    value={form.gender} 
+                    onChange={(e) => handleChange('gender', e.target.value)} 
+                    className={inputClass('gender')}
+                  >
                     <option value="">-- Chọn giới tính --</option>
                     {MASTER_DATA.genders.map((item) => (
                       <option key={item} value={item}>{item}</option>
@@ -256,7 +248,7 @@ function NewCandidateForm() {
               </div>
             </div>
 
-            {/* 2. Thông tin CCCD */}
+            {/* Căn cước công dân */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin CCCD</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -275,7 +267,7 @@ function NewCandidateForm() {
               </div>
             </div>
 
-            {/* 3. Địa chỉ */}
+            {/* Địa chỉ */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-emerald-700 mb-6 border-l-4 border-emerald-600 pl-3">Địa chỉ thường trú</h2>
               <div className="space-y-4">
@@ -290,7 +282,11 @@ function NewCandidateForm() {
                   </div>
                   <div>
                     <label className={labelClass}>Tỉnh / Thành phố</label>
-                    <select value={form.address_city} onChange={(e) => handleChange('address_city', e.target.value)} className={inputClass('address_city')}>
+                    <select 
+                      value={form.address_city} 
+                      onChange={(e) => handleChange('address_city', e.target.value)} 
+                      className={inputClass('address_city')}
+                    >
                       <option value="">-- Chọn tỉnh / thành phố --</option>
                       {MASTER_DATA.cities.map((item) => (
                         <option key={item} value={item}>{item}</option>
@@ -306,7 +302,7 @@ function NewCandidateForm() {
               </div>
             </div>
 
-            {/* 4. Học vấn & Kinh nghiệm */}
+            {/* Học vấn & Kinh nghiệm */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-orange-700 mb-6 border-l-4 border-orange-600 pl-3">Học vấn & Kinh nghiệm</h2>
               <div className="space-y-4">
@@ -325,13 +321,17 @@ function NewCandidateForm() {
               </div>
             </div>
 
-            {/* 5. Thông tin tuyển dụng */}
+            {/* Thông tin tuyển dụng */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-purple-700 mb-6 border-l-4 border-purple-600 pl-3">Phân loại tuyển dụng</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Dự án</label>
-                  <select value={form.project} onChange={(e) => handleChange('project', e.target.value)} className={inputClass('project')}>
+                  <select 
+                    value={form.project} 
+                    onChange={(e) => handleChange('project', e.target.value)} 
+                    className={inputClass('project')}
+                  >
                     <option value="">-- Chọn dự án --</option>
                     {MASTER_DATA.projects.map((item) => (
                       <option key={item} value={item}>{item}</option>
@@ -350,12 +350,12 @@ function NewCandidateForm() {
               </div>
             </div>
 
-            {/* 6. Nguồn dữ liệu (LOGIC MỚI Ở ĐÂY) */}
+            {/* Nguồn dữ liệu & Phụ trách */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-pink-700 mb-6 border-l-4 border-pink-600 pl-3">Nguồn dữ liệu & Phụ trách</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                {/* 6.1 Bộ phận tạo nguồn */}
+                {/* 1. Bộ phận tạo nguồn */}
                 <div>
                   <label className={labelClass}>Bộ phận tạo nguồn</label>
                   <select 
@@ -371,18 +371,19 @@ function NewCandidateForm() {
                   {errors.data_source_dept && <p className={errorMsgClass}>{errors.data_source_dept}</p>}
                 </div>
 
-                {/* 6.2 Loại nguồn (Dropdown phụ thuộc) */}
+                {/* 2. Loại nguồn (Dependent Dropdown) */}
                 <div>
-                  <label className={labelClass}>Loại nguồn (Chi tiết)</label>
+                  <label className={labelClass}>
+                     Loại nguồn
+                     {form.data_source_dept ? ` (${form.data_source_dept})` : ''}
+                  </label>
                   <select 
                     value={form.data_source_type_group} 
                     onChange={(e) => handleChange('data_source_type_group', e.target.value)} 
-                    className={`${inputClass('data_source_type_group')} ${!form.data_source_dept ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
-                    disabled={!form.data_source_dept}
+                    className={`${inputClass('data_source_type_group')} ${!form.data_source_dept ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+                    disabled={!form.data_source_dept} // Disable nếu chưa chọn Bộ phận
                   >
-                    <option value="">
-                        {!form.data_source_dept ? "-- Vui lòng chọn Bộ phận trước --" : "-- Chọn loại nguồn --"}
-                    </option>
+                    <option value="">-- Chọn loại nguồn --</option>
                     {availableSourceTypes.map((item) => (
                       <option key={item} value={item}>{item}</option>
                     ))}
@@ -390,20 +391,20 @@ function NewCandidateForm() {
                   {errors.data_source_type_group && <p className={errorMsgClass}>{errors.data_source_type_group}</p>}
                 </div>
 
-                {/* 6.3 Chi tiết thêm (Optional) */}
+                {/* 3. Chi tiết nguồn (Text input) */}
                 <div>
-                  <label className={labelClass}>Ghi chú nguồn (Không bắt buộc)</label>
+                  <label className={labelClass}>Chi tiết nguồn</label>
                   <input 
                     type="text" 
                     value={form.data_source_type} 
                     onChange={(e) => handleChange('data_source_type', e.target.value)} 
                     className={inputClass('data_source_type')} 
-                    placeholder="VD: Tên chiến dịch, tên CTV..."
+                    placeholder="Nhập chi tiết cụ thể..."
                   />
                 </div>
 
                 <div>
-                  <label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
+                  <label className={labelClass}>ID nhân viên phụ trách (Tự động)</label>
                   <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
                 </div>
               </div>
@@ -413,7 +414,7 @@ function NewCandidateForm() {
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 flex justify-center gap-4 z-10">
               <button
                 type="button"
-                onClick={() => alert('Hủy bỏ')} // [PROD NOTE]: Thay bằng window.location.href
+                onClick={() => alert("Hủy bỏ thao tác")}
                 className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-8 rounded-xl transition shadow-sm"
               >
                 Hủy bỏ
@@ -437,6 +438,7 @@ function NewCandidateForm() {
   );
 }
 
+// Wrapper Component để chạy trong môi trường Preview
 export default function NewCandidate() {
   return (
     <ProtectedRoute>
