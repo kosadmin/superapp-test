@@ -96,10 +96,15 @@ function NewCandidateForm() {
     .filter(Boolean)
     .join(' - ');
 
-  // Logic lấy danh sách Loại nguồn (Dùng ép kiểu as any để qua mặt check index signature của file cũ nếu cần)
-  const availableSourceTypes = form.data_source_dept 
-    ? (MASTER_DATA.sourceTypeGroupsByDept as any)[form.data_source_dept] || [] 
-    : [];
+// Logic lấy danh sách Loại nguồn (Level 2)
+const availableSourceTypeGroups = form.data_source_dept 
+  ? (MASTER_DATA.sourceTypeGroupsByDept as any)[form.data_source_dept] || [] 
+  : [];
+
+// THÊM MỚI: Logic lấy danh sách Nguồn cụ thể (Level 3)
+const availableSourceTypes = form.data_source_type_group
+  ? (MASTER_DATA.sourceTypesByGroup as any)[form.data_source_type_group] || []
+  : [];
 
   const validate = () => {
     const newErrors: FormErrors = {};
@@ -123,20 +128,35 @@ function NewCandidateForm() {
         if (!validTypes.includes(form.data_source_type_group)) {
             newErrors.data_source_type_group = "Loại nguồn không khớp với Bộ phận";
         }
+      // Kiểm tra Nguồn cụ thể có thuộc Loại nguồn đang chọn không
+if (form.data_source_type_group && form.data_source_type) {
+    const validSpecificTypes = (MASTER_DATA.sourceTypesByGroup as any)[form.data_source_type_group] || [];
+    if (!validSpecificTypes.includes(form.data_source_type)) {
+        newErrors.data_source_type = "Nguồn cụ thể không khớp với Loại nguồn";
+    }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (field: keyof CandidateForm, value: string) => {
-    setForm(prev => {
-      const newData = { ...prev, [field]: value };
-      if (field === 'data_source_dept') {
-        newData.data_source_type_group = ''; 
-      }
-      return newData;
-    });
+const handleChange = (field: keyof CandidateForm, value: string) => {
+  setForm(prev => {
+    const newData = { ...prev, [field]: value };
+    
+    // Nếu đổi Bộ phận -> Reset cả 2 cấp dưới
+    if (field === 'data_source_dept') {
+      newData.data_source_type_group = ''; 
+      newData.data_source_type = '';
+    }
+    
+    // THÊM MỚI: Nếu đổi Loại nguồn -> Reset Nguồn cụ thể
+    if (field === 'data_source_type_group') {
+      newData.data_source_type = '';
+    }
+    
+    return newData;
+  });
 
     if (errors[field]) {
       setErrors(prev => {
@@ -348,10 +368,21 @@ function NewCandidateForm() {
                     {availableSourceTypes.map((item: string) => (<option key={item} value={item}>{item}</option>))}
                   </select>
                 </div>
-                              <div>
-                  <label className={labelClass}>Loại nguồn cụ thể</label>
-                  <input type="text" value={form.data_source_type} onChange={(e) => handleChange('data_source_type', e.target.value)} className={inputClass('data_source_type')} />
-                </div>
+<div>
+  <label className={labelClass}>Nguồn cụ thể</label>
+  <select 
+    value={form.data_source_type} 
+    onChange={(e) => handleChange('data_source_type', e.target.value)} 
+    className={`${inputClass('data_source_type')} ${!form.data_source_type_group ? 'bg-gray-100' : ''}`}
+    disabled={!form.data_source_type_group}
+  >
+    <option value="">-- Chọn nguồn cụ thể --</option>
+    {availableSourceTypes.map((item: string) => (
+      <option key={item} value={item}>{item}</option>
+    ))}
+  </select>
+  {errors.data_source_type && <p className={errorMsgClass}>{errors.data_source_type}</p>}
+</div>
                 <div>
                   <label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
                   <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
