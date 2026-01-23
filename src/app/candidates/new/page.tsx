@@ -24,8 +24,11 @@ interface CandidateForm {
   experience_summary: string;
   job_wish: string;
   project: string;
+  project_id: string;
+  project_type: string;
   position: string;
   company: string;
+  department: string;
   data_source_dept: string;
   data_source_type_group: string;
   data_source_type: string;
@@ -72,8 +75,11 @@ function NewCandidateForm() {
     experience_summary: '',
     job_wish: '',
     project: '',
+    project_id: '',
+    project_type: '',
     position: '',
     company: '',
+    department: '',
     data_source_dept: '',
     data_source_type_group: '',
     data_source_type: '',
@@ -106,6 +112,16 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
     const newForm = { ...prev, [field]: value };
 
     // --- LOGIC AUTOFILL CÔNG TY ---
+            if (field === 'project') {
+      // Dò tìm công ty tương ứng từ master data, nếu không thấy thì để trống
+      const mappedProjectType = MASTER_DATA.projectTypeMap[value] || '';
+      newForm.project_type = mappedProjectType;
+    }
+        if (field === 'project') {
+      // Dò tìm công ty tương ứng từ master data, nếu không thấy thì để trống
+      const mappedProjectId = MASTER_DATA.projectIDMap[value] || '';
+      newForm.project_id = mappedProjectId;
+    }
     if (field === 'project') {
       // Dò tìm công ty tương ứng từ master data, nếu không thấy thì để trống
       const mappedCompany = MASTER_DATA.projectCompanyMap[value] || '';
@@ -317,6 +333,26 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                     {MASTER_DATA.projects.map((item) => (<option key={item} value={item}>{item}</option>))}
                   </select>
                 </div>
+                                <div>
+  <label className={labelClass}>Loại dự án (Tự động theo dự án)</label>
+  <input 
+    type="text" 
+    value={form.project_type} 
+    readOnly // Khóa không cho nhập
+    className={readOnlyClass} // Sử dụng class xám màu của bạn
+    placeholder="Sẽ hiển thị khi chọn dự án"
+  />
+</div>
+                <div>
+  <label className={labelClass}>ID Dự án (Tự động theo dự án)</label>
+  <input 
+    type="text" 
+    value={form.project_id} 
+    readOnly // Khóa không cho nhập
+    className={readOnlyClass} // Sử dụng class xám màu của bạn
+    placeholder="Sẽ hiển thị khi chọn dự án"
+  />
+</div>
 <div>
   <label className={labelClass}>Công ty (Tự động theo dự án)</label>
   <input 
@@ -327,6 +363,11 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
     placeholder="Sẽ hiển thị khi chọn dự án"
   />
 </div>
+                                                <div className="md:col-span-2">
+                  <label className={labelClass}>Bộ phận ứng tuyển</label>
+                  <input type="text" value={form.department} onChange={(e) => handleChange('department', e.target.value)} className={inputClass('department')} />
+                </div>
+
                                 <div className="md:col-span-2">
                   <label className={labelClass}>Vị trí ứng tuyển</label>
                   <input type="text" value={form.position} onChange={(e) => handleChange('position', e.target.value)} className={inputClass('position')} />
