@@ -1,33 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute'
-import { useAuth } from '@/contexts/AuthContext'; 
 import { MASTER_DATA } from '@/constants/masterData';
+  import { useAuth } from '@/contexts/AuthContext';
+    import ProtectedRoute from '@/components/ProtectedRoute';
 
-// --- CONFIG ---
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 
 
-// ==========================================
-// 2. ICONS & UTILS
-// ==========================================
+// SVG Icons
 const Icons = {
-  UserPlus: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>
-  ),
-  Save: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-  ),
-  Loader2: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.21-8.58"/></svg>
-  ),
-  ArrowLeft: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-  ),
-  AlertCircle: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-  )
+  UserPlus: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="16" x2="22" y1="11" y2="11"/></svg>,
+  Save: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
+  Loader2: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.21-8.58"/></svg>,
+  ArrowLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
 };
 
 interface FormData {
@@ -48,15 +34,11 @@ interface FormData {
   project: string;
   position: string;
   company: string;
-  data_source_dept: string;
-  data_source_type_group: string; // Có thể giữ hoặc bỏ nếu logic dept đã cover
-  data_source_type: string;
+  data_source_dept: string;       // Bộ phận tạo nguồn
+  data_source_type_group: string; // Loại nguồn (Ads, Seeding...) - Phụ thuộc Bộ phận
+  data_source_type: string;       // Chi tiết nguồn (Text nhập tay nếu cần chi tiết hơn)
   assigned_user: string;
 }
-
-// ==========================================
-// 3. MAIN COMPONENT
-// ==========================================
 
 function NewCandidateForm() {
   const { user_id, user_group } = useAuth();
@@ -94,49 +76,42 @@ function NewCandidateForm() {
     }
   }, [user_id]);
 
-  // Derived Values
   const birthYear = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
   const addressFull = [form.address_street, form.address_ward, form.address_city]
     .filter(Boolean)
     .join(' - ');
 
-  // Danh sách loại nguồn phụ thuộc (Dependent Dropdown Logic)
-  const availableSourceTypeGroup = form.data_source_dept && MASTER_DATA.sourceTypeGroupsByDept[form.data_source_dept as SourceDeptTypeGroupGroup]
-    ? MASTER_DATA.sourceTypeGroupsByDept[form.data_source_dept as SourceDeptTypeGroup]
+  // Lấy danh sách Loại nguồn dựa trên Bộ phận đã chọn
+  const availableSourceTypes = form.data_source_dept 
+    ? MASTER_DATA.sourceTypeGroupsByDept[form.data_source_dept] || [] 
     : [];
 
-  // --- VALIDATION ---
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
     
     // 1. Validation cơ bản
-    if (!form.candidate_name.trim()) newErrors.candidate_name = "Tên không được để trống";
-    if (!form.phone || !/^\d{10}$/.test(form.phone)) {
-      newErrors.phone = "Số điện thoại phải đúng 10 số";
-    }
+    if (!form.candidate_name) newErrors.candidate_name = "Họ tên là bắt buộc";
+    if (!form.phone || form.phone.length !== 10) newErrors.phone = "Số điện thoại phải đúng 10 số";
 
     // 2. Validation Master Data
     if (form.project && !MASTER_DATA.projects.includes(form.project)) {
       newErrors.project = "Dự án không hợp lệ";
     }
-
     if (form.address_city && !MASTER_DATA.cities.includes(form.address_city)) {
-      newErrors.address_city = "Tỉnh/Thành phố không hợp lệ";
+      newErrors.address_city = "Tỉnh/Thành phố không nằm trong danh sách";
     }
 
-    // 3. Validation Logic nguồn
+    // 3. Validation Logic phụ thuộc (MỚI)
     if (form.data_source_dept && !MASTER_DATA.sourceDepartments.includes(form.data_source_dept)) {
-      newErrors.data_source_dept = "Bộ phận không nằm trong danh sách";
+      newErrors.data_source_dept = "Bộ phận không hợp lệ";
     }
 
-    // Nếu đã chọn bộ phận, bắt buộc chọn loại nguồn chi tiết
-    if (form.data_source_dept && availableSourceTypeGroup.length > 0 && !form.data_source_type_group) {
-      newErrors.data_source_type_group = "Vui lòng chọn loại nguồn chi tiết";
-    }
-    
-    // Nếu chọn loại nguồn mà không khớp với bộ phận (hack form)
-    if (form.data_source_type_group && availableSourceTypeGroup.length > 0 && !availableSourceTypeGroup.includes(form.data_source_type_group)) {
-       newErrors.data_source_type_group = "Loại nguồn không khớp với bộ phận";
+    // Nếu đã chọn bộ phận nhưng loại nguồn không nằm trong danh sách của bộ phận đó
+    if (form.data_source_dept && form.data_source_type_group) {
+        const validTypes = MASTER_DATA.sourceTypeGroupsByDept[form.data_source_dept] || [];
+        if (!validTypes.includes(form.data_source_type_group)) {
+            newErrors.data_source_type_group = `Loại nguồn này không thuộc bộ phận ${form.data_source_dept}`;
+        }
     }
 
     setErrors(newErrors);
@@ -145,16 +120,17 @@ function NewCandidateForm() {
 
   const handleChange = (field: keyof FormData, value: string) => {
     setForm(prev => {
-      const updated = { ...prev, [field]: value };
-      
-      // LOGIC QUAN TRỌNG: Reset loại nguồn nếu bộ phận thay đổi
-      if (field === 'data_source_dept') {
-        updated.data_source_type_group = ''; 
-      }
-      return updated;
+        const newData = { ...prev, [field]: value };
+
+        // [LOGIC MỚI]: Nếu thay đổi Bộ phận (Dept), phải Reset Loại nguồn (Type Group)
+        if (field === 'data_source_dept') {
+            newData.data_source_type_group = ''; 
+        }
+
+        return newData;
     });
 
-    // Clear error on change
+    // Clear error khi user gõ
     if (errors[field]) {
       setErrors(prev => {
         const next = { ...prev };
@@ -166,14 +142,11 @@ function NewCandidateForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    if (!validate()) {
-       // Scroll to top or first error could be added here
-       return;
-    }
+    if (!validate()) return;
 
     setLoading(true);
 
+    // [PROD NOTE]: Thay thế alert bằng Toast notification nếu có
     try {
       const payload = {
         action: 'create',
@@ -185,30 +158,29 @@ function NewCandidateForm() {
         contacted: true,
       };
 
-      console.log("Submitting payload:", payload); // Debug log
+      // [PROD NOTE]: Logic fetch giữ nguyên, nhưng trong Preview mình sẽ log ra console
+      console.log("Submitting payload:", payload);
 
-      // --- SIMULATE API CALL CHO PREVIEW ---
-      // Khi chạy thật: Bỏ comment fetch và xóa phần setTimeout
-      /*
-      const res = await fetch(N8N_URL, {
+      // Giả lập delay mạng
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Giả lập thành công (Bỏ comment fetch thật khi chạy prod)
+      /* const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       if (!res.ok) throw new Error(`Lỗi server: ${res.status}`);
       const data = await res.json();
       */
-     
-      // Giả lập delay mạng
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const data = { success: true, message: "Mock success" }; 
+      
+      const data = { success: true }; // Mock result
 
       if (data.success) {
-        alert('Giả lập: Tạo ứng viên thành công!\nDữ liệu đã được log trong Console.');
-        // window.location.href = '/candidates'; // Uncomment khi chạy thật
+        alert('Giả lập: Tạo ứng viên thành công! (Xem payload trong Console)');
+        // window.location.href = '/candidates'; // [PROD NOTE]: Uncomment dòng này
       } else {
-        // alert('Lỗi: ' + (data.message || 'Không thể tạo ứng viên'));
+        alert('Lỗi: Không thể tạo ứng viên');
       }
     } catch (err) {
       console.error("Submit error:", err);
@@ -218,18 +190,13 @@ function NewCandidateForm() {
     }
   };
 
-  // --- STYLES ---
   const inputClass = (fieldName: string) => `w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none transition-all bg-white text-gray-900 ${
     errors[fieldName] ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500'
   }`;
   
-  const selectClass = (fieldName: string) => `w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none transition-all bg-white text-gray-900 appearance-none cursor-pointer ${
-    errors[fieldName] ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500'
-  }`;
-
-  const readOnlyClass = "w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed";
+  const readOnlyClass = "w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed";
   const labelClass = "block text-sm font-semibold text-gray-700 mb-1";
-  const errorMsgClass = "flex items-center gap-1 text-red-500 text-xs mt-1 font-medium";
+  const errorMsgClass = "text-red-500 text-xs mt-1 font-medium";
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
@@ -237,52 +204,42 @@ function NewCandidateForm() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="text-blue-600 bg-blue-50 p-2 rounded-lg"><Icons.UserPlus /></div>
+              <div className="text-blue-600"><Icons.UserPlus /></div>
               Tạo Mới Ứng Viên
             </h1>
             <button 
                 type="button"
-                onClick={() => console.log('Back clicked')}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm transition-all"
+                onClick={() => alert("Chuyển hướng về danh sách...")} // [PROD NOTE]: Thay bằng window.location.href
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
                 <Icons.ArrowLeft /> Quay lại
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6 pb-24">
+          <form onSubmit={handleSubmit} className="space-y-6 pb-20">
             
             {/* 1. Thông tin cá nhân */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3 flex items-center gap-2">
-                Thông tin cá nhân
-              </h2>
+              <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin cá nhân</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>Họ và tên <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Họ và tên *</label>
                   <input type="text" value={form.candidate_name} onChange={(e) => handleChange('candidate_name', e.target.value)} className={inputClass('candidate_name')} placeholder="Nguyễn Văn A" />
-                  {errors.candidate_name && <p className={errorMsgClass}><Icons.AlertCircle /> {errors.candidate_name}</p>}
+                  {errors.candidate_name && <p className={errorMsgClass}>{errors.candidate_name}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Giới tính</label>
-                  <div className="relative">
-                    <select 
-                        value={form.gender} 
-                        onChange={(e) => handleChange('gender', e.target.value)} 
-                        className={selectClass('gender')}
-                    >
-                        <option value="">-- Chọn giới tính --</option>
-                        {MASTER_DATA.genders.map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                        ))}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
-                  </div>
-                  {errors.gender && <p className={errorMsgClass}><Icons.AlertCircle /> {errors.gender}</p>}
+                  <select value={form.gender} onChange={(e) => handleChange('gender', e.target.value)} className={inputClass('gender')}>
+                    <option value="">-- Chọn giới tính --</option>
+                    {MASTER_DATA.genders.map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Số điện thoại <span className="text-red-500">*</span></label>
-                  <input type="text" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} className={inputClass('phone')} placeholder="0901234567" maxLength={10} />
-                  {errors.phone && <p className={errorMsgClass}><Icons.AlertCircle /> {errors.phone}</p>}
+                  <label className={labelClass}>Số điện thoại * (10 số)</label>
+                  <input type="text" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} className={inputClass('phone')} placeholder="0901234567" />
+                  {errors.phone && <p className={errorMsgClass}>{errors.phone}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Email</label>
@@ -299,7 +256,7 @@ function NewCandidateForm() {
               </div>
             </div>
 
-            {/* 2. Căn cước công dân */}
+            {/* 2. Thông tin CCCD */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin CCCD</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -333,20 +290,13 @@ function NewCandidateForm() {
                   </div>
                   <div>
                     <label className={labelClass}>Tỉnh / Thành phố</label>
-                    <div className="relative">
-                        <select 
-                        value={form.address_city} 
-                        onChange={(e) => handleChange('address_city', e.target.value)} 
-                        className={selectClass('address_city')}
-                        >
-                        <option value="">-- Chọn Tỉnh / Thành --</option>
-                        {MASTER_DATA.cities.map((item) => (
-                            <option key={item} value={item}>{item}</option>
-                        ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
-                    </div>
-                    {errors.address_city && <p className={errorMsgClass}><Icons.AlertCircle /> {errors.address_city}</p>}
+                    <select value={form.address_city} onChange={(e) => handleChange('address_city', e.target.value)} className={inputClass('address_city')}>
+                      <option value="">-- Chọn tỉnh / thành phố --</option>
+                      {MASTER_DATA.cities.map((item) => (
+                        <option key={item} value={item}>{item}</option>
+                      ))}
+                    </select>
+                    {errors.address_city && <p className={errorMsgClass}>{errors.address_city}</p>}
                   </div>
                 </div>
                 <div>
@@ -375,26 +325,19 @@ function NewCandidateForm() {
               </div>
             </div>
 
-            {/* 5. Phân loại tuyển dụng */}
+            {/* 5. Thông tin tuyển dụng */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-purple-700 mb-6 border-l-4 border-purple-600 pl-3">Phân loại tuyển dụng</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Dự án</label>
-                  <div className="relative">
-                    <select 
-                        value={form.project} 
-                        onChange={(e) => handleChange('project', e.target.value)} 
-                        className={selectClass('project')}
-                    >
-                        <option value="">-- Chọn dự án --</option>
-                        {MASTER_DATA.projects.map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                        ))}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
-                  </div>
-                  {errors.project && <p className={errorMsgClass}><Icons.AlertCircle /> {errors.project}</p>}
+                  <select value={form.project} onChange={(e) => handleChange('project', e.target.value)} className={inputClass('project')}>
+                    <option value="">-- Chọn dự án --</option>
+                    {MASTER_DATA.projects.map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </select>
+                  {errors.project && <p className={errorMsgClass}>{errors.project}</p>}
                 </div>
                 <div>
                   <label className={labelClass}>Công ty</label>
@@ -407,72 +350,70 @@ function NewCandidateForm() {
               </div>
             </div>
 
-            {/* 6. Nguồn dữ liệu & Phụ trách (QUAN TRỌNG) */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-pink-50 rounded-bl-full -z-0"></div>
-              <h2 className="text-lg font-bold text-pink-700 mb-6 border-l-4 border-pink-600 pl-3 relative z-10">Nguồn dữ liệu & Phụ trách</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+            {/* 6. Nguồn dữ liệu (LOGIC MỚI Ở ĐÂY) */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-lg font-bold text-pink-700 mb-6 border-l-4 border-pink-600 pl-3">Nguồn dữ liệu & Phụ trách</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                {/* Chọn Bộ Phận */}
+                {/* 6.1 Bộ phận tạo nguồn */}
                 <div>
-                  <label className={labelClass}>Bộ phận tạo nguồn <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <select 
-                        value={form.data_source_dept} 
-                        onChange={(e) => handleChange('data_source_dept', e.target.value)} 
-                        className={selectClass('data_source_dept')}
-                    >
-                        <option value="">-- Chọn bộ phận --</option>
-                        {MASTER_DATA.sourceDepartments.map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                        ))}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
-                  </div>
-                  {errors.data_source_dept && <p className={errorMsgClass}><Icons.AlertCircle /> {errors.data_source_dept}</p>}
+                  <label className={labelClass}>Bộ phận tạo nguồn</label>
+                  <select 
+                    value={form.data_source_dept} 
+                    onChange={(e) => handleChange('data_source_dept', e.target.value)} 
+                    className={inputClass('data_source_dept')}
+                  >
+                    <option value="">-- Chọn bộ phận --</option>
+                    {MASTER_DATA.sourceDepartments.map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </select>
+                  {errors.data_source_dept && <p className={errorMsgClass}>{errors.data_source_dept}</p>}
                 </div>
 
-                {/* Chọn Loại Nguồn (Phụ thuộc vào Bộ Phận) */}
+                {/* 6.2 Loại nguồn (Dropdown phụ thuộc) */}
                 <div>
-                  <label className={labelClass}>
-                    Loại nguồn 
-                    {form.data_source_dept && <span className="text-gray-400 font-normal ml-1">(theo {form.data_source_dept})</span>}
-                  </label>
-                  <div className="relative">
-                    <select 
-                        value={form.data_source_type_group} 
-                        onChange={(e) => handleChange('data_source_type_group', e.target.value)} 
-                        className={`${selectClass('data_source_type_group')} ${!form.data_source_dept ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
-                        disabled={!form.data_source_dept || availableSourceTypeGroup.length === 0}
-                    >
-                        <option value="">
-                             {form.data_source_dept ? "-- Chọn loại nguồn --" : "-- Chọn bộ phận trước --"}
-                        </option>
-                        {availableSourceTypeGroup.map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                        ))}
-                    </select>
-                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
-                  </div>
-                  {/* Hiển thị lỗi hoặc cảnh báo nếu bộ phận không có loại nguồn */}
-                  {errors.data_source_type_group && <p className={errorMsgClass}><Icons.AlertCircle /> {errors.data_source_type_group}</p>}
-                  {form.data_source_dept && availableSourceTypeGroup.length === 0 && (
-                      <p className="text-orange-500 text-xs mt-1">Bộ phận này chưa cấu hình danh sách nguồn.</p>
-                  )}
+                  <label className={labelClass}>Loại nguồn (Chi tiết)</label>
+                  <select 
+                    value={form.data_source_type_group} 
+                    onChange={(e) => handleChange('data_source_type_group', e.target.value)} 
+                    className={`${inputClass('data_source_type_group')} ${!form.data_source_dept ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
+                    disabled={!form.data_source_dept}
+                  >
+                    <option value="">
+                        {!form.data_source_dept ? "-- Vui lòng chọn Bộ phận trước --" : "-- Chọn loại nguồn --"}
+                    </option>
+                    {availableSourceTypes.map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </select>
+                  {errors.data_source_type_group && <p className={errorMsgClass}>{errors.data_source_type_group}</p>}
+                </div>
+
+                {/* 6.3 Chi tiết thêm (Optional) */}
+                <div>
+                  <label className={labelClass}>Ghi chú nguồn (Không bắt buộc)</label>
+                  <input 
+                    type="text" 
+                    value={form.data_source_type} 
+                    onChange={(e) => handleChange('data_source_type', e.target.value)} 
+                    className={inputClass('data_source_type')} 
+                    placeholder="VD: Tên chiến dịch, tên CTV..."
+                  />
                 </div>
 
                 <div>
-                  <label className={labelClass}>ID nhân viên phụ trách</label>
+                  <label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
                   <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
                 </div>
               </div>
             </div>
 
             {/* Footer Buttons */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-200 flex justify-center gap-4 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 flex justify-center gap-4 z-10">
               <button
                 type="button"
-                onClick={() => alert('Hủy thao tác')}
+                onClick={() => alert('Hủy bỏ')} // [PROD NOTE]: Thay bằng window.location.href
                 className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-8 rounded-xl transition shadow-sm"
               >
                 Hủy bỏ
@@ -480,7 +421,7 @@ function NewCandidateForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold py-3 px-12 rounded-xl transition shadow-lg flex items-center gap-2 transform hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-3 px-12 rounded-xl transition shadow-lg flex items-center gap-2"
               >
                 {loading ? (
                   <><Icons.Loader2 /> Đang xử lý...</>
