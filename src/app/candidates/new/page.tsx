@@ -284,6 +284,25 @@ function NewCandidateForm() {
               </div>
             </div>
 
+                      {/* Học vấn & Kinh nghiệm */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-lg font-bold text-orange-700 mb-6 border-l-4 border-orange-600 pl-3">Học vấn & Kinh nghiệm</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>Trình độ học vấn</label>
+                  <input type="text" value={form.education_level} onChange={(e) => handleChange('education_level', e.target.value)} className={inputClass('education_level')} placeholder="Đại học, Cao đẳng..." />
+                </div>
+                <div>
+                  <label className={labelClass}>Tóm tắt kinh nghiệm làm việc</label>
+                  <textarea rows={3} value={form.experience_summary} onChange={(e) => handleChange('experience_summary', e.target.value)} className={inputClass('experience_summary')} placeholder="Các công ty đã làm, vị trí đảm nhiệm..."></textarea>
+                </div>
+                <div>
+                  <label className={labelClass}>Nguyện vọng công việc</label>
+                  <textarea rows={2} value={form.job_wish} onChange={(e) => handleChange('job_wish', e.target.value)} className={inputClass('job_wish')} placeholder="Mong muốn về lương, môi trường..."></textarea>
+                </div>
+              </div>
+            </div>
+
             {/* Tuyển dụng */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-purple-700 mb-6 border-l-4 border-purple-600 pl-3">Phân loại tuyển dụng</h2>
@@ -299,12 +318,16 @@ function NewCandidateForm() {
                   <label className={labelClass}>Công ty</label>
                   <input type="text" value={form.company} onChange={(e) => handleChange('company', e.target.value)} className={inputClass('company')} />
                 </div>
+                                <div className="md:col-span-2">
+                  <label className={labelClass}>Vị trí ứng tuyển</label>
+                  <input type="text" value={form.position} onChange={(e) => handleChange('position', e.target.value)} className={inputClass('position')} />
+                </div>
               </div>
             </div>
 
             {/* Nguồn dữ liệu */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-pink-700 mb-6 border-l-4 border-pink-600 pl-3">Nguồn dữ liệu</h2>
+              <h2 className="text-lg font-bold text-pink-700 mb-6 border-l-4 border-pink-600 pl-3">Nguồn dữ liệu & Phụ trách</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Bộ phận tạo nguồn</label>
@@ -324,6 +347,14 @@ function NewCandidateForm() {
                     <option value="">-- Chọn loại nguồn --</option>
                     {availableSourceTypes.map((item: string) => (<option key={item} value={item}>{item}</option>))}
                   </select>
+                </div>
+                              <div>
+                  <label className={labelClass}>Loại nguồn cụ thể</label>
+                  <input type="text" value={form.data_source_type} onChange={(e) => handleChange('data_source_type', e.target.value)} className={inputClass('data_source_type')} />
+                </div>
+                <div>
+                  <label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
+                  <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
                 </div>
               </div>
             </div>
