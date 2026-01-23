@@ -71,6 +71,25 @@ export const MASTER_DATA = {
     "Quản lý nguồn",
   ],
 
+  // Danh sách Loại nguồn phụ thuộc vào Bộ phận
+  // Key của object này phải trùng khớp với giá trị trong sourceDepartments
+  sourceTypesByDept: {
+    "Marketing": [
+      "Ads", 
+      "Tiktok Organic", 
+      "MKT Organic"
+    ],
+    "Tuyển dụng": [
+      "Seeding"
+    ],
+    "Cộng tác viên": [
+      "CTV Cá nhân",
+      "Vendor"
+    ]
+  }
+
   // Giới tính (để đồng nhất)
   genders: ["Nam", "Nữ", "Khác"]
 };
+
+export type SourceDeptType = keyof typeof MASTER_DATA.sourceTypesByDept;
