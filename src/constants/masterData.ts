@@ -1,6 +1,7 @@
 // Định nghĩa cấu trúc cho đối tượng nguồn dữ liệu để tránh lỗi Index Signature
 interface MasterDataType {
   projects: string[];
+      projectTypeMap: Record<string, string>;
     projectIdMap: Record<string, string>;
   projectCompanyMap: Record<string, string>;
   cities: string[];
