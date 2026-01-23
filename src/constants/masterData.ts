@@ -86,9 +86,9 @@ export const MASTER_DATA = {
     "Tuyển dụng": [
       "Seeding"
     ],
-    "Cộng tác viên": [
-      "CTV Cá nhân",
-      "Vendor"
+    "Quản lý nguồn": [
+      "Vendor/CTV",
+      "Offline"
     ]
   }
 
