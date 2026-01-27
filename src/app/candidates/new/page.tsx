@@ -309,8 +309,11 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
               <h2 className="text-lg font-bold text-orange-700 mb-6 border-l-4 border-orange-600 pl-3">Học vấn & Kinh nghiệm</h2>
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>Trình độ học vấn</label>
-                  <input type="text" value={form.education_level} onChange={(e) => handleChange('education_level', e.target.value)} className={inputClass('education_level')} placeholder="Đại học, Cao đẳng..." />
+                  <label className={labelClass}>Trình độ  học vấn</label>
+                  <select value={form.education_level} onChange={(e) => handleChange('education_level', e.target.value)} className={inputClass('education_level')}>
+                    <option value="">-- Chọn Trình độ --</option>
+                    {MASTER_DATA.educationLevels.map((item) => (<option key={item} value={item}>{item}</option>))}
+                  </select>
                 </div>
                 <div>
                   <label className={labelClass}>Tóm tắt kinh nghiệm làm việc</label>
