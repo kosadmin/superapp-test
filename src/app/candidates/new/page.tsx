@@ -231,6 +231,9 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 pb-24">
+          {/* Layout 2 cột trên màn hình lớn (lg) */}
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <div className="space-y-6">
           {/* Thông tin cá nhân */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin cá nhân</h2>
@@ -310,7 +313,9 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                 <input type="text" value={addressFull} readOnly className={readOnlyClass} placeholder="Địa chỉ hiển thị tự động" />
               </div>
             </div>
+      </div>
 
+    <div className="space-y-6">
                       {/* Học vấn & Kinh nghiệm */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-orange-700 mb-6 border-l-4 border-orange-600 pl-3">Học vấn & Kinh nghiệm</h2>
@@ -447,6 +452,8 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
 </div>
             </div>
           </div>
+      </div>
+  </div>
 
           {/* Nút thao tác */}
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 flex justify-center gap-4 z-10">
