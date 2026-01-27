@@ -33,6 +33,7 @@ interface CandidateForm {
   data_source_type_group: string;
   data_source_type: string;
   assigned_user: string;
+    assigned_user_group: string;
 }
 
 interface FormErrors {
@@ -84,6 +85,7 @@ function NewCandidateForm() {
     data_source_type_group: '',
     data_source_type: '',
     assigned_user: '',
+        assigned_user_group: '',
   });
 
   // Tự động điền ID nhân viên khi có thông tin auth
@@ -91,7 +93,11 @@ function NewCandidateForm() {
     if (user_id) {
       setForm(prev => ({ ...prev, assigned_user: String(user_id) }));
     }
-  }, [user_id]);
+  }, [user_group]);
+      if (user_group) {
+      setForm(prev => ({ ...prev, assigned_user_group: String(user_group) }));
+    }
+  }, [user_group]);
 
   // Logic Master Data lọc dropdown
   const availableSourceTypeGroups = form.data_source_dept 
@@ -408,6 +414,10 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                                 <div>
 <label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
                   <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
+                </div>
+                                              <div>
+<label className={labelClass}>Nhóm phụ trách (Tự động điền)</label>
+                  <input type="text" value={form.assigned_user_group} onChange={(e) => handleChange('assigned_user_group', e.target.value)} className={inputClass('assigned_user_group')} placeholder="Nhập ID nhóm..." />
                 </div>
             </div>
           </div>
