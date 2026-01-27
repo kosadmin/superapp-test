@@ -269,9 +269,22 @@ function CandidatesContent() {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
   };
 
-  const handleSave = async () => {
-    if (!formData) return;
-    setIsSaving(true);
+const handleSave = async () => {
+  if (!formData) return;
+
+  // --- BỔ SUNG VALIDATION ---
+  if (!formData.candidate_name?.trim()) return alert('Họ tên không được để trống');
+  if (!formData.phone?.trim()) return alert('Số điện thoại không được để trống');
+  
+  const phoneRegex = /^\d{10}$/;
+  if (!phoneRegex.test(formData.phone)) return alert('Số điện thoại phải đúng 10 chữ số');
+
+  if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+    return alert('Email không đúng định dạng');
+  }
+  // --------------------------
+
+  setIsSaving(true);
     try {
       const res = await fetch(N8N_URL, {
         method: 'POST',
@@ -523,9 +536,9 @@ function CandidatesContent() {
                     </div>
                   </section>
 
-                  {/* 2. IMPORTANT DATES */}
+                  {/* 2. THÔNG TIN LỊCH HẸN */}
                   <section>
-                        <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-emerald-500 pl-3 text-xs uppercase tracking-wider">Thông tin quan trọng</h3>
+                        <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-emerald-500 pl-3 text-xs uppercase tracking-wider">Thông tin lịch hẹn</h3>
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-3">
                                 <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày phỏng vấn</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-emerald-50/30 focus:bg-white focus:border-emerald-500 transition" value={formatDateToISO(formData.interview_date)} onChange={e => handleChange('interview_date', formatISOToDDMMYYYY(e.target.value))} /></div>
@@ -552,22 +565,34 @@ function CandidatesContent() {
                   </section>
 
                   {/* 4. PERSONAL INFO */}
-                  <section>
-                    <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-purple-500 pl-3 text-xs uppercase tracking-wider">Thông tin cá nhân</h3>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
-  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Email</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
-  
-  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
-  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày cấp CCCD</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formatDateToISO(formData.id_card_issued_date)} onChange={e => handleChange('id_card_issued_date', formatISOToDDMMYYYY(e.target.value))} /></div>
-        <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nơi cấp CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_place || ''} onChange={e => handleChange('id_card_issued_place', e.target.value)} /></div>
-  
-  <div className="col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nơi cấp CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_place || ''} onChange={e => handleChange('id_card_issued_place', e.target.value)} /></div>
-  
-  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
-  <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label><input type="number" className="w-full p-2.5 border rounded-xl mt-1" value={formData.birth_year || ''} onChange={e => handleChange('birth_year', e.target.value)} /></div>
-</div>
-                  </section>
+         <section>
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-purple-500 pl-3 text-xs uppercase tracking-wider">Thông tin cá nhân</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+    {/* Thêm Giới tính */}
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Giới tính</label>
+      <select className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.gender || ''} onChange={e => handleChange('gender', e.target.value)}>
+        <option value="">-- Chọn --</option>
+        {['Nam', 'Nữ', 'Khác'].map(g => <option key={g} value={g}>{g}</option>)}
+      </select>
+    </div>
+    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
+    
+    {/* Địa chỉ chi tiết */}
+    <div className="col-span-2 grid grid-cols-3 gap-3">
+       <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Đường/Số nhà</label><input className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_street || ''} onChange={e => handleChange('address_street', e.target.value)} /></div>
+       <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Phường/Xã</label><input className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_ward || ''} onChange={e => handleChange('address_ward', e.target.value)} /></div>
+       <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tỉnh/Thành</label><input className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_city || ''} onChange={e => handleChange('address_city', e.target.value)} /></div>
+    </div>
+
+    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
+    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày cấp CCCD</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formatDateToISO(formData.id_card_issued_date)} onChange={e => handleChange('id_card_issued_date', formatISOToDDMMYYYY(e.target.value))} /></div>
+    <div className="col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nơi cấp CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_place || ''} onChange={e => handleChange('id_card_issued_place', e.target.value)} /></div>
+    
+    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
+    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label><input className="w-full p-2.5 border rounded-xl mt-1 bg-gray-50" value={formData.date_of_birth?.split('-')[0] || ''} readOnly /></div>
+  </div>
+</section>
 
                  <section>
   <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-orange-500 pl-3 text-xs uppercase tracking-wider">Học vấn & Sự nghiệp</h3>
