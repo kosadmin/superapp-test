@@ -218,8 +218,8 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
   const errorClass = "text-red-500 text-xs mt-1 font-medium";
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-2 md:p-4 lg:p-6 font-sans text-gray-900">
+      <div className="max-w-[95%] lg:max-w-6xl xl:max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <div className="text-blue-600"><Icons.UserPlus /></div>
