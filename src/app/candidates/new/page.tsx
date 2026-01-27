@@ -209,19 +209,19 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
     }
   };
 
-  const inputClass = (field: keyof CandidateForm) => `
-    w-full px-4 py-2 border rounded-lg outline-none transition-all bg-white text-gray-900
-    ${errors[field] ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'}
-  `;
-  const readOnlyClass = "w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed";
-  const labelClass = "block text-sm font-semibold text-gray-700 mb-1";
-  const errorClass = "text-red-500 text-xs mt-1 font-medium";
+const inputClass = (field: keyof CandidateForm) => `
+  w-full px-3 py-1.5 border rounded-lg outline-none transition-all bg-white text-[14px]
+  ${errors[field] ? 'border-red-500 focus:ring-1 focus:ring-red-200' : 'border-gray-300 focus:ring-1 focus:ring-blue-500'}
+`;
+const readOnlyClass = "w-full px-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-[14px] text-gray-500 cursor-not-allowed";
+const labelClass = "block text-[13px] font-bold text-gray-600 mb-1 ml-1";
+const errorClass = "text-red-500 text-[11px] mt-0.5 font-medium";
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 md:p-4 lg:p-6 font-sans text-gray-900">
       <div className="max-w-[95%] lg:max-w-6xl xl:max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-3">
             <div className="text-blue-600"><Icons.UserPlus /></div>
             Tạo Mới Ứng Viên
           </h1>
@@ -232,12 +232,12 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
 
         <form onSubmit={handleSubmit} className="space-y-6 pb-24">
           {/* Layout 2 cột trên màn hình lớn (lg) */}
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-4 gap-y-3 items-start">
     <div className="space-y-6">
           {/* Thông tin cá nhân */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin cá nhân</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h2 className="text-[15px] font-extrabold uppercase tracking-wide text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin cá nhân</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
               <div>
                 <label className={labelClass}>Họ và tên *</label>
                 <input type="text" value={form.candidate_name} onChange={(e) => handleChange('candidate_name', e.target.value)} className={inputClass('candidate_name')} placeholder="Nguyễn Văn A" />
@@ -273,8 +273,8 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
 
             {/* Căn cước công dân */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin CCCD</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <h2 className="text-[15px] font-extrabold uppercase tracking-wide text-blue-700 mb-6 border-l-4 border-blue-600 pl-3">Thông tin CCCD</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                 <div>
                   <label className={labelClass}>Số CCCD</label>
                   <input type="text" value={form.id_card_number} onChange={(e) => handleChange('id_card_number', e.target.value)} className={inputClass('id_card_number')} />
@@ -289,12 +289,9 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                 </div>
               </div>
             </div>
-      </div>
-
-          <div className="space-y-6">
           {/* Địa chỉ */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-emerald-700 mb-6 border-l-4 border-emerald-600 pl-3">Địa chỉ thường trú</h2>
+              <h2 className="text-[15px] font-extrabold uppercase tracking-wide text-emerald-700 mb-6 border-l-4 border-emerald-600 pl-3">Địa chỉ thường trú</h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -316,10 +313,12 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                 <input type="text" value={addressFull} readOnly className={readOnlyClass} placeholder="Địa chỉ hiển thị tự động" />
               </div>
             </div>
+      </div>
 
+    <div className="space-y-6">
                       {/* Học vấn & Kinh nghiệm */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-orange-700 mb-6 border-l-4 border-orange-600 pl-3">Học vấn & Kinh nghiệm</h2>
+              <h2 className="text-[15px] font-extrabold uppercase tracking-wide text-orange-700 mb-6 border-l-4 border-orange-600 pl-3">Học vấn & Kinh nghiệm</h2>
               <div className="space-y-4">
                 <div>
                   <label className={labelClass}>Trình độ  học vấn</label>
@@ -338,13 +337,10 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                 </div>
               </div>
             </div>
-                        </div>
-
-                      <div className="space-y-6">
             {/* Tuyển dụng */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-purple-700 mb-6 border-l-4 border-purple-600 pl-3">Phân loại tuyển dụng</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <h2 className="text-[15px] font-extrabold uppercase tracking-wide text-purple-700 mb-6 border-l-4 border-purple-600 pl-3">Phân loại tuyển dụng</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                 <div>
                   <label className={labelClass}>Dự án</label>
                   <select value={form.project} onChange={(e) => handleChange('project', e.target.value)} className={inputClass('project')}>
@@ -398,8 +394,8 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
 
           {/* Nguồn dữ liệu & Phụ trách */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-bold text-pink-700 mb-6 border-l-4 border-pink-600 pl-3">Nguồn dữ liệu & Phụ trách</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h2 className="text-[15px] font-extrabold uppercase tracking-wide text-pink-700 mb-6 border-l-4 border-pink-600 pl-3">Nguồn dữ liệu & Phụ trách</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
               <div>
                 <label className={labelClass}>Bộ phận tạo nguồn</label>
                 <select value={form.data_source_dept} onChange={(e) => handleChange('data_source_dept', e.target.value)} className={inputClass('data_source_dept')}>
