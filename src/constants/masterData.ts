@@ -6,6 +6,7 @@ interface MasterDataType {
   projectCompanyMap: Record<string, string>;
   cities: string[];
   genders: string[];
+educationLevels: string[];
   sourceDepartments: string[];
   sourceTypeGroupsByDept: {
     [key: string]: string[] | undefined; // Cho phép truy cập bằng key string bất kỳ
@@ -127,6 +128,9 @@ export const MASTER_DATA: MasterDataType = {
 
   // Giới tính
   genders: ["Nam", "Nữ", "Khác"],
+
+    // Trình độ học vấn
+  educationLevels: ["PTCS", "PTTH", "Trung cấp", "Cao đẳng", "Đại học"],
 
   // Danh sách bộ phận tạo nguồn
   sourceDepartments: [
