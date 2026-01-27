@@ -88,16 +88,14 @@ function NewCandidateForm() {
         assigned_user_group: '',
   });
 
-  // Tự động điền ID nhân viên khi có thông tin auth
-  useEffect(() => {
-    if (user_id) {
-      setForm(prev => ({ ...prev, assigned_user: String(user_id) }));
-    }
-  }, [user_group]);
-      if (user_group) {
-      setForm(prev => ({ ...prev, assigned_user_group: String(user_group) }));
-    }
-  }, [user_group]);
+// Tự động điền ID nhân viên và Nhóm khi có thông tin auth
+useEffect(() => {
+  setForm(prev => ({
+    ...prev,
+    assigned_user: user_id ? String(user_id) : prev.assigned_user,
+    assigned_user_group: user_group ? String(user_group) : prev.assigned_user_group,
+  }));
+}, [user_id, user_group]);
 
   // Logic Master Data lọc dropdown
   const availableSourceTypeGroups = form.data_source_dept 
