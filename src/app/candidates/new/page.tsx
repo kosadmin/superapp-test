@@ -409,14 +409,29 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                   {availableSourceTypes.map(type => <option key={type} value={type}>{type}</option>)}
                 </select>
               </div>
-                                <div>
-<label className={labelClass}>ID nhân viên phụ trách (Tự động điền)</label>
-                  <input type="text" value={form.assigned_user} onChange={(e) => handleChange('assigned_user', e.target.value)} className={inputClass('assigned_user')} placeholder="Nhập ID nhân viên..." />
-                </div>
-                                              <div>
-<label className={labelClass}>Nhóm phụ trách (Tự động điền)</label>
-                  <input type="text" value={form.assigned_user_group} onChange={(e) => handleChange('assigned_user_group', e.target.value)} className={inputClass('assigned_user_group')} placeholder="Nhập ID nhóm..." />
-                </div>
+{/* ID nhân viên phụ trách */}
+<div>
+  <label className={labelClass}>ID nhân viên phụ trách (Tự động)</label>
+  <input 
+    type="text" 
+    value={form.assigned_user} 
+    readOnly // Thêm thuộc tính này
+    className={readOnlyClass} // Đổi từ inputClass sang readOnlyClass
+    placeholder="Chưa có ID..." 
+  />
+</div>
+
+{/* Nhóm phụ trách */}
+<div>
+  <label className={labelClass}>Nhóm phụ trách (Tự động)</label>
+  <input 
+    type="text" 
+    value={form.assigned_user_group} 
+    readOnly // Thêm thuộc tính này
+    className={readOnlyClass} // Đổi từ inputClass sang readOnlyClass
+    placeholder="Chưa có nhóm..." 
+  />
+</div>
             </div>
           </div>
 
