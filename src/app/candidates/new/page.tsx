@@ -232,7 +232,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
 
         <form onSubmit={handleSubmit} className="space-y-6 pb-24">
           {/* Layout 2 cột trên màn hình lớn (lg) */}
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
     <div className="space-y-6">
           {/* Thông tin cá nhân */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -289,6 +289,9 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                 </div>
               </div>
             </div>
+      </div>
+
+          <div className="space-y-6">
           {/* Địa chỉ */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-emerald-700 mb-6 border-l-4 border-emerald-600 pl-3">Địa chỉ thường trú</h2>
@@ -313,9 +316,7 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                 <input type="text" value={addressFull} readOnly className={readOnlyClass} placeholder="Địa chỉ hiển thị tự động" />
               </div>
             </div>
-      </div>
 
-    <div className="space-y-6">
                       {/* Học vấn & Kinh nghiệm */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-orange-700 mb-6 border-l-4 border-orange-600 pl-3">Học vấn & Kinh nghiệm</h2>
@@ -337,6 +338,9 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
                 </div>
               </div>
             </div>
+                        </div>
+
+                      <div className="space-y-6">
             {/* Tuyển dụng */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-bold text-purple-700 mb-6 border-l-4 border-purple-600 pl-3">Phân loại tuyển dụng</h2>
