@@ -33,6 +33,7 @@ interface CandidateForm {
   data_source_type_group: string;
   data_source_type: string;
   assigned_user: string;
+    assigned_user_name: string;
     assigned_user_group: string;
 }
 
@@ -85,17 +86,19 @@ function NewCandidateForm() {
     data_source_type_group: '',
     data_source_type: '',
     assigned_user: '',
+        assigned_user_name: '',
         assigned_user_group: '',
   });
 
-// Tự động điền ID nhân viên và Nhóm khi có thông tin auth
+// Tự động điền ID nhân viên, Tên nhân viên và Nhóm khi có thông tin auth
 useEffect(() => {
   setForm(prev => ({
     ...prev,
     assigned_user: user_id ? String(user_id) : prev.assigned_user,
+        assigned_user_name: name ? String(name) : prev.assigned_user_name,
     assigned_user_group: user_group ? String(user_group) : prev.assigned_user_group,
   }));
-}, [user_id, user_group]);
+}, [user_id, name, user_group]);
 
   // Logic Master Data lọc dropdown
   const availableSourceTypeGroups = form.data_source_dept 
@@ -418,6 +421,16 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
     readOnly // Thêm thuộc tính này
     className={readOnlyClass} // Đổi từ inputClass sang readOnlyClass
     placeholder="Chưa có ID..." 
+  />
+</div>
+              <div>
+  <label className={labelClass}>Tên nhân viên phụ trách (Tự động)</label>
+  <input 
+    type="text" 
+    value={form.assigned_user_name} 
+    readOnly // Thêm thuộc tính này
+    className={readOnlyClass} // Đổi từ inputClass sang readOnlyClass
+    placeholder="Chưa có tên..." 
   />
 </div>
 
