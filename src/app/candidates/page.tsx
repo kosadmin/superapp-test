@@ -748,7 +748,7 @@ const handleSave = async () => {
   <div className="grid grid-cols-2 gap-x-6 gap-y-4">
 
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
-    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày cấp CCCD</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formatDateToISO(formData.id_card_issued_date)} onChange={e => handleChange('id_card_issued_date', formatISOToDDMMYYYY(e.target.value))} /></div>
+    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày cấp CCCD</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_date|| ''} onChange={e => handleChange('id_card_issued_date', e.target.value)} /></div>
     <div className="col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nơi cấp CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_place || ''} onChange={e => handleChange('id_card_issued_place', e.target.value)} /></div>
     
   
