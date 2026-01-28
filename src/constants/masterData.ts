@@ -8,6 +8,8 @@ interface MasterDataType {
   genders: string[];
 educationLevels: string[];
   sourceDepartments: string[];
+  rejectReasonsOffer: string[];     
+  rejectReasonsUnqualified: string[];
   sourceTypeGroupsByDept: {
     [key: string]: string[] | undefined; // Cho phép truy cập bằng key string bất kỳ
     "Marketing": string[];
@@ -162,6 +164,22 @@ export const MASTER_DATA: MasterDataType = {
     "Vendor/CTV": ["CTV cá nhân", "Vendor"],
     "Offline": ["Trường học", "Sự kiện tuyển dụng", "Cơ quan địa phương"]
   }
+  rejectReasonsOffer: [
+    "Lương thấp",
+    "Đã có việc khác",
+    "Không có nhu cầu",
+      "Công việc không phù hợp",
+    "Xa nhà",
+    "Lý do cá nhân",
+    "Khác"
+  ],
+  rejectReasonsUnqualified: [
+    "Không đạt về trình độ",
+    "Không đạt về sức khỏe",
+    "Thái độ không tốt",
+    "Hồ sơ giả mạo",
+    "Khác"
+  ]
 };
 
 // Export Type để sử dụng ở các file khác nếu cần
