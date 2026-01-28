@@ -342,7 +342,7 @@ const handleSave = async () => {
   };
 
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
-
+}
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden text-sm p-4 gap-4">
       
@@ -586,7 +586,9 @@ const handleSave = async () => {
       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Giới tính</label>
       <select className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.gender || ''} onChange={e => handleChange('gender', e.target.value)}>
         <option value="">-- Chọn giới tính --</option>
-        {MASTER_DATA.genders.map((item) => (<option key={item} value={item}>{item}</option>))}</option>)}
+{MASTER_DATA.genders.map((item) => (
+  <option key={item} value={item}>{item}</option>
+))}
       </select>
     </div>
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
@@ -620,7 +622,9 @@ const handleSave = async () => {
       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tỉnh / Thành phố</label>
       <select className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_city || ''} onChange={e => handleChange('address_city', e.target.value)}>
         <option value="">-- Chọn --</option>
-        {MASTER_DATA.cities.map((item) => (<option key={item} value={item}>{item}</option>))}</option>)}
+{MASTER_DATA.cities.map((item) => (
+  <option key={item} value={item}>{item}</option>
+))}
       </select>
     </div>
     </div>
