@@ -276,12 +276,46 @@ const addressFull = [formData?.address_street, formData?.address_ward, formData?
   .join(' - ');
 
 // Khai báo thêm biến này để tránh lỗi "readOnlyClass is not defined" ở phần JSX bên dưới
-const readOnlyClass = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500 italic";
+const readOnlyClass = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500";
   
   const handleChange = (field: string, value: any) => {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
   };
+// --- LOGIC MỚI: Xử lý thay đổi Dự án (Yêu cầu 3) ---
+  const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setFormData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        project: val,
+        // Tự động điền các trường ReadOnly dựa vào MasterData
+        project_id: MASTER_DATA.projectIdMap[val] || '',
+        project_type: MASTER_DATA.projectTypeMap[val] || '',
+        company: MASTER_DATA.projectCompanyMap[val] || '',
+      };
+    });
+  };
 
+  // --- LOGIC MỚI: Xử lý Cascading Dropdown cho Nguồn (Yêu cầu 7) ---
+  const handleSourceDeptChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setFormData(prev => prev ? { 
+      ...prev, 
+      data_source_dept: val, 
+      data_source_type_group: '', // Reset cấp con
+      data_source_type: ''        // Reset cấp cháu
+    } : null);
+  };
+
+  const handleSourceGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setFormData(prev => prev ? { 
+      ...prev, 
+      data_source_type_group: val, 
+      data_source_type: ''        // Reset cấp cháu
+    } : null);
+  };
 const handleSave = async () => {
   if (!formData) return;
 
@@ -512,9 +546,13 @@ const handleSave = async () => {
                   <div className="flex items-center gap-3">
                     <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-200 rounded-full transition">✕</button>
                     <div>
-                        <h2 className="font-bold text-lg uppercase text-blue-800 leading-none">{formData.candidate_name}</h2>
-                        <span className="text-[10px] font-mono text-gray-400">{formData.candidate_id}</span>
-                    </div>
+<input 
+      className="font-bold text-lg uppercase text-blue-800 leading-none bg-transparent border-b border-transparent hover:border-blue-300 focus:border-blue-600 outline-none w-full"
+      value={formData.candidate_name} 
+      onChange={(e) => handleChange('candidate_name', e.target.value)}
+    />
+    <span className="text-[10px] font-mono text-gray-400">{formData.candidate_id}</span>
+</div>
                   </div>
                   <div className="flex gap-2">
                       <button
@@ -558,24 +596,68 @@ const handleSave = async () => {
                                 <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày nhận việc</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-emerald-50/30 focus:bg-white focus:border-emerald-500 transition" value={formatDateToISO(formData.onboard_date)} onChange={e => handleChange('onboard_date', formatISOToDDMMYYYY(e.target.value))} /></div>
                             </div>
                             <div className="space-y-3">
-                                <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do từ chối Offer</label><input className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-gray-50 focus:bg-white focus:border-gray-500 transition placeholder:text-gray-300 text-sm" placeholder="..." value={formData.reason_rejected_offer || ''} onChange={e => handleChange('reason_rejected_offer', e.target.value)} /></div>
-                                <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do không đạt</label><input className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-gray-50 focus:bg-white focus:border-gray-500 transition placeholder:text-gray-300 text-sm" placeholder="..." value={formData.reason_unqualified || ''} onChange={e => handleChange('reason_unqualified', e.target.value)} /></div>
+                                <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do từ chối Offer</label><select 
+            className="w-full p-2.5 border rounded-xl mt-1 text-sm outline-none bg-gray-50 focus:bg-white"
+            value={formData.reason_rejected_offer || ''} 
+            onChange={e => handleChange('reason_rejected_offer', e.target.value)}
+        >
+            <option value="">-- Chọn lý do --</option>
+            {MASTER_DATA.rejectReasonsOffer.map(r => <option key={r} value={r}>{r}</option>)}
+        </select></div>
+                                <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do không đạt</label><select 
+            className="w-full p-2.5 border rounded-xl mt-1 text-sm outline-none bg-gray-50 focus:bg-white"
+            value={formData.reason_unqualified || ''} 
+            onChange={e => handleChange('reason_unqualified', e.target.value)}
+        >
+            <option value="">-- Chọn lý do --</option>
+            {MASTER_DATA.rejectReasonsUnqualified.map(r => <option key={r} value={r}>{r}</option>)}
+        </select></div>
                             </div>
                         </div>
                   </section>
 
                   {/* 3. JOB INFO */}
-                  <section>
-                    <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Thông tin tuyển dụng</h3>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      {['project', 'project_id', 'project_type', 'position', 'company', 'department'].map(field => (
-                        <div key={field}>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{DEFAULT_COLUMNS.find(c => c.id === field)?.label || field}</label>
-                          <input className="w-full p-2.5 border rounded-xl mt-1 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition" value={formData[field] || ''} onChange={e => handleChange(field, e.target.value)} />
-                        </div>
-                      ))}
-                    </div>
-                  </section>
+<section>
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Thông tin tuyển dụng</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+    {/* DỰ ÁN (Select Box) */}
+    <div className="col-span-2">
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Dự án <span className="text-red-500">*</span></label>
+      <select 
+        className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none" 
+        value={formData.project || ''} 
+        onChange={handleProjectChange} // Dùng hàm handle mới tạo
+      >
+        <option value="">-- Chọn dự án --</option>
+        {MASTER_DATA.projects.map(p => <option key={p} value={p}>{p}</option>)}
+      </select>
+    </div>
+
+    {/* CÁC TRƯỜNG READ ONLY (Tự động điền) */}
+    <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">ID Dự án</label>
+        <input className={readOnlyClass} value={formData.project_id || ''} readOnly />
+    </div>
+    <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Loại dự án</label>
+        <input className={readOnlyClass} value={formData.project_type || ''} readOnly />
+    </div>
+    <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Công ty</label>
+        <input className={readOnlyClass} value={formData.company || ''} readOnly />
+    </div>
+
+    {/* Các trường nhập tay còn lại */}
+    <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Vị trí ứng tuyển</label>
+        <input className="w-full p-2.5 border rounded-xl mt-1" value={formData.position || ''} onChange={e => handleChange('position', e.target.value)} />
+    </div>
+    <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Bộ phận ứng tuyển</label>
+        <input className="w-full p-2.5 border rounded-xl mt-1" value={formData.department || ''} onChange={e => handleChange('department', e.target.value)} />
+    </div>
+  </div>
+</section>
 
                   {/* 4. PERSONAL INFO */}
          <section>
@@ -594,7 +676,11 @@ const handleSave = async () => {
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
         <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Email</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
           <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
-    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label><input className="w-full p-2.5 border rounded-xl mt-1 bg-gray-50" value={birthYear} readOnly /></div>
+    <div>
+    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label>
+    {/* Dùng readOnlyClass đã sửa ở bước 1 */}
+    <input className={readOnlyClass} value={birthYear} readOnly />
+</div>
 
       </div>
 </section>
@@ -635,10 +721,19 @@ const handleSave = async () => {
                  <section>
   <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-orange-500 pl-3 text-xs uppercase tracking-wider">Học vấn & Kinh nghiệp</h3>
   <div className="space-y-4">
-    <div>
-      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Trình độ học vấn</label>
-      <input className="w-full p-2.5 border rounded-xl mt-1" value={formData.education_level || ''} onChange={e => handleChange('education_level', e.target.value)} />
-    </div>
+<div>
+  <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Trình độ học vấn</label>
+  <select 
+    className="w-full p-2.5 border rounded-xl mt-1 bg-white" 
+    value={formData.education_level || ''} 
+    onChange={e => handleChange('education_level', e.target.value)}
+  >
+    <option value="">-- Chọn trình độ --</option>
+    {MASTER_DATA.educationLevels.map(lvl => (
+      <option key={lvl} value={lvl}>{lvl}</option>
+    ))}
+  </select>
+</div>
     <div>
       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tóm tắt kinh nghiệm làm việc</label>
       <textarea className="w-full p-3 border rounded-xl mt-1 h-24 outline-none focus:ring-2 focus:ring-blue-500" value={formData.experience_summary || ''} onChange={e => handleChange('experience_summary', e.target.value)} />
@@ -652,17 +747,69 @@ const handleSave = async () => {
 
 
                                    {/* 5. SOURCE INFO */}
-                  <section>
-                    <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Nguồn dữ liệu & Phụ trách</h3>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      {['data_source_dept', 'data_source_type_group', 'data_source_type', 'assigned_user', 'assigned_user_name', 'assigned_user_group'].map(field => (
-                        <div key={field}>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{DEFAULT_COLUMNS.find(c => c.id === field)?.label || field}</label>
-                          <input className="w-full p-2.5 border rounded-xl mt-1 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition" value={formData[field] || ''} onChange={e => handleChange(field, e.target.value)} />
-                        </div>
-                      ))}
-                    </div>
-                  </section>
+<section>
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Nguồn dữ liệu</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-6">
+    {/* 1. Bộ phận (Cấp 1) */}
+    <div>
+       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Bộ phận tạo nguồn</label>
+       <select className="w-full p-2.5 border rounded-xl mt-1" value={formData.data_source_dept || ''} onChange={handleSourceDeptChange}>
+          <option value="">-- Chọn bộ phận --</option>
+          {MASTER_DATA.sourceDepartments.map(d => <option key={d} value={d}>{d}</option>)}
+       </select>
+    </div>
+
+    {/* 2. Nhóm nguồn (Cấp 2 - Phụ thuộc Cấp 1) */}
+    <div>
+       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nhóm nguồn</label>
+       <select 
+         className="w-full p-2.5 border rounded-xl mt-1" 
+         value={formData.data_source_type_group || ''} 
+         onChange={handleSourceGroupChange}
+         disabled={!formData.data_source_dept} // Disable nếu chưa chọn cấp 1
+       >
+          <option value="">-- Chọn nhóm --</option>
+          {/* Lấy list dựa vào bộ phận đã chọn */}
+          {formData.data_source_dept && MASTER_DATA.sourceTypeGroupsByDept[formData.data_source_dept as keyof typeof MASTER_DATA.sourceTypeGroupsByDept]?.map(g => (
+              <option key={g} value={g}>{g}</option>
+          ))}
+       </select>
+    </div>
+
+    {/* 3. Loại nguồn (Cấp 3 - Phụ thuộc Cấp 2) */}
+    <div className="col-span-2">
+       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Loại nguồn cụ thể</label>
+       <select 
+         className="w-full p-2.5 border rounded-xl mt-1" 
+         value={formData.data_source_type || ''} 
+         onChange={e => handleChange('data_source_type', e.target.value)}
+         disabled={!formData.data_source_type_group} // Disable nếu chưa chọn cấp 2
+       >
+          <option value="">-- Chọn loại nguồn --</option>
+           {/* Lấy list dựa vào nhóm đã chọn */}
+          {formData.data_source_type_group && MASTER_DATA.sourceTypesByGroup[formData.data_source_type_group as keyof typeof MASTER_DATA.sourceTypesByGroup]?.map(t => (
+              <option key={t} value={t}>{t}</option>
+          ))}
+       </select>
+    </div>
+  </div>
+
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-gray-500 pl-3 text-xs uppercase tracking-wider">Người phụ trách (Read Only)</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+    <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">ID Nhân viên</label>
+        <input className={readOnlyClass} value={formData.assigned_user || ''} readOnly />
+    </div>
+    <div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Họ tên nhân viên</label>
+        <input className={readOnlyClass} value={formData.assigned_user_name || ''} readOnly />
+    </div>
+    <div className="col-span-2">
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nhóm phụ trách</label>
+        <input className={readOnlyClass} value={formData.assigned_user_group || ''} readOnly />
+    </div>
+  </div>
+</section>
 
                                   <section>
   <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-blue-400 pl-3 text-xs uppercase tracking-wider">Tài liệu đính kèm</h3>
