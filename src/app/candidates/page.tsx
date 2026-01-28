@@ -256,7 +256,7 @@ function CandidatesContent() {
       const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get', id, user_group }),
+        body: JSON.stringify({ action: 'get', id, user_group, user_id }),
       });
       const data = await res.json();
       if (data.success) {
@@ -394,7 +394,7 @@ const handleSave = async () => {
       const res = await fetch(N8N_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update', id: formData.candidate_id, updates: formData }),
+        body: JSON.stringify({ action: 'update',user_group, user_id, id: formData.candidate_id, updates: formData }),
       });
       const data = await res.json();
       if (data.success) {
