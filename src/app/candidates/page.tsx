@@ -48,7 +48,9 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'created_at', label: 'Ngày tạo', width: 140, visible: false, sortable: true },
   
   // Các cột khác
+    { id: 'assigned_user', label: 'ID Nhân viên phụ trách', width: 120, visible: false, sortable: true },
   { id: 'assigned_user_name', label: 'Người phụ trách', width: 150, visible: true, sortable: true },
+    { id: 'assigned_user_group', label: 'Nhóm phụ trách', width: 130, visible: false, sortable: true },
   { id: 'candidate_id', label: 'Mã UV', width: 120, visible: false, sortable: true },
   { id: 'id_card_number', label: 'CCCD', width: 130, visible: false, sortable: false }, // Thường không sort CCCD
   { id: 'id_card_issued_date', label: 'Ngày cấp CCCD', width: 130, visible: false, sortable: true },
@@ -72,8 +74,6 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'data_source_type', label: 'Loại nguồn cụ thể', width: 100, visible: false, sortable: true },
   { id: 'created_by', label: 'Người tạo', width: 120, visible: false, sortable: true },
   { id: 'last_updated_at', label: 'Cập nhật cuối', width: 140, visible: false, sortable: true },
-  { id: 'assigned_user', label: 'ID Nhân viên phụ trách', width: 120, visible: false, sortable: true },
-  { id: 'assigned_user_group', label: 'Nhóm phụ trách', width: 130, visible: false, sortable: true },
 ];
 
 interface Candidate {
@@ -553,9 +553,9 @@ const handleSave = async () => {
 
                   {/* 3. JOB INFO */}
                   <section>
-                    <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Thông tin hồ sơ</h3>
+                    <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Thông tin tuyển dụng</h3>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      {['project', 'project_id', 'project_type', 'position', 'company', 'department', 'data_source_dept', 'data_source_type_group', 'data_source_type', 'assigned_user_name', 'assigned_user_group'].map(field => (
+                      {['project', 'project_id', 'project_type', 'position', 'company', 'department'].map(field => (
                         <div key={field}>
                           <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{DEFAULT_COLUMNS.find(c => c.id === field)?.label || field}</label>
                           <input className="w-full p-2.5 border rounded-xl mt-1 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition" value={formData[field] || ''} onChange={e => handleChange(field, e.target.value)} />
@@ -595,14 +595,14 @@ const handleSave = async () => {
 </section>
 
                  <section>
-  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-orange-500 pl-3 text-xs uppercase tracking-wider">Học vấn & Sự nghiệp</h3>
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-orange-500 pl-3 text-xs uppercase tracking-wider">Học vấn & Kinh nghiệp</h3>
   <div className="space-y-4">
     <div>
       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Trình độ học vấn</label>
       <input className="w-full p-2.5 border rounded-xl mt-1" value={formData.education_level || ''} onChange={e => handleChange('education_level', e.target.value)} />
     </div>
     <div>
-      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tóm tắt kinh nghiệm</label>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tóm tắt kinh nghiệm làm việc</label>
       <textarea className="w-full p-3 border rounded-xl mt-1 h-24 outline-none focus:ring-2 focus:ring-blue-500" value={formData.experience_summary || ''} onChange={e => handleChange('experience_summary', e.target.value)} />
     </div>
     <div>
@@ -644,7 +644,21 @@ const handleSave = async () => {
     </div>
   </div>
 </section>
-                  {/* 5. SYSTEM INFO */}
+
+                                   {/* 5. SOURCE INFO */}
+                  <section>
+                    <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Nguồn dữ liệu & Phụ trách</h3>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      {['data_source_dept', 'data_source_type_group', 'data_source_type', 'assigned_user', 'assigned_user_name', 'assigned_user_group'].map(field => (
+                        <div key={field}>
+                          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{DEFAULT_COLUMNS.find(c => c.id === field)?.label || field}</label>
+                          <input className="w-full p-2.5 border rounded-xl mt-1 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition" value={formData[field] || ''} onChange={e => handleChange(field, e.target.value)} />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                 
+                  {/* 6. SYSTEM INFO */}
                   <section className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                       <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-gray-400 pl-3 text-xs uppercase tracking-wider">Thông tin hệ thống</h3>
                       <div className="space-y-3">
