@@ -118,7 +118,7 @@ export const MASTER_DATA: MasterDataType = {
     "Nissin Outsourcing": "Nissin - Hòa Bình",
     "Kennametal Outsourcing": "Kennametal - Hà Nội",
     "Fairmont Outsourcing": "Fairmont - Hà Nội",
-    "DH Vina Outsourcing": "DH Vina - Hải Phòng"
+    "DH Vina Outsourcing": "DH Vina - Hải Phòng",
         "VinFast Outsourcing": "VinFast - Hải Phòng"
   },
 
