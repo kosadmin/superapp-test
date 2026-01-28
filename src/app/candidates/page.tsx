@@ -278,9 +278,32 @@ const addressFull = [formData?.address_street, formData?.address_ward, formData?
 // Khai báo thêm biến này để tránh lỗi "readOnlyClass is not defined" ở phần JSX bên dưới
 const readOnlyClass = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500";
   
-  const handleChange = (field: string, value: any) => {
-    setFormData(prev => prev ? { ...prev, [field]: value } : null);
-  };
+const handleChange = (field: string, value: any) => {
+  setFormData(prev => {
+    if (!prev) return null;
+    let newData = { ...prev, [field]: value };
+
+    // --- YÊU CẦU 1: Tự động tích các bước trước đó ---
+    const funnelSteps = [
+      'new', 
+      'interested', 
+      'scheduled_for_interview', 
+      'show_up_for_interview', 
+      'pass_interview', 
+      'onboard'
+    ];
+
+    if (funnelSteps.includes(field) && value === true) {
+      const currentIndex = funnelSteps.indexOf(field);
+      // Tích true cho tất cả các bước đứng trước bước vừa chọn
+      for (let i = 0; i < currentIndex; i++) {
+        newData[funnelSteps[i] as keyof typeof newData] = true;
+      }
+    }
+
+    return newData;
+  });
+};
 // --- LOGIC MỚI: Xử lý thay đổi Dự án (Yêu cầu 3) ---
   const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -317,6 +340,33 @@ const readOnlyClass = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-
     } : null);
   };
 const handleSave = async () => {
+  if (!formData) return;
+
+  // --- YÊU CẦU 2 & 3: VALIDATION TRƯỚC KHI LƯU ---
+  
+  // Kiểm tra Ngày phỏng vấn
+  if (formData.scheduled_for_interview && !formData.interview_date) {
+    alert("Vui lòng nhập 'Ngày phỏng vấn' khi đã lên lịch hẹn!");
+    return;
+  }
+
+  // Kiểm tra Ngày nhận việc
+  if (formData.pass_interview && !formData.onboard_date) {
+    alert("Vui lòng nhập 'Ngày nhận việc' khi ứng viên đã đỗ PV!");
+    return;
+  }
+
+  // Kiểm tra Lý do từ chối Offer
+  if (formData.reject_offer && !formData.reason_rejected_offer) {
+    alert("Vui lòng chọn 'Lý do từ chối Offer'!");
+    return;
+  }
+
+  // Kiểm tra Lý do không đạt
+  if (formData.unqualified && !formData.reason_unqualified) {
+    alert("Vui lòng chọn 'Lý do không đạt'!");
+    return;
+  }
   if (!formData) return;
 
   // --- BỔ SUNG VALIDATION ---
