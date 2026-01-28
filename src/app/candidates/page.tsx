@@ -282,7 +282,9 @@ const handleChange = (field: string, value: any) => {
   setFormData(prev => {
     if (!prev) return null;
     let newData = { ...prev, [field]: value };
-
+if (field === 'date_of_birth') {
+      newData.birth_year = value ? value.split('-')[0] : '';
+    }
     const funnelSteps = [
       'new', 
       'interested', 
@@ -734,10 +736,13 @@ const handleSave = async () => {
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
         <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Email</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
           <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
-    <div>
+<div>
     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label>
-    {/* Dùng readOnlyClass đã sửa ở bước 1 */}
-    <input className={readOnlyClass} value={birthYear} readOnly />
+    <input 
+      className={readOnlyClass} 
+      value={formData.birth_year || ''} 
+      readOnly 
+    />
 </div>
 
       </div>
