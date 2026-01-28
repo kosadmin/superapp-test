@@ -271,9 +271,7 @@ function CandidatesContent() {
 // --- TÌM ĐOẠN NÀY VÀ SỬA ---
 // Tính toán thông tin tự động
 const birthYear = formData?.date_of_birth ? formData.date_of_birth.split('-')[0] : '';
-const addressFull = [formData?.address_street, formData?.address_ward, formData?.address_city]
-  .filter(Boolean)
-  .join(' - ');
+
 
 // Khai báo thêm biến này để tránh lỗi "readOnlyClass is not defined" ở phần JSX bên dưới
 const readOnlyClass = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500";
@@ -284,6 +282,15 @@ const handleChange = (field: string, value: any) => {
     let newData = { ...prev, [field]: value };
 if (field === 'date_of_birth') {
       newData.birth_year = value ? value.split('-')[0] : '';
+    }
+
+    const addressFields = ['address_street', 'address_ward', 'address_city'];
+    if (addressFields.includes(field)) {
+      // Chúng ta lấy giá trị mới nhất từ newData để ghép chuỗi
+      const full = [newData.address_street, newData.address_ward, newData.address_city]
+        .filter(Boolean)
+        .join(' - ');
+      newData.address_full = full;
     }
     const funnelSteps = [
       'new', 
@@ -777,8 +784,14 @@ const handleSave = async () => {
       </select>
     </div>
     </div>
-    <input type="text" value={addressFull} readOnly className={readOnlyClass} placeholder="Địa chỉ hiển thị tự động" />
-</div>
+<input 
+      type="text" 
+      value={formData.address_full || ''} 
+      readOnly 
+      className={readOnlyClass} 
+      placeholder="Địa chỉ hiển thị tự động" 
+    />
+  </div>
 </section>
 
                  <section>
