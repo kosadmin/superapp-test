@@ -163,7 +163,7 @@ export const MASTER_DATA: MasterDataType = {
     "Seeding": ["Seeding thường", "Seeding tự động"],
     "Vendor/CTV": ["CTV cá nhân", "Vendor"],
     "Offline": ["Trường học", "Sự kiện tuyển dụng", "Cơ quan địa phương"]
-  }
+  },
   rejectReasonsOffer: [
     "Lương thấp",
     "Đã có việc khác",
