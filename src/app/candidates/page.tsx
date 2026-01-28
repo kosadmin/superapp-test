@@ -268,8 +268,15 @@ function CandidatesContent() {
   };
 
     // Tính toán thông tin tự động
-  const birthYear = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
-  const addressFull = [form.address_street, form.address_ward, form.address_city].filter(Boolean).join(' - ');
+// --- TÌM ĐOẠN NÀY VÀ SỬA ---
+// Tính toán thông tin tự động
+const birthYear = formData?.date_of_birth ? formData.date_of_birth.split('-')[0] : '';
+const addressFull = [formData?.address_street, formData?.address_ward, formData?.address_city]
+  .filter(Boolean)
+  .join(' - ');
+
+// Khai báo thêm biến này để tránh lỗi "readOnlyClass is not defined" ở phần JSX bên dưới
+const readOnlyClass = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500 italic";
   
   const handleChange = (field: string, value: any) => {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
@@ -579,7 +586,7 @@ const handleSave = async () => {
       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Giới tính</label>
       <select className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.gender || ''} onChange={e => handleChange('gender', e.target.value)}>
         <option value="">-- Chọn giới tính --</option>
-        {MASTER_DATA.genders.map((item) => <option key={g} value={g}>{g}</option>)}
+        {MASTER_DATA.genders.map((item) => (<option key={item} value={item}>{item}</option>))}</option>)}
       </select>
     </div>
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
@@ -613,7 +620,7 @@ const handleSave = async () => {
       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tỉnh / Thành phố</label>
       <select className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_city || ''} onChange={e => handleChange('address_city', e.target.value)}>
         <option value="">-- Chọn --</option>
-        {MASTER_DATA.cities.map((item) => <option key={g} value={g}>{g}</option>)}
+        {MASTER_DATA.cities.map((item) => (<option key={item} value={item}>{item}</option>))}</option>)}
       </select>
     </div>
     </div>
