@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { MASTER_DATA } from '@/constants/masterData';
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
 const ITEMS_PER_PAGE = 50;
@@ -58,6 +59,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'attachment_url', label: 'File đính kèm', width: 120, visible: false, sortable: false },
   { id: 'date_of_birth', label: 'Ngày sinh', width: 100, visible: false, sortable: true },
   { id: 'birth_year', label: 'Năm sinh', width: 80, visible: false, sortable: true },
+    { id: 'gender', label: 'Giới tính', width: 80, visible: false, sortable: true },
   { id: 'address_street', label: 'Số nhà/Tên đường', width: 150, visible: false, sortable: false },
   { id: 'address_ward', label: 'Phường/Xã', width: 120, visible: false, sortable: false },
   { id: 'address_city', label: 'Tỉnh/Thành phố', width: 120, visible: false, sortable: true },
@@ -265,6 +267,10 @@ function CandidatesContent() {
     finally { setDetailLoading(false); }
   };
 
+    // Tính toán thông tin tự động
+  const birthYear = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
+  const addressFull = [form.address_street, form.address_ward, form.address_city].filter(Boolean).join(' - ');
+  
   const handleChange = (field: string, value: any) => {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
   };
@@ -572,26 +578,47 @@ const handleSave = async () => {
     <div>
       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Giới tính</label>
       <select className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.gender || ''} onChange={e => handleChange('gender', e.target.value)}>
-        <option value="">-- Chọn --</option>
-        {['Nam', 'Nữ', 'Khác'].map(g => <option key={g} value={g}>{g}</option>)}
+        <option value="">-- Chọn giới tính --</option>
+        {MASTER_DATA.genders.map((item) => <option key={g} value={g}>{g}</option>)}
       </select>
     </div>
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
-    
-    {/* Địa chỉ chi tiết */}
-    <div className="col-span-2 grid grid-cols-3 gap-3">
-       <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Đường/Số nhà</label><input className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_street || ''} onChange={e => handleChange('address_street', e.target.value)} /></div>
-       <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Phường/Xã</label><input className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_ward || ''} onChange={e => handleChange('address_ward', e.target.value)} /></div>
-       <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tỉnh/Thành</label><input className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_city || ''} onChange={e => handleChange('address_city', e.target.value)} /></div>
-    </div>
+        <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Email</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
+          <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
+    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label><input className="w-full p-2.5 border rounded-xl mt-1 bg-gray-50" value={birthYear} readOnly /></div>
+
+      </div>
+</section>
+
+                          <section>
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-purple-500 pl-3 text-xs uppercase tracking-wider">Thông tin CCCD</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
 
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_number || ''} onChange={e => handleChange('id_card_number', e.target.value)} /></div>
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày cấp CCCD</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formatDateToISO(formData.id_card_issued_date)} onChange={e => handleChange('id_card_issued_date', formatISOToDDMMYYYY(e.target.value))} /></div>
     <div className="col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nơi cấp CCCD</label><input className="w-full p-2.5 border rounded-xl mt-1" value={formData.id_card_issued_place || ''} onChange={e => handleChange('id_card_issued_place', e.target.value)} /></div>
     
-    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
-    <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Năm sinh</label><input className="w-full p-2.5 border rounded-xl mt-1 bg-gray-50" value={formData.date_of_birth?.split('-')[0] || ''} readOnly /></div>
+  
   </div>
+</section>
+
+                          <section>
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-purple-500 pl-3 text-xs uppercase tracking-wider">Địa chỉ thường trú</h3>
+  <div className="space-y-4">
+                     {/* Địa chỉ chi tiết */}
+    <div className="col-span-2 grid grid-cols-3 gap-3">
+       <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số nhà / Tên đường</label><input className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_street || ''} onChange={e => handleChange('address_street', e.target.value)} /></div>
+       <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Phường / Xã</label><input className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_ward || ''} onChange={e => handleChange('address_ward', e.target.value)} /></div>
+          <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tỉnh / Thành phố</label>
+      <select className="w-full p-2.5 border rounded-xl mt-1 text-sm" value={formData.address_city || ''} onChange={e => handleChange('address_city', e.target.value)}>
+        <option value="">-- Chọn --</option>
+        {MASTER_DATA.cities.map((item) => <option key={g} value={g}>{g}</option>)}
+      </select>
+    </div>
+    </div>
+    <input type="text" value={addressFull} readOnly className={readOnlyClass} placeholder="Địa chỉ hiển thị tự động" />
+</div>
 </section>
 
                  <section>
