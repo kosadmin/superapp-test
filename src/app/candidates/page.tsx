@@ -283,7 +283,6 @@ const handleChange = (field: string, value: any) => {
     if (!prev) return null;
     let newData = { ...prev, [field]: value };
 
-    // --- YÊU CẦU 1: Tự động tích các bước trước đó ---
     const funnelSteps = [
       'new', 
       'interested', 
@@ -293,11 +292,20 @@ const handleChange = (field: string, value: any) => {
       'onboard'
     ];
 
-    if (funnelSteps.includes(field) && value === true) {
+    if (funnelSteps.includes(field)) {
       const currentIndex = funnelSteps.indexOf(field);
-      // Tích true cho tất cả các bước đứng trước bước vừa chọn
-      for (let i = 0; i < currentIndex; i++) {
-        newData[funnelSteps[i] as keyof typeof newData] = true;
+
+      if (value === true) {
+        // 1. Nếu CLICK CHỌN: Tích TRUE cho tất cả các bước TRƯỚC nó
+        for (let i = 0; i < currentIndex; i++) {
+          newData[funnelSteps[i] as keyof typeof newData] = true;
+        }
+      } else {
+        // 2. Nếu BỎ CLICK: Tích FALSE cho tất cả các bước SAU nó
+        // Vì nếu bạn chưa phỏng vấn thì không thể có chuyện đã pass hay onboard được
+        for (let i = currentIndex + 1; i < funnelSteps.length; i++) {
+          newData[funnelSteps[i] as keyof typeof newData] = false;
+        }
       }
     }
 
@@ -597,11 +605,11 @@ const handleSave = async () => {
                     <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-200 rounded-full transition">✕</button>
                     <div>
 <input 
-      className="font-bold text-lg uppercase text-blue-800 leading-none bg-transparent border-b border-transparent hover:border-blue-300 focus:border-blue-600 outline-none w-full"
+      className="font-bold text-base uppercase text-blue-800 leading-none bg-transparent border-b border-transparent hover:border-blue-300 focus:border-blue-600 outline-none w-full"
       value={formData.candidate_name} 
       onChange={(e) => handleChange('candidate_name', e.target.value)}
     />
-    <span className="text-[10px] font-mono text-gray-400">{formData.candidate_id}</span>
+    <span className="text-[12px] font-mono text-gray-400">{formData.candidate_id}</span>
 </div>
                   </div>
                   <div className="flex gap-2">
