@@ -342,7 +342,7 @@ const handleSave = async () => {
   };
 
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
-}
+
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden text-sm p-4 gap-4">
       
