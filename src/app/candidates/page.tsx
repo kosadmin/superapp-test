@@ -6,7 +6,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 const ITEMS_PER_PAGE = 50;
 
 // --- UTILS ---
