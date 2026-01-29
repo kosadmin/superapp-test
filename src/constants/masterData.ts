@@ -10,6 +10,7 @@ educationLevels: string[];
   sourceDepartments: string[];
   rejectReasonsOffer: string[];     
   rejectReasonsUnqualified: string[];
+  candidateTags: string[];
   sourceTypeGroupsByDept: {
     [key: string]: string[] | undefined; // Cho phép truy cập bằng key string bất kỳ
     "Marketing": string[];
@@ -182,7 +183,12 @@ export const MASTER_DATA: MasterDataType = {
     "Không đạt về sức khỏe",
     "Thái độ không tốt",
     "Hồ sơ giả mạo",
+        "Không gọi được quá nhiều lần",
     "Khác"
+  ]
+  candidateTags: [
+    "Ưu tiên",
+    "Ra tết"
   ]
 };
 
