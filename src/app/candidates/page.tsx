@@ -415,6 +415,54 @@ const handleSave = async () => {
     finally { setIsSaving(false); }
   };
 
+
+  // ... (Ngay sau hàm handleSave và trước const hasChanges)
+
+// --- LOGIC MỚI: Xử lý Xóa ứng viên ---
+const handleDelete = async () => {
+  if (!formData || !formData.candidate_id) return;
+
+  // 1. Xác nhận trước khi xóa
+  const confirmDelete = window.confirm(
+    `Bạn có chắc chắn muốn xóa ứng viên "${formData.candidate_name}" không?\nHành động này không thể hoàn tác!`
+  );
+  if (!confirmDelete) return;
+
+  setIsSaving(true); // Tận dụng state loading
+  try {
+    // 2. Gọi API
+    const res = await fetch(N8N_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        action: 'delete', // Action mới
+        user_group, 
+        user_id, 
+        id: formData.candidate_id 
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert('Đã xóa ứng viên thành công!');
+      
+      // 3. Cập nhật State Frontend (Xóa khỏi danh sách mà không cần load lại trang)
+      setAllCandidates(prev => prev.filter(c => c.candidate_id !== formData.candidate_id));
+      
+      // 4. Đóng cửa sổ chi tiết
+      setSelectedId(null);
+      setFormData(null);
+    } else {
+      alert('Xóa thất bại: ' + (data.message || 'Lỗi không xác định'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Lỗi kết nối đến hệ thống');
+  } finally {
+    setIsSaving(false);
+  }
+};
   const hasChanges = JSON.stringify(originalData) !== JSON.stringify(formData);
 
   const toggleColumn = (id: string) => {
@@ -622,6 +670,13 @@ const handleSave = async () => {
 </div>
                   </div>
                   <div className="flex gap-2">
+                  {user_group === 'ADMIN' && (
+  <button onClick={handleDelete}
+      disabled={isSaving}
+      className="px-4 py-2 rounded-xl font-bold transition border border-red-200 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white hover:shadow-red-200 shadow-sm whitespace-nowrap"
+    >
+      🗑️ XÓA
+    </button>)}
                       <button
                         onClick={handleSave}
                         disabled={isSaving || !hasChanges}
