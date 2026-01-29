@@ -671,13 +671,15 @@ const handleDelete = async () => {
 </div>
                   </div>
                   <div className="flex gap-2">
-                  {user_group === 'ADMIN' && (
-  <button onClick={handleDelete}
-      disabled={isSaving}
-      className="px-4 py-2 rounded-xl font-bold transition border border-red-200 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white hover:shadow-red-200 shadow-sm whitespace-nowrap"
-    >
-      🗑️ XÓA
-    </button>)}
+{user_group?.toLowerCase() === 'admin' && (
+  <button
+    onClick={handleDelete}
+    disabled={isSaving}
+    className="px-4 py-2 rounded-xl font-bold transition border border-red-200 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white hover:shadow-red-200 shadow-sm whitespace-nowrap"
+  >
+    🗑️ XÓA
+  </button>
+)}
                       <button
                         onClick={handleSave}
                         disabled={isSaving || !hasChanges}
