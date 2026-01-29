@@ -185,7 +185,7 @@ export const MASTER_DATA: MasterDataType = {
     "Hồ sơ giả mạo",
         "Không gọi được quá nhiều lần",
     "Khác"
-  ]
+  ],
   candidateTags: [
     "Ưu tiên",
     "Ra tết"
