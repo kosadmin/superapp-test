@@ -179,6 +179,10 @@ function CandidatesContent() {
 
   useEffect(() => { if (user_group && user_id) fetchAllCandidates(); }, [user_group, user_id, isAuthLoading]);
 
+  useEffect(() => {
+  setCurrentPage(1);
+}, [search, filters]);
+
   // --- DATA PROCESSING (SEARCH -> FILTER -> SORT) ---
   const processedData = useMemo(() => {
     let result = [...allCandidates];
