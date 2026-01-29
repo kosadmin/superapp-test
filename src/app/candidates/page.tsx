@@ -105,6 +105,7 @@ const funnelSteps = [
 
 function CandidatesContent() {
   const { user_group, user_id, isLoading: isAuthLoading } = useAuth();
+  const canEditSource = user_group?.toLowerCase() === 'admin';
   
   // Data States
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
@@ -670,7 +671,7 @@ const handleDelete = async () => {
 </div>
                   </div>
                   <div className="flex gap-2">
-                  {user_group === 'ADMIN' && (
+                  {isAdmin && (
   <button onClick={handleDelete}
       disabled={isSaving}
       className="px-4 py-2 rounded-xl font-bold transition border border-red-200 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white hover:shadow-red-200 shadow-sm whitespace-nowrap"
@@ -878,46 +879,54 @@ const handleDelete = async () => {
 
 
                                    {/* 5. SOURCE INFO */}
+{/* 5. SOURCE INFO */}
 <section>
   <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Nguồn dữ liệu</h3>
   <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-6">
+    
     {/* 1. Bộ phận (Cấp 1) */}
     <div>
        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Bộ phận tạo nguồn</label>
-       <select className="w-full p-2.5 border rounded-xl mt-1" value={formData.data_source_dept || ''} onChange={handleSourceDeptChange}>
+       <select 
+         // Logic disable: Nếu KHÔNG phải admin thì disable
+         disabled={!canEditSource}
+         className={`w-full p-2.5 border rounded-xl mt-1 ${!canEditSource ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
+         value={formData.data_source_dept || ''} 
+         onChange={handleSourceDeptChange}
+       >
           <option value="">-- Chọn bộ phận --</option>
           {MASTER_DATA.sourceDepartments.map(d => <option key={d} value={d}>{d}</option>)}
        </select>
     </div>
 
-    {/* 2. Nhóm nguồn (Cấp 2 - Phụ thuộc Cấp 1) */}
+    {/* 2. Nhóm nguồn (Cấp 2) */}
     <div>
        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nhóm nguồn</label>
        <select 
-         className="w-full p-2.5 border rounded-xl mt-1" 
+         // Logic disable: Không phải admin HOẶC chưa chọn cấp 1
+         disabled={!canEditSource || !formData.data_source_dept} 
+         className={`w-full p-2.5 border rounded-xl mt-1 ${(!canEditSource || !formData.data_source_dept) ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
          value={formData.data_source_type_group || ''} 
          onChange={handleSourceGroupChange}
-         disabled={!formData.data_source_dept} // Disable nếu chưa chọn cấp 1
        >
           <option value="">-- Chọn nhóm --</option>
-          {/* Lấy list dựa vào bộ phận đã chọn */}
           {formData.data_source_dept && MASTER_DATA.sourceTypeGroupsByDept[formData.data_source_dept as keyof typeof MASTER_DATA.sourceTypeGroupsByDept]?.map(g => (
               <option key={g} value={g}>{g}</option>
           ))}
        </select>
     </div>
 
-    {/* 3. Loại nguồn (Cấp 3 - Phụ thuộc Cấp 2) */}
+    {/* 3. Loại nguồn (Cấp 3) */}
     <div className="col-span-2">
        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Loại nguồn cụ thể</label>
        <select 
-         className="w-full p-2.5 border rounded-xl mt-1" 
+         // Logic disable: Không phải admin HOẶC chưa chọn cấp 2
+         disabled={!canEditSource || !formData.data_source_type_group}
+         className={`w-full p-2.5 border rounded-xl mt-1 ${(!canEditSource || !formData.data_source_type_group) ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
          value={formData.data_source_type || ''} 
          onChange={e => handleChange('data_source_type', e.target.value)}
-         disabled={!formData.data_source_type_group} // Disable nếu chưa chọn cấp 2
        >
           <option value="">-- Chọn loại nguồn --</option>
-           {/* Lấy list dựa vào nhóm đã chọn */}
           {formData.data_source_type_group && MASTER_DATA.sourceTypesByGroup[formData.data_source_type_group as keyof typeof MASTER_DATA.sourceTypesByGroup]?.map(t => (
               <option key={t} value={t}>{t}</option>
           ))}
