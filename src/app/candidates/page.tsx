@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
+import * as XLSX from 'xlsx';
 
 const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 const ITEMS_PER_PAGE = 50;
@@ -464,6 +465,52 @@ const handleDelete = async () => {
     setIsSaving(false);
   }
 };
+
+  const handleExportExcel = () => {
+  // 1. Lấy danh sách các cột đang hiển thị (visible)
+  const visibleColumns = columns.filter(col => col.visible);
+
+  // 2. Chuyển đổi dữ liệu từ processedData (dữ liệu đã Search + Filter + Sort)
+  const exportData = processedData.map(cand => {
+    const row: any = {};
+    visibleColumns.forEach(col => {
+      let value = cand[col.id];
+
+      // Format dữ liệu đặc biệt cho Excel
+      if (col.id === 'status') {
+        // Tái hiện logic lấy text trạng thái
+        if (cand.unqualified) value = 'KHÔNG ĐẠT';
+        else if (cand.reject_offer) value = 'TỪ CHỐI';
+        else if (cand.onboard) value = 'ĐÃ NHẬN VIỆC';
+        else if (cand.pass_interview) value = 'ĐỖ PV';
+        else if (cand.show_up_for_interview) value = 'THAM GIA PV';
+        else if (cand.scheduled_for_interview) value = 'ĐĂNG KÝ PV';
+        else if (cand.interested) value = 'QUAN TÂM';
+        else value = 'MỚI';
+      } 
+      else if (col.id.includes('date') || col.id === 'created_at') {
+        // Đảm bảo format ngày tháng dễ nhìn trong Excel
+        value = value ? value : '';
+      }
+
+      row[col.label] = value || ''; // Key của object là tiêu đề cột
+    });
+    return row;
+  });
+
+  // 3. Tạo Workbook và Worksheet
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách ứng viên");
+
+  // 4. Cấu hình độ rộng cột cơ bản (tùy chọn)
+  const wscols = visibleColumns.map(col => ({ wch: col.width / 7 })); 
+  worksheet['!cols'] = wscols;
+
+  // 5. Xuất file
+  const fileName = `Danh_sach_ung_vien_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(workbook, fileName);
+};
   const hasChanges = JSON.stringify(originalData) !== JSON.stringify(formData);
 
   const toggleColumn = (id: string) => {
@@ -516,6 +563,12 @@ const handleDelete = async () => {
                 >
                    ⚙️ CỘT
                 </button>
+<button 
+  onClick={handleExportExcel}
+  className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-green-50 hover:bg-green-100 text-green-700 border-green-200 transition flex items-center gap-1"
+>
+  📥 XUẤT EXCEL
+</button>
                 <Link href="/dashboard" className="p-1.5 text-gray-400 hover:text-red-500 transition">✕</Link>
             </div>
           </div>
