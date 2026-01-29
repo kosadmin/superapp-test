@@ -11,6 +11,23 @@ const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 const ITEMS_PER_PAGE = 50;
 
 // --- UTILS ---
+// Hàm hỗ trợ lấy màu sắc ngẫu nhiên nhưng cố định cho từng nhãn
+const getTagStyles = (tag: string) => {
+  const colors = [
+    { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-200' },
+    { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200' },
+    { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200' },
+    { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-200' },
+    { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-200' },
+    { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+    { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-200' },
+    { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
+  ];
+  
+  // Hash đơn giản để tag nào luôn ra màu đó
+  const index = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+  return colors[index];
+};
 const formatDateToISO = (dateString: string | undefined): string => {
   if (!dateString) return '';
   if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
@@ -93,6 +110,7 @@ interface FilterState {
   status: string;
   project: string;
   assigned_user: string;
+  tags: string;
 }
 
 const funnelSteps = [
@@ -123,7 +141,7 @@ function CandidatesContent() {
   const [showFilters, setShowFilters] = useState(false); // Toggle thanh Filter
 
   // Filter & Sort States
-  const [filters, setFilters] = useState<FilterState>({ status: '', project: '', assigned_user: '' });
+  const [filters, setFilters] = useState<FilterState>({ status: '', project: '', assigned_user: '',tags: '' });
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
   // Detail States
@@ -201,7 +219,13 @@ function CandidatesContent() {
     if (filters.assigned_user) {
         result = result.filter(c => c.assigned_user_name === filters.assigned_user);
     }
-
+if (filters.tags) {
+        result = result.filter(c => {
+            if (!c.tags) return false;
+            const tagList = c.tags.split(',').map((t: string) => t.trim());
+            return tagList.includes(filters.tags);
+        });
+    }
     // 3. Sorting
     if (sortConfig.key) {
         result.sort((a, b) => {
@@ -225,7 +249,6 @@ function CandidatesContent() {
 
   const totalPages = Math.ceil(processedData.length / ITEMS_PER_PAGE);
 
-  // --- HANDLE SORT CLICK ---
 // --- HANDLE SORT CLICK ---
   const handleSort = (colId: string) => {
     setSortConfig(current => {
@@ -606,7 +629,7 @@ const handleDelete = async () => {
 
           {/* FILTER BAR (Hiện ra khi bấm nút) */}
           {showFilters && (
-             <div className="mt-3 p-3 bg-blue-50/50 border border-blue-100 rounded-xl grid grid-cols-3 gap-3 animate-in slide-in-from-top-2">
+             <div className="mt-3 p-3 bg-blue-50/50 border border-blue-100 rounded-xl grid grid-cols-4 gap-3 animate-in slide-in-from-top-2">
                  <div>
                     <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Trạng thái</label>
                     <select 
@@ -640,6 +663,17 @@ const handleDelete = async () => {
                         {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
                     </select>
                  </div>
+               <div>
+      <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Nhãn</label>
+      <select 
+        className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
+        value={filters.tags}
+        onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}
+      >
+        <option value="">Tất cả nhãn</option>
+        {MASTER_DATA.candidateTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+      </select>
+    </div>
              </div>
           )}
         </div>
@@ -766,10 +800,6 @@ const handleDelete = async () => {
                {/* Body Detail */}
                <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24 scrollbar-thin">
        <section className="relative">
-  <h3 className="text-gray-800 font-bold mb-2 border-l-4 border-pink-500 pl-3 text-[10px] uppercase tracking-wider">
-    Phân loại (Tags)
-  </h3>
-  
   <div className="flex flex-wrap items-center gap-2 p-2 border rounded-xl focus-within:border-pink-500 bg-white transition-all">
     {/* Danh sách nhãn đã chọn */}
     {formData.tags?.split(',').map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
@@ -1164,18 +1194,25 @@ const handleDelete = async () => {
 function renderCell(colId: string, cand: any) {
     switch (colId) {
 case 'tags':
-    return (
-        <div className="flex gap-1 flex-wrap max-w-[150px]">
-            {cand.tags?.split(',').slice(0, 2).map((t: string) => (
-                <span key={t} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[9px] font-medium border border-gray-200">
-                    {t.trim()}
-                </span>
-            ))}
-            {cand.tags?.split(',').length > 2 && (
-                <span className="text-[9px] text-gray-400">...</span>
-            )}
-        </div>
-    );
+  return (
+    <div className="flex gap-1 flex-wrap max-w-[150px]">
+      {cand.tags?.split(',').slice(0, 3).map((t: string) => {
+        const tag = t.trim();
+        const styles = getTagStyles(tag);
+        return (
+          <span 
+            key={tag} 
+            className={`px-1.5 py-0.5 rounded text-[8px] font-black border uppercase tracking-tighter shadow-sm ${styles.bg} ${styles.text} ${styles.border}`}
+          >
+            {tag}
+          </span>
+        );
+      })}
+      {cand.tags?.split(',').length > 3 && (
+        <span className="text-[9px] text-gray-400 font-bold">...</span>
+      )}
+    </div>
+  );
         case 'candidate_name': return <div className="font-bold text-blue-900 leading-tight">{cand.candidate_name}</div>;
         case 'status': return <StatusBadge cand={cand} />;
         case 'interview_date': return <span className="text-blue-600 font-bold">{cand.interview_date || '—'}</span>;
