@@ -37,6 +37,7 @@ interface ColumnConfig {
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   // Các cột chính đều cho phép sort
+  { id: 'tags', label: 'Nhãn', width: 150, visible: true, sortable: false },
   { id: 'candidate_name', label: 'Họ tên', width: 180, visible: true, sortable: true },
   { id: 'status', label: 'Trạng thái', width: 120, visible: true, sortable: true },
   { id: 'phone', label: 'Số điện thoại', width: 130, visible: true, sortable: true }, // Sort số điện thoại
@@ -417,8 +418,26 @@ const handleSave = async () => {
     finally { setIsSaving(false); }
   };
 
+// Thêm vào trong component CandidatesContent
 
-  // ... (Ngay sau hàm handleSave và trước const hasChanges)
+const handleAddTag = (tag: string) => {
+  if (!formData) return;
+  const currentTags = formData.tags ? formData.tags.split(',').map((t: string) => t.trim()) : [];
+  if (!currentTags.includes(tag)) {
+    const newTags = [...currentTags, tag].join(', ');
+    handleChange('tags', newTags);
+  }
+};
+
+const handleRemoveTag = (tagToRemove: string) => {
+  if (!formData || !formData.tags) return;
+  const newTags = formData.tags
+    .split(',')
+    .map((t: string) => t.trim())
+    .filter((t: string) => t !== tagToRemove)
+    .join(', ');
+  handleChange('tags', newTags);
+};
 
 // --- LOGIC MỚI: Xử lý Xóa ứng viên ---
 const handleDelete = async () => {
@@ -745,7 +764,55 @@ const handleDelete = async () => {
 
                {/* Body Detail */}
                <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24 scrollbar-thin">
-                  
+                  <section>
+  <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-pink-500 pl-3 text-xs uppercase tracking-wider">
+    Phân loại & Ghi chú nhanh (Tags)
+  </h3>
+  
+  {/* Hiển thị danh sách Tag hiện có */}
+  <div className="flex flex-wrap gap-2 mb-3">
+    {formData.tags ? formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean).map(tag => (
+      <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-[11px] font-bold">
+        {tag}
+        <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 text-sm">×</button>
+      </span>
+    )) : (
+      <span className="text-gray-400 italic text-xs">Chưa có nhãn nào...</span>
+    )}
+  </div>
+
+  {/* Input thêm tag mới & Gợi ý */}
+  <div className="space-y-3">
+    <input 
+      type="text"
+      placeholder="Gõ tag mới và nhấn Enter..."
+      className="w-full p-2.5 border rounded-xl text-sm outline-none focus:border-pink-500 transition"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const val = (e.target as HTMLInputElement).value.trim();
+          if (val) {
+            handleAddTag(val);
+            (e.target as HTMLInputElement).value = '';
+          }
+        }
+      }}
+    />
+    
+    <div className="flex flex-wrap gap-1.5">
+      <span className="text-[10px] text-gray-400 font-bold uppercase w-full">Gợi ý:</span>
+      {MASTER_DATA.candidateTags.map(sTag => (
+        <button
+          key={sTag}
+          onClick={() => handleAddTag(sTag)}
+          className="px-2 py-1 border border-dashed border-gray-300 rounded-md text-[10px] text-gray-500 hover:border-pink-500 hover:text-pink-500 transition"
+        >
+          + {sTag}
+        </button>
+      ))}
+    </div>
+  </div>
+</section>
                   {/* 1. FUNNEL */}
                   <section className="bg-white p-0 rounded-2xl">
                     <h3 className="text-[10px] font-black text-blue-400 uppercase mb-3 tracking-[0.2em] px-1">Tiến độ tuyển dụng (Phễu)</h3>
@@ -1089,6 +1156,15 @@ const handleDelete = async () => {
 
 function renderCell(colId: string, cand: any) {
     switch (colId) {
+        case 'tags': return (
+        <div className="flex gap-1 overflow-hidden">
+            {cand.tags?.split(',').slice(0, 2).map((t: string) => (
+                <span key={t} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] whitespace-nowrap">
+                    {t.trim()}
+                </span>
+            ))}
+            {cand.tags?.split(',').length > 2 && <span className="text-[9px] text-gray-400">...</span>}
+        </div>);
         case 'candidate_name': return <div className="font-bold text-blue-900 leading-tight">{cand.candidate_name}</div>;
         case 'status': return <StatusBadge cand={cand} />;
         case 'interview_date': return <span className="text-blue-600 font-bold">{cand.interview_date || '—'}</span>;
