@@ -84,6 +84,7 @@ interface Candidate {
   candidate_id: string;
   candidate_name: string;
   phone: string;
+  tags?: string;
   [key: string]: any;
 }
 
@@ -771,7 +772,7 @@ const handleDelete = async () => {
   
   {/* Hiển thị danh sách Tag hiện có */}
   <div className="flex flex-wrap gap-2 mb-3">
-    {formData.tags ? formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean).map(tag => (
+    {formData.tags ? formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
       <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-[11px] font-bold">
         {tag}
         <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 text-sm">×</button>
