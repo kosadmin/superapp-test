@@ -420,7 +420,7 @@ const handleSave = async () => {
   };
 
 // Thêm vào trong component CandidatesContent
-
+const [showSuggestions, setShowSuggestions] = useState(false);
 const handleAddTag = (tag: string) => {
   if (!formData) return;
   const currentTags = formData.tags ? formData.tags.split(',').map((t: string) => t.trim()) : [];
@@ -765,52 +765,58 @@ const handleDelete = async () => {
 
                {/* Body Detail */}
                <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24 scrollbar-thin">
-                  <section>
-  <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-pink-500 pl-3 text-xs uppercase tracking-wider">
-    Phân loại & Ghi chú nhanh (Tags)
+       <section className="relative">
+  <h3 className="text-gray-800 font-bold mb-2 border-l-4 border-pink-500 pl-3 text-[10px] uppercase tracking-wider">
+    Phân loại (Tags)
   </h3>
   
-  {/* Hiển thị danh sách Tag hiện có */}
-  <div className="flex flex-wrap gap-2 mb-3">
-    {formData.tags ? formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
-      <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-[11px] font-bold">
+  <div className="flex flex-wrap items-center gap-2 p-2 border rounded-xl focus-within:border-pink-500 bg-white transition-all">
+    {/* Danh sách nhãn đã chọn */}
+    {formData.tags?.split(',').map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
+      <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-pink-50 text-pink-600 rounded-md text-[10px] font-bold border border-pink-100">
         {tag}
-        <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 text-sm">×</button>
+        <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 text-xs">×</button>
       </span>
-    )) : (
-      <span className="text-gray-400 italic text-xs">Chưa có nhãn nào...</span>
-    )}
-  </div>
+    ))}
 
-  {/* Input thêm tag mới & Gợi ý */}
-  <div className="space-y-3">
-    <input 
-      type="text"
-      placeholder="Gõ tag mới và nhấn Enter..."
-      className="w-full p-2.5 border rounded-xl text-sm outline-none focus:border-pink-500 transition"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const val = (e.target as HTMLInputElement).value.trim();
-          if (val) {
-            handleAddTag(val);
-            (e.target as HTMLInputElement).value = '';
+    {/* Input thêm tag */}
+    <div className="relative flex-1 min-w-[120px]">
+      <input 
+        type="text"
+        placeholder="Thêm nhãn..."
+        className="w-full outline-none text-sm bg-transparent"
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay để kịp nhận click vào gợi ý
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = (e.target as HTMLInputElement).value.trim();
+            if (val) {
+              handleAddTag(val);
+              (e.target as HTMLInputElement).value = '';
+            }
           }
-        }
-      }}
-    />
-    
-    <div className="flex flex-wrap gap-1.5">
-      <span className="text-[10px] text-gray-400 font-bold uppercase w-full">Gợi ý:</span>
-      {MASTER_DATA.candidateTags.map(sTag => (
-        <button
-          key={sTag}
-          onClick={() => handleAddTag(sTag)}
-          className="px-2 py-1 border border-dashed border-gray-300 rounded-md text-[10px] text-gray-500 hover:border-pink-500 hover:text-pink-500 transition"
-        >
-          + {sTag}
-        </button>
-      ))}
+        }}
+      />
+
+      {/* Dropdown Gợi ý */}
+      {showSuggestions && (
+        <div className="absolute z-50 top-full left-0 mt-1 w-48 bg-white border rounded-lg shadow-xl p-1 animate-in fade-in slide-in-from-top-1">
+          <p className="text-[9px] text-gray-400 font-bold px-2 py-1 uppercase">Gợi ý nhanh</p>
+          {MASTER_DATA.candidateTags.map(sTag => (
+            <button
+              key={sTag}
+              onClick={() => {
+                handleAddTag(sTag);
+                setShowSuggestions(false);
+              }}
+              className="w-full text-left px-3 py-1.5 hover:bg-pink-50 hover:text-pink-600 rounded text-xs transition"
+            >
+              + {sTag}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   </div>
 </section>
@@ -1157,15 +1163,19 @@ const handleDelete = async () => {
 
 function renderCell(colId: string, cand: any) {
     switch (colId) {
-        case 'tags': return (
-        <div className="flex gap-1 overflow-hidden">
+case 'tags':
+    return (
+        <div className="flex gap-1 flex-wrap max-w-[150px]">
             {cand.tags?.split(',').slice(0, 2).map((t: string) => (
-                <span key={t} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] whitespace-nowrap">
+                <span key={t} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[9px] font-medium border border-gray-200">
                     {t.trim()}
                 </span>
             ))}
-            {cand.tags?.split(',').length > 2 && <span className="text-[9px] text-gray-400">...</span>}
-        </div>);
+            {cand.tags?.split(',').length > 2 && (
+                <span className="text-[9px] text-gray-400">...</span>
+            )}
+        </div>
+    );
         case 'candidate_name': return <div className="font-bold text-blue-900 leading-tight">{cand.candidate_name}</div>;
         case 'status': return <StatusBadge cand={cand} />;
         case 'interview_date': return <span className="text-blue-600 font-bold">{cand.interview_date || '—'}</span>;
