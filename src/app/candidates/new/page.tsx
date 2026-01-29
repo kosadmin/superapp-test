@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { MASTER_DATA } from '@/constants/masterData';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 
 // --- 1. ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
 interface CandidateForm {
