@@ -71,6 +71,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
     { id: 'assigned_user', label: 'ID Nhân viên phụ trách', width: 120, visible: false, sortable: true },
   { id: 'assigned_user_name', label: 'Người phụ trách', width: 150, visible: true, sortable: true },
     { id: 'assigned_user_group', label: 'Nhóm phụ trách', width: 130, visible: false, sortable: true },
+    { id: 'other_phone', label: 'Số điện thoại khác', width: 130, visible: false, sortable: true },
   { id: 'candidate_id', label: 'Mã UV', width: 120, visible: false, sortable: true },
   { id: 'id_card_number', label: 'CCCD', width: 130, visible: false, sortable: false }, // Thường không sort CCCD
   { id: 'id_card_issued_date', label: 'Ngày cấp CCCD', width: 130, visible: false, sortable: true },
@@ -87,6 +88,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 { id: 'education_level', label: 'Trình độ học vấn', width: 150, visible: false, sortable: true },
   { id: 'experience_summary', label: 'Tóm tắt kinh nghiệm làm việc', width: 250, visible: false, sortable: false },
 { id: 'job_wish', label: 'Nguyện vọng công việc', width: 200, visible: false, sortable: false },
+  { id: 'take_note', label: 'Ghi chú chăm sóc', width: 200, visible: false, sortable: false },
   { id: 'project_id', label: 'ID dự án', width: 120, visible: false, sortable: true },
   { id: 'project_type', label: 'Loại dự án', width: 120, visible: false, sortable: true },
   { id: 'department', label: 'Bộ phận ứng tuyển', width: 120, visible: false, sortable: true },
@@ -960,6 +962,7 @@ const handleDelete = async () => {
       </select>
     </div>
     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} /></div>
+        <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Số điện thoại khác</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.other_phone || ''} onChange={e => handleChange('other_phone', e.target.value)} /></div>
         <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Email</label><input className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-700" value={formData.email || ''} onChange={e => handleChange('email', e.target.value)} /></div>
           <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày sinh</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1" value={formData.date_of_birth || ''} onChange={e => handleChange('date_of_birth', e.target.value)} /></div>
 <div>
@@ -1036,6 +1039,10 @@ const handleDelete = async () => {
     <div>
       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nguyện vọng công việc</label>
       <textarea className="w-full p-3 border rounded-xl mt-1 h-20 outline-none focus:ring-2 focus:ring-blue-500 text-blue-800" value={formData.job_wish || ''} onChange={e => handleChange('job_wish', e.target.value)} />
+    </div>
+            <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ghi chú chăm sóc</label>
+      <textarea className="w-full p-3 border rounded-xl mt-1 h-24 outline-none focus:ring-2 focus:ring-blue-500" value={formData.take_note || ''} onChange={e => handleChange('take_note', e.target.value)} />
     </div>
   </div>
 </section>
