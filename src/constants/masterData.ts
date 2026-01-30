@@ -151,7 +151,7 @@ export const MASTER_DATA: MasterDataType = {
     "Marketing": [
       "Ads",
       "Tiktok Organic",
-      "MKT Organic"
+      "MKT Organic khác"
     ],
     "Tuyển dụng": [
       "Seeding"
@@ -164,7 +164,7 @@ export const MASTER_DATA: MasterDataType = {
   sourceTypesByGroup: {
     "Ads": ["Facebook Ads", "Tiktok Ads", "Zalo Ads"],
     "Tiktok Organic": ["Tiktok Video", "Tiktok Live", "Tiktok Inbox"],
-    "MKT Organic": ["Hotline", "Zalo OA", "Website", "Group Facebook","Social khác"],
+    "MKT Organic khác": ["Hotline", "Zalo OA", "Website", "Group Facebook","Social khác"],
     "Seeding": ["Seeding thường", "Seeding tự động"],
     "Vendor/CTV": ["CTV cá nhân", "Vendor"],
     "Offline": ["Trường học", "Sự kiện tuyển dụng", "Cơ quan địa phương"]
