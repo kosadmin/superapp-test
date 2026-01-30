@@ -174,7 +174,7 @@ export const MASTER_DATA: MasterDataType = {
     "Đã có việc khác",
     "Không có nhu cầu",
       "Công việc không phù hợp",
-    "Xa nhà",
+    "Xa nhà, không có xe đón",
     "Lý do cá nhân",
     "Khác"
   ],
