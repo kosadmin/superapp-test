@@ -112,9 +112,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-500 mt-6">
-          Test account: <strong>admin</strong> / <strong>Kos@8386</strong>
-        </p>
       </div>
     </div>
   );
