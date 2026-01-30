@@ -188,7 +188,8 @@ export const MASTER_DATA: MasterDataType = {
   ],
   candidateTags: [
     "Ưu tiên",
-    "Ra tết"
+    "Ra tết",
+    "Chưa liên lạc được"
   ]
 };
 
