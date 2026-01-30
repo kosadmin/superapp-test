@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
 import * as XLSX from 'xlsx';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
+const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidatetest';
 const ITEMS_PER_PAGE = 50;
 
 // --- UTILS ---
