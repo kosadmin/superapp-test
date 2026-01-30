@@ -184,6 +184,8 @@ export const MASTER_DATA: MasterDataType = {
     "Thái độ không tốt",
     "Hồ sơ giả mạo",
         "Không gọi được quá nhiều lần",
+    "Không thuộc địa điểm được phép tuyển",
+    "Không thuộc độ tuổi được phép tuyển",
     "Khác"
   ],
   candidateTags: [
