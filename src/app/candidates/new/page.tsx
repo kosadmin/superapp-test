@@ -11,6 +11,7 @@ const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 interface CandidateForm {
   candidate_name: string;
   phone: string;
+    other_phone: string;
   gender: string;
   email: string;
   id_card_number: string;
@@ -23,6 +24,7 @@ interface CandidateForm {
   education_level: string;
   experience_summary: string;
   job_wish: string;
+    take_note: string;
   project: string;
   project_id: string;
   project_type: string;
@@ -64,6 +66,7 @@ function NewCandidateForm() {
   const [form, setForm] = useState<CandidateForm>({
     candidate_name: '',
     phone: '',
+        other_phone: '',
     gender: '',
     email: '',
     id_card_number: '',
@@ -76,6 +79,7 @@ function NewCandidateForm() {
     education_level: '',
     experience_summary: '',
     job_wish: '',
+        take_note: '',
     project: '',
     project_id: '',
     project_type: '',
@@ -255,6 +259,11 @@ const errorClass = "text-red-500 text-[11px] mt-0.5 font-medium";
                 <input type="text" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} className={inputClass('phone')} placeholder="090..." />
                 {errors.phone && <p className={errorClass}>{errors.phone}</p>}
               </div>
+                            <div>
+                <label className={labelClass}>Số điện thoại khác</label>
+                <input type="text" value={form.other_phone} onChange={(e) => handleChange('other_phone', e.target.value)} className={inputClass('other_phone')} placeholder="090..." />
+                {errors.other_phone && <p className={errorClass}>{errors.other_phone}</p>}
+              </div>
               <div>
                 <label className={labelClass}>Email</label>
                 <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} className={inputClass('email')} placeholder="example@gmail.com" />
@@ -334,6 +343,10 @@ const errorClass = "text-red-500 text-[11px] mt-0.5 font-medium";
                 <div>
                   <label className={labelClass}>Nguyện vọng công việc</label>
                   <textarea rows={2} value={form.job_wish} onChange={(e) => handleChange('job_wish', e.target.value)} className={inputClass('job_wish')} placeholder="Mong muốn về lương, môi trường..."></textarea>
+                </div>
+                                <div>
+                  <label className={labelClass}>Ghi chú chăm sóc</label>
+                  <textarea rows={2} value={form.take_note} onChange={(e) => handleChange('take_note', e.target.value)} className={inputClass('take_note')} placeholder="Ghi chú về cách chăm sóc, mốc chăm sóc..."></textarea>
                 </div>
               </div>
             </div>
