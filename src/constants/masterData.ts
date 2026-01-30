@@ -103,7 +103,7 @@ export const MASTER_DATA: MasterDataType = {
     "Sumidenso Tuyển dụng": "Sumidenso - Hải Dương",
     "Tinh Lợi Tuyển dụng": "Tinh Lợi - Hải Dương",
     "Crystal Sweater Tuyển dụng": "Crystal Sweater - Hải Phòng",
-    "Heesung Tuyển dụng": "Heesung - Hải Dương",
+    "Heesung Tuyển dụng": "Heesung - Hải Phòng",
     "Canon Tuyển dụng": "Canon - Hưng Yên",
     "Pegatron Tuyển dụng": "Pegatron - Hải Phòng",
     "Taishodo Tuyển dụng": "Taishodo - Hải Dương",
