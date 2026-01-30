@@ -192,7 +192,8 @@ export const MASTER_DATA: MasterDataType = {
   candidateTags: [
     "Ưu tiên",
     "Ra tết",
-    "Chưa liên lạc được"
+    "Chưa liên lạc được",
+    "Sai số"
   ]
 };
 
