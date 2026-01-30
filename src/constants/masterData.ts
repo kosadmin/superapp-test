@@ -176,6 +176,7 @@ export const MASTER_DATA: MasterDataType = {
       "Công việc không phù hợp",
     "Xa nhà, không có xe đón",
     "Lý do cá nhân",
+    "Không muốn qua bên thứ 3 / nhà thầu",
     "Khác"
   ],
   rejectReasonsUnqualified: [
