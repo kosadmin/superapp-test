@@ -26,27 +26,27 @@ export const MASTER_DATA: MasterDataType = {
   // Danh sách dự án
   projects: [
     "Brother Tuyển dụng",
-    "Sumidenso Tuyển dụng",
-    "Tinh Lợi Tuyển dụng",
+    "Canon Tuyển dụng",
     "Crystal Sweater Tuyển dụng",
     "Heesung Tuyển dụng",
-    "Canon Tuyển dụng",
-    "Pegatron Tuyển dụng",
-    "Taishodo Tuyển dụng",
     "Meiko Tuyển dụng",
-    "Yazaki Tuyển dụng",
+    "Pegatron Tuyển dụng",
     "ShinEtsu Tuyển dụng",
     "Stavian Packaging Tuyển dụng",
     "Stavian Tissue Tuyển dụng",
+    "Sumidenso Tuyển dụng",
+    "Taishodo Tuyển dụng",
+    "Tinh Lợi Tuyển dụng",
+    "Yazaki Tuyển dụng",
+    "DH Vina Outsourcing",
+    "Fairmont Outsourcing",
+    "Kennametal Outsourcing",
     "LG Display Outsourcing",
-    "VinFast Test xe Outsourcing",
-    "ORPC Outsourcing",
     "Michang Outsourcing",
     "Nissin Outsourcing",
-    "Kennametal Outsourcing",
-    "Fairmont Outsourcing",
-    "DH Vina Outsourcing",
-        "VinFast Outsourcing"
+    "ORPC Outsourcing",
+    "VinFast Outsourcing",
+    "VinFast Test xe Outsourcing"
   ],
 
   projectIdMap: {
@@ -137,7 +137,7 @@ export const MASTER_DATA: MasterDataType = {
   genders: ["Nam", "Nữ", "Khác"],
 
     // Trình độ học vấn
-  educationLevels: ["PTCS", "PTTH", "Trung cấp", "Cao đẳng", "Đại học"],
+  educationLevels: ["PTCS", "PTTH", "Trung cấp", "Cao đẳng", "Đại học","Thạc sĩ","Tiến sĩ"],
 
   // Danh sách bộ phận tạo nguồn
   sourceDepartments: [
@@ -193,7 +193,9 @@ export const MASTER_DATA: MasterDataType = {
     "Ưu tiên",
     "Ra tết",
     "Chưa liên lạc được",
-    "Sai số"
+    "Sai số",
+    "Đăng ký KTX",
+    "Đăng ký tuyến xe"
   ]
 };
 
