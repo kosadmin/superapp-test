@@ -5,9 +5,9 @@ import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
+import { API_CONFIG } from '@/constants/masterData'; // Hoặc đường dẫn file bạn vừa tạo
 import * as XLSX from 'xlsx';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook-test/candidatetest';
 const ITEMS_PER_PAGE = 50;
 
 // --- UTILS ---
@@ -170,7 +170,7 @@ function CandidatesContent() {
     if (isAuthLoading || !user_group || !user_id) return;
     setListLoading(true);
     try {
-      const res = await fetch(N8N_URL, {
+      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'list', sort: 'newest', user_group, user_id }),
@@ -304,7 +304,7 @@ if (filters.tags) {
     setSelectedId(id);
     setDetailLoading(true);
     try {
-      const res = await fetch(N8N_URL, {
+      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get', id, user_group, user_id }),
@@ -454,7 +454,7 @@ const phoneRegex = /^0\d{9}$/;
 
   setIsSaving(true);
     try {
-      const res = await fetch(N8N_URL, {
+      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update',user_group, user_id, id: formData.candidate_id, updates: formData }),
@@ -503,7 +503,7 @@ const handleDelete = async () => {
   setIsSaving(true); // Tận dụng state loading
   try {
     // 2. Gọi API
-    const res = await fetch(N8N_URL, {
+    const res = await fetch(API_CONFIG.CANDIDATE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
