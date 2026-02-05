@@ -201,3 +201,7 @@ export const MASTER_DATA: MasterDataType = {
 
 // Export Type để sử dụng ở các file khác nếu cần
 export type SourceDeptType = keyof typeof MASTER_DATA.sourceTypeGroupsByDept;
+
+export const API_CONFIG = {
+  CANDIDATE_URL: 'https://n8n.koutsourcing.vn/webhook-test/candidatetest',
+};
