@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext'; 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { MASTER_DATA } from '@/constants/masterData';
-
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
+import { API_CONFIG } from '@/constants/masterData'; // Hoặc đường dẫn file bạn vừa tạo
 
 // --- 1. ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
 interface CandidateForm {
@@ -156,8 +155,8 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
   }
 
     // Validation nhanh
-    if (field === 'phone' && value && !/^\d{10}$/.test(value)) {
-      setErrors(prev => ({ ...prev, phone: 'Số điện thoại phải có 10 chữ số' }));
+if (field === 'phone' && value && !/^0\d{9}$/.test(value)) {
+      setErrors(prev => ({ ...prev, phone: 'SĐT phải có 10 chữ số và bắt đầu bằng 0' }));
     }
     if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
       setErrors(prev => ({ ...prev, email: 'Email không đúng định dạng' }));
@@ -167,7 +166,14 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
   const validateForm = () => {
     const newErrors: FormErrors = {};
     if (!form.candidate_name.trim()) newErrors.candidate_name = 'Họ tên là bắt buộc';
-    if (!form.phone.trim()) newErrors.phone = 'Số điện thoại là bắt buộc';
+if (!form.phone.trim()) {
+        newErrors.phone = 'Số điện thoại là bắt buộc';
+    } else if (!/^0\d{9}$/.test(form.phone)) {
+        newErrors.phone = 'SĐT phải có 10 chữ số và bắt đầu bằng 0';
+    }
+if (!form.data_source_dept) newErrors.data_source_dept = 'Vui lòng chọn Bộ phận tạo nguồn';
+    if (!form.data_source_type_group) newErrors.data_source_type_group = 'Vui lòng chọn Nhóm nguồn';
+    if (!form.data_source_type) newErrors.data_source_type = 'Vui lòng chọn Loại nguồn cụ thể';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -190,11 +196,11 @@ const handleChange = (field: keyof CandidateForm, value: string) => {
         contacted: true,
       };
 
-      const res = await fetch(N8N_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+const res = await fetch(API_CONFIG.CANDIDATE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+});
 
       if (!res.ok) throw new Error(`Lỗi server: ${res.status}`);
 
@@ -415,6 +421,7 @@ const errorClass = "text-red-500 text-[11px] mt-0.5 font-medium";
                   <option value="">-- Chọn bộ phận --</option>
                   {MASTER_DATA.sourceDepartments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
                 </select>
+                {errors.data_source_dept && <p className={errorClass}>{errors.data_source_dept}</p>}
               </div>
               <div>
                 <label className={labelClass}>Nhóm nguồn</label>
@@ -422,6 +429,7 @@ const errorClass = "text-red-500 text-[11px] mt-0.5 font-medium";
                   <option value="">-- Chọn nhóm nguồn --</option>
                   {availableSourceTypeGroups.map(group => <option key={group} value={group}>{group}</option>)}
                 </select>
+                {errors.data_source_type_group && <p className={errorClass}>{errors.data_source_type_group}</p>}
               </div>
               <div>
                 <label className={labelClass}>Loại nguồn cụ thể</label>
@@ -429,6 +437,7 @@ const errorClass = "text-red-500 text-[11px] mt-0.5 font-medium";
                   <option value="">-- Chọn nguồn cụ thể --</option>
                   {availableSourceTypes.map(type => <option key={type} value={type}>{type}</option>)}
                 </select>
+                {errors.data_source_type && <p className={errorClass}>{errors.data_source_type}</p>}
               </div>
 {/* ID nhân viên phụ trách */}
 <div>
