@@ -63,8 +63,8 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'company', label: 'Công ty', width: 150, visible: true, sortable: true },
   
   // Ngày tháng rất cần sort
-  { id: 'interview_date', label: 'Ngày PV', width: 110, visible: true, sortable: true },
-  { id: 'onboard_date', label: 'Ngày Onboard', width: 110, visible: true, sortable: true },
+  { id: 'interview_date', label: 'Ngày Phỏng vấn', width: 110, visible: true, sortable: true },
+  { id: 'onboard_date', label: 'Ngày Nhận việc', width: 110, visible: true, sortable: true },
   { id: 'created_at', label: 'Ngày tạo', width: 140, visible: false, sortable: true },
   
   // Các cột khác
@@ -441,8 +441,11 @@ const handleSave = async () => {
   if (!formData.candidate_name?.trim()) return alert('Họ tên không được để trống');
   if (!formData.phone?.trim()) return alert('Số điện thoại không được để trống');
   
-  const phoneRegex = /^\d{10}$/;
-  if (!phoneRegex.test(formData.phone)) return alert('Số điện thoại phải đúng 10 chữ số');
+const phoneRegex = /^0\d{9}$/; 
+  
+  if (!phoneRegex.test(formData.phone)) {
+    return alert('Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
+  }
 
   if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
     return alert('Email không đúng định dạng');
@@ -708,7 +711,7 @@ const handleDelete = async () => {
                     {/* Filter Ngày Phỏng vấn */}
                     <div className="col-span-2 flex gap-2 items-end">
                         <div className="flex-1">
-                            <label className="text-[10px] uppercase font-bold text-blue-600 mb-1 block">Ngày PV: Từ</label>
+                            <label className="text-[10px] uppercase font-bold text-blue-600 mb-1 block">Ngày Phỏng vấn: Từ</label>
                             <input 
                                 type="date" 
                                 className="w-full p-2 border rounded-lg text-xs outline-none focus:border-blue-500 bg-white"
@@ -731,7 +734,7 @@ const handleDelete = async () => {
                     {/* Filter Ngày Onboard */}
                     <div className="col-span-2 flex gap-2 items-end">
                         <div className="flex-1">
-                            <label className="text-[10px] uppercase font-bold text-emerald-600 mb-1 block">Ngày Onboard: Từ</label>
+                            <label className="text-[10px] uppercase font-bold text-emerald-600 mb-1 block">Ngày Nhận việc: Từ</label>
                             <input 
                                 type="date" 
                                 className="w-full p-2 border rounded-lg text-xs outline-none focus:border-emerald-500 bg-white"
