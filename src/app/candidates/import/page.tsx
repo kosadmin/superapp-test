@@ -9,7 +9,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 
 function ImportCandidateContent() {
-    const { user } = useAuth();
+    const { name,user_id, user_group } = useAuth();
     const [data, setData] = useState<any[]>([]);
     const [errors, setErrors] = useState<{row: number, msg: string}[]>([]);
     const [isUploading, setIsUploading] = useState(false);
