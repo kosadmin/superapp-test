@@ -137,7 +137,7 @@ export const MASTER_DATA: MasterDataType = {
   genders: ["Nam", "Nữ", "Khác"],
 
     // Trình độ học vấn
-  educationLevels: ["PTCS", "PTTH", "Trung cấp", "Cao đẳng", "Đại học","Thạc sĩ","Tiến sĩ"],
+  educationLevels: ["Tiểu học","PTCS", "PTTH", "Trung cấp", "Cao đẳng", "Đại học","Thạc sĩ","Tiến sĩ"],
 
   // Danh sách bộ phận tạo nguồn
   sourceDepartments: [
