@@ -47,62 +47,80 @@ function ImportCandidateContent() {
     };
 
     // 2. Logic Validation mới
-    const validateExcelData = (rows: any[]) => {
-        const errLog: {row: number, msg: string}[] = [];
+ const validateExcelData = (rows: any[]) => {
+        const errLog: { row: number, msg: string }[] = [];
         const validRows: any[] = [];
         
-        // Regex kiểm tra định dạng YYYY-MM-DD
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        // Regex định dạng chuẩn
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // YYYY-MM-DD
+        const phoneRegex = /^(0|84)[3|5|7|8|9][0-9]{8}$/;
 
         rows.forEach((row: any, index: number) => {
-            const rowNum = index + 3; // Dòng 3 trong Excel
+            const rowNum = index + 3; // Dòng thực tế trong Excel
             const currentErrors: string[] = [];
 
-            // --- A. CHECK TRƯỜNG BẮT BUỘC ---
-            if (!row.candidate_name) currentErrors.push("Thiếu Họ tên");
-            if (!row.phone) currentErrors.push("Thiếu Số điện thoại");
-            if (!row.project) currentErrors.push("Thiếu Dự án");
+            // --- NHÓM 1: BẮT BUỘC ĐIỀN (KHÔNG ĐƯỢC TRỐNG) ---
+            if (!row.candidate_name?.toString().trim()) currentErrors.push("Thiếu Họ tên");
+            if (!row.phone?.toString().trim()) currentErrors.push("Thiếu Số điện thoại");
+            if (!row.data_source_dept?.toString().trim()) currentErrors.push("Thiếu Bộ phận nguồn");
+            if (!row.data_source_type_group?.toString().trim()) currentErrors.push("Thiếu Nhóm nguồn");
+            if (!row.data_source_type?.toString().trim()) currentErrors.push("Thiếu Nguồn chi tiết");
 
-            // --- B. CHECK MASTER DATA (Dropdown) ---
-            // Trình độ học vấn
-            if (row.education_level && !MASTER_DATA.educationLevels.includes(row.education_level.trim())) {
-                currentErrors.push(`Học vấn "${row.education_level}" không đúng danh mục`);
+            // --- NHÓM 2: CÓ THỂ TRỐNG, NHƯNG NẾU ĐIỀN THÌ PHẢI ĐÚNG ---
+            
+            // Validate SĐT (Nếu có)
+            if (row.phone && !phoneRegex.test(row.phone.toString().trim())) {
+                currentErrors.push("SĐT không đúng định dạng (10 chữ số, bắt đầu từ 0)");
             }
-            // Giới tính
+
+            // Validate Giới tính
             if (row.gender && !MASTER_DATA.genders.includes(row.gender.trim())) {
                 currentErrors.push(`Giới tính "${row.gender}" không đúng danh mục`);
             }
-            // Tỉnh thành
+
+            // Validate Tỉnh thành
             if (row.address_city && !MASTER_DATA.cities.includes(row.address_city.trim())) {
-                currentErrors.push(`Tỉnh thành "${row.address_city}" không có trong danh sách`);
-            }
-            // Dự án tuyển dụng
-            if (row.project && !MASTER_DATA.projects.includes(row.project.trim())) {
-                currentErrors.push(`Dự án "${row.project}" không tồn tại trong MasterData`);
+                currentErrors.push(`Tỉnh thành "${row.address_city}" không hợp lệ`);
             }
 
-            // --- C. CHECK ĐỊNH DẠNG NGÀY (YYYY-MM-DD) ---
-            if (row.date_of_birth && !dateRegex.test(String(row.date_of_birth))) {
+            // Validate Trình độ học vấn
+            if (row.education_level && !MASTER_DATA.educationLevels.includes(row.education_level.trim())) {
+                currentErrors.push(`Học vấn "${row.education_level}" không đúng danh mục`);
+            }
+
+            // Validate Dự án
+            if (row.project && !MASTER_DATA.projects.includes(row.project.trim())) {
+                currentErrors.push(`Dự án "${row.project}" không tồn tại`);
+            }
+
+            // Validate Ngày sinh (YYYY-MM-DD)
+            if (row.date_of_birth && !dateRegex.test(row.date_of_birth.toString().trim())) {
                 currentErrors.push(`Ngày sinh "${row.date_of_birth}" sai định dạng YYYY-MM-DD`);
             }
-            if (row.id_card_issued_date && !dateRegex.test(String(row.id_card_issued_date))) {
+
+            // Validate Ngày cấp CCCD (YYYY-MM-DD)
+            if (row.id_card_issued_date && !dateRegex.test(row.id_card_issued_date.toString().trim())) {
                 currentErrors.push(`Ngày cấp CCCD "${row.id_card_issued_date}" sai định dạng YYYY-MM-DD`);
             }
 
-            // --- D. CHECK SĐT & EMAIL ---
-            const phoneRegex = /^(0|84)[3|5|7|8|9][0-9]{8}$/;
-            if (row.phone && !phoneRegex.test(String(row.phone))) {
-                currentErrors.push("SĐT không đúng định dạng (10 số)");
-            }
+            // --- NHÓM 3: VALIDATION 3 LỚP CHO NGUỒN (VÌ BẮT BUỘC NÊN PHẢI CHECK KHỚP NHAU) ---
+            const dept = row.data_source_dept?.toString().trim();
+            const group = row.data_source_type_group?.toString().trim();
+            const type = row.data_source_type?.toString().trim();
 
-            // --- E. CHECK NGUỒN 3 LỚP ---
-            if (row.data_source_dept) {
-                const validGroups = (MASTER_DATA as any).sourceTypeGroupsByDept[row.data_source_dept] || [];
-                if (row.data_source_type_group && !validGroups.includes(row.data_source_type_group)) {
-                    currentErrors.push(`Nhóm nguồn không khớp với Bộ phận ${row.data_source_dept}`);
+            if (dept && group) {
+                const validGroups = (MASTER_DATA as any).sourceTypeGroupsByDept[dept] || [];
+                if (!validGroups.includes(group)) {
+                    currentErrors.push(`Nhóm "${group}" không thuộc Bộ phận "${dept}"`);
+                } else if (type) {
+                    const validTypes = (MASTER_DATA as any).sourceTypesByGroup[group] || [];
+                    if (!validTypes.includes(type)) {
+                        currentErrors.push(`Nguồn "${type}" không thuộc Nhóm "${group}"`);
+                    }
                 }
             }
 
+            // Tổng hợp lỗi
             if (currentErrors.length > 0) {
                 errLog.push({ row: rowNum, msg: currentErrors.join(" | ") });
             } else {
@@ -113,7 +131,7 @@ function ImportCandidateContent() {
         setErrors(errLog);
         setData(validRows);
     };
-
+    
     const handlePushToN8N = async () => {
         if (errors.length > 0) return alert("Vui lòng sửa hết lỗi trước khi gửi!");
         setIsUploading(true);
