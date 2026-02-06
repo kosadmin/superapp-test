@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
 import { API_CONFIG } from '@/constants/masterData'; // Hoặc đường dẫn file bạn vừa tạo
 import * as XLSX from 'xlsx';
+import { Upload } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 50;
 
@@ -651,6 +652,13 @@ const handleDelete = async () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <Link 
+        href="/candidates/import" 
+        className="bg-white border border-emerald-600 text-emerald-600 px-4 py-2 rounded-xl font-bold hover:bg-emerald-50 transition flex items-center gap-2"
+    >
+        <Upload className="w-4 h-4" />
+        IMPORT DS
+    </Link>
             {!selectedId && <Link href="/candidates/new" className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition whitespace-nowrap">THÊM MỚI</Link>}
           </div>
 
