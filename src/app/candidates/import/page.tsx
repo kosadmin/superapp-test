@@ -5,10 +5,11 @@ import { ArrowLeft, Download, UploadCloud, AlertCircle, CheckCircle2 } from 'luc
 import Link from 'next/link';
 import { MASTER_DATA } from '@/constants/masterData';
 import { API_CONFIG } from '@/constants/masterData';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function ImportCandidatePage() {
-  const { name,user_id, user_group } = useAuth();
+function ImportCandidateContent() {
+    const { user } = useAuth();
     const [data, setData] = useState<any[]>([]);
     const [errors, setErrors] = useState<{row: number, msg: string}[]>([]);
     const [isUploading, setIsUploading] = useState(false);
@@ -191,5 +192,13 @@ if (response.ok) {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ImportCandidatePage() {
+    return (
+        <ProtectedRoute>
+            <ImportCandidateContent />
+        </ProtectedRoute>
     );
 }
