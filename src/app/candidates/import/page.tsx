@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 function ImportCandidateContent() {
     // Lấy thông tin user từ Auth
     const { user_id, user_group } = useAuth();
-    
+    const [importResults, setImportResults] = useState<any[]>([]); // Lưu kết quả trả về từ n8n
     const [data, setData] = useState<any[]>([]);
     const [errors, setErrors] = useState<{row: number, msg: string}[]>([]);
     const [isUploading, setIsUploading] = useState(false);
@@ -20,12 +20,13 @@ function ImportCandidateContent() {
     const [fileInputKey, setFileInputKey] = useState(Date.now());
 
     // Hàm Reset trạng thái
-    const handleReset = () => {
-        setData([]);
-        setErrors([]);
-        setUploadStatus('idle');
-        setFileInputKey(Date.now()); // Thay đổi key để xóa file đã chọn trong input
-    };
+const handleReset = () => {
+    setData([]);
+    setErrors([]);
+    setImportResults([]); // Thêm dòng này
+    setUploadStatus('idle');
+    setFileInputKey(Date.now());
+};
 
     // 1. Hàm đọc file
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,36 +133,42 @@ function ImportCandidateContent() {
         setData(validRows);
     };
     
-    const handlePushToN8N = async () => {
-        if (errors.length > 0) return alert("Vui lòng sửa hết lỗi trước khi gửi!");
-        setIsUploading(true);
-        try {
-            const response = await fetch(API_CONFIG.CANDIDATE_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'import',
-                    user_id,
-                    user_group,
-                    import_source: "Excel_Web_CRM",
-                    timestamp: new Date().toISOString(),
-                    payload: data
-                })
-            });
+ const handlePushToN8N = async () => {
+    if (errors.length > 0) return alert("Vui lòng sửa hết lỗi trước khi gửi!");
+    setIsUploading(true);
+    setImportResults([]); // Xóa kết quả cũ nếu có
 
-            if (response.ok) {
-                alert(`Thành công! Đã gửi ${data.length} ứng viên.`);
-                handleReset(); // Reset sau khi thành công
-                setUploadStatus('success');
-            } else {
-                setUploadStatus('error');
-            }
-        } catch (error) {
+    try {
+        const response = await fetch(API_CONFIG.CANDIDATE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'import',
+                user_id,
+                user_group,
+                import_source: "Excel_Web_CRM",
+                timestamp: new Date().toISOString(),
+                payload: data
+            })
+        });
+
+        if (response.ok) {
+            const resultData = await response.json(); // Nhận danh sách kết quả từ n8n
+            setImportResults(resultData); // Lưu vào biến để hiển thị
+            setUploadStatus('success');
+            // Không nên handleReset() ngay để người dùng còn xem kết quả
+            setData([]); // Xóa dữ liệu chờ để tránh bấm gửi lại
+        } else {
             setUploadStatus('error');
-        } finally {
-            setIsUploading(false);
+            alert("Có lỗi xảy ra trong quá trình xử lý trên máy chủ.");
         }
-    };
+    } catch (error) {
+        setUploadStatus('error');
+        alert("Lỗi kết nối: " + error);
+    } finally {
+        setIsUploading(false);
+    }
+};
 
     return (
         <div className="min-h-screen bg-gray-50 p-8">
@@ -232,7 +239,47 @@ function ImportCandidateContent() {
                             <span className="text-emerald-800 font-bold">File hợp lệ! Sẵn sàng import {data.length} ứng viên.</span>
                         </div>
                     )}
-
+{/* BẢNG HIỂN THỊ KẾT QUẢ SAU KHI IMPORT */}
+{importResults.length > 0 && (
+    <div className="mt-8 border-t pt-8">
+        <h2 className="text-lg font-black text-slate-800 mb-4 uppercase flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-blue-600" /> Kết quả xử lý hệ thống
+        </h2>
+        <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm">
+            <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-600 font-bold">
+                    <tr>
+                        <th className="p-4">Họ tên</th>
+                        <th className="p-4">Trạng thái</th>
+                        <th className="p-4">Mã UV / Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                    {importResults.map((res, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50/50 transition">
+                            <td className="p-4 font-medium">{res.candidate_name}</td>
+                            <td className="p-4">
+                                {res.import_status === "Success" ? (
+                                    <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg font-bold text-[11px]">THÀNH CÔNG</span>
+                                ) : (
+                                    <span className="text-red-600 bg-red-50 px-2 py-1 rounded-lg font-bold text-[11px]">THẤT BẠI</span>
+                                )}
+                            </td>
+                            <td className="p-4">
+                                {res.import_status === "Success" ? (
+                                    <span className="text-blue-600 font-mono font-bold">{res.candidate_id}</span>
+                                ) : (
+                                    <span className="text-red-500 italic text-xs">{res.error}</span>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+        <p className="text-gray-400 text-[11px] mt-4 italic">* Hệ thống đã tự động bỏ qua các dòng lỗi và cập nhật các dòng thành công.</p>
+    </div>
+)}
                     <button
                         onClick={handlePushToN8N}
                         disabled={data.length === 0 || errors.length > 0 || isUploading}
