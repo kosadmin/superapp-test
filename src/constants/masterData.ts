@@ -47,6 +47,7 @@ export const MASTER_DATA: MasterDataType = {
     "Nissin Outsourcing",
     "ORPC Outsourcing",
     "VinFast Outsourcing",
+    "VinFast AFS Outsourcing",
     "VinFast Test xe Outsourcing"
   ],
 
@@ -73,7 +74,8 @@ export const MASTER_DATA: MasterDataType = {
     "Kennametal Outsourcing": "OS_KENNA",
     "Fairmont Outsourcing": "OS_FAIRMONT",
     "DH Vina Outsourcing": "OS_DHVINA",
-        "VinFast Outsourcing": "OS_VinFast"
+     "VinFast Outsourcing": "OS_VinFast",
+      "VinFast AFS Outsourcing": "OS_VFAFS"
   },
   projectTypeMap: {
     "Brother Tuyển dụng": "Recruiting",
@@ -98,7 +100,8 @@ export const MASTER_DATA: MasterDataType = {
     "Kennametal Outsourcing": "Outsourcing",
     "Fairmont Outsourcing": "Outsourcing",
     "DH Vina Outsourcing": "Outsourcing",
-        "VinFast Outsourcing": "Outsourcing"
+        "VinFast Outsourcing": "Outsourcing",
+            "VinFast AFS Outsourcing": "Outsourcing"
   },
   // --- THÊM PHẦN MAPPING NÀY ---
   projectCompanyMap: {
@@ -124,7 +127,8 @@ export const MASTER_DATA: MasterDataType = {
     "Kennametal Outsourcing": "Kennametal - Hà Nội",
     "Fairmont Outsourcing": "Fairmont - Hà Nội",
     "DH Vina Outsourcing": "DH Vina - Hải Phòng",
-        "VinFast Outsourcing": "VinFast - Hải Phòng"
+        "VinFast Outsourcing": "VinFast - Hải Phòng",
+            "VinFast AFS Outsourcing": "VinFast AFS - Hải Phòng"
   },
 
   // Danh sách tỉnh thành
