@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-// THAY URL WEBHOOK N8N CỦA BẠN VÀO ĐÂY
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // ← DÁN URL THẬT CỦA BẠN VÀO ĐÂY
+import { API_CONFIG } from '@/constants/masterData'; 
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -19,7 +17,7 @@ export default function LoginPage() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    fetch(N8N_URL, {
+    fetch(API_CONFIG.LOGIN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'verify', token }),
@@ -37,7 +35,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch(N8N_URL, {
+      const res = await fetch(API_CONFIG.LOGIN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

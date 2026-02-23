@@ -37,6 +37,7 @@ export const MASTER_DATA: MasterDataType = {
     "Sumidenso Tuyển dụng",
     "Taishodo Tuyển dụng",
     "Tinh Lợi Tuyển dụng",
+    "USI Tuyển dụng",
     "Yazaki Tuyển dụng",
     "DH Vina Outsourcing",
     "Fairmont Outsourcing",
@@ -46,6 +47,7 @@ export const MASTER_DATA: MasterDataType = {
     "Nissin Outsourcing",
     "ORPC Outsourcing",
     "VinFast Outsourcing",
+    "VinFast AFS Outsourcing",
     "VinFast Test xe Outsourcing"
   ],
 
@@ -59,6 +61,7 @@ export const MASTER_DATA: MasterDataType = {
     "Pegatron Tuyển dụng": "Recruit_PEGATRON",
     "Taishodo Tuyển dụng": "Recruit_TAISHODO",
     "Meiko Tuyển dụng": "Recruit_MEIKO",
+    "USI Tuyển dụng": "Recruit_USI",
     "Yazaki Tuyển dụng": "Recruit_YAZAKI",
     "ShinEtsu Tuyển dụng": "Recruit_SHINETSU",
     "Stavian Packaging Tuyển dụng": "Recruit_STAPACK",
@@ -71,7 +74,8 @@ export const MASTER_DATA: MasterDataType = {
     "Kennametal Outsourcing": "OS_KENNA",
     "Fairmont Outsourcing": "OS_FAIRMONT",
     "DH Vina Outsourcing": "OS_DHVINA",
-        "VinFast Outsourcing": "OS_VinFast"
+     "VinFast Outsourcing": "OS_VinFast",
+      "VinFast AFS Outsourcing": "OS_VFAFS"
   },
   projectTypeMap: {
     "Brother Tuyển dụng": "Recruiting",
@@ -83,6 +87,7 @@ export const MASTER_DATA: MasterDataType = {
     "Pegatron Tuyển dụng": "Recruiting",
     "Taishodo Tuyển dụng": "Recruiting",
     "Meiko Tuyển dụng": "Recruiting",
+    "USI Tuyển dụng": "Recruiting",
     "Yazaki Tuyển dụng": "Recruiting",
     "ShinEtsu Tuyển dụng": "Recruiting",
     "Stavian Packaging Tuyển dụng": "Recruiting",
@@ -95,7 +100,8 @@ export const MASTER_DATA: MasterDataType = {
     "Kennametal Outsourcing": "Outsourcing",
     "Fairmont Outsourcing": "Outsourcing",
     "DH Vina Outsourcing": "Outsourcing",
-        "VinFast Outsourcing": "Outsourcing"
+        "VinFast Outsourcing": "Outsourcing",
+            "VinFast AFS Outsourcing": "Outsourcing"
   },
   // --- THÊM PHẦN MAPPING NÀY ---
   projectCompanyMap: {
@@ -108,6 +114,7 @@ export const MASTER_DATA: MasterDataType = {
     "Pegatron Tuyển dụng": "Pegatron - Hải Phòng",
     "Taishodo Tuyển dụng": "Taishodo - Hải Dương",
     "Meiko Tuyển dụng": "Meiko - Hà Nội",
+    "USI Tuyển dụng": "USI - Hải Phòng",
     "Yazaki Tuyển dụng": "Yazaki - Hải Phòng",
     "ShinEtsu Tuyển dụng": "ShinEtsu - Quảng Ninh",
     "Stavian Packaging Tuyển dụng": "Stavian Packaging - Hưng Yên",
@@ -120,7 +127,8 @@ export const MASTER_DATA: MasterDataType = {
     "Kennametal Outsourcing": "Kennametal - Hà Nội",
     "Fairmont Outsourcing": "Fairmont - Hà Nội",
     "DH Vina Outsourcing": "DH Vina - Hải Phòng",
-        "VinFast Outsourcing": "VinFast - Hải Phòng"
+        "VinFast Outsourcing": "VinFast - Hải Phòng",
+            "VinFast AFS Outsourcing": "VinFast AFS - Hải Phòng"
   },
 
   // Danh sách tỉnh thành
@@ -137,7 +145,7 @@ export const MASTER_DATA: MasterDataType = {
   genders: ["Nam", "Nữ", "Khác"],
 
     // Trình độ học vấn
-  educationLevels: ["PTCS", "PTTH", "Trung cấp", "Cao đẳng", "Đại học","Thạc sĩ","Tiến sĩ"],
+  educationLevels: ["Tiểu học","PTCS", "PTTH", "Trung cấp", "Cao đẳng", "Đại học","Thạc sĩ","Tiến sĩ"],
 
   // Danh sách bộ phận tạo nguồn
   sourceDepartments: [
@@ -201,3 +209,8 @@ export const MASTER_DATA: MasterDataType = {
 
 // Export Type để sử dụng ở các file khác nếu cần
 export type SourceDeptType = keyof typeof MASTER_DATA.sourceTypeGroupsByDept;
+
+export const API_CONFIG = {
+  LOGIN_URL: 'https://n8n.koutsourcing.vn/webhook/auth',
+  CANDIDATE_URL: 'https://n8n.koutsourcing.vn/webhook/candidate',
+};

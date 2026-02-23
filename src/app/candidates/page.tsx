@@ -5,9 +5,10 @@ import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
+import { API_CONFIG } from '@/constants/masterData'; // Hoặc đường dẫn file bạn vừa tạo
 import * as XLSX from 'xlsx';
+import { Upload } from 'lucide-react';
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/candidate';
 const ITEMS_PER_PAGE = 50;
 
 // --- UTILS ---
@@ -63,8 +64,8 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'company', label: 'Công ty', width: 150, visible: true, sortable: true },
   
   // Ngày tháng rất cần sort
-  { id: 'interview_date', label: 'Ngày PV', width: 110, visible: true, sortable: true },
-  { id: 'onboard_date', label: 'Ngày Onboard', width: 110, visible: true, sortable: true },
+  { id: 'interview_date', label: 'Ngày Phỏng vấn', width: 110, visible: true, sortable: true },
+  { id: 'onboard_date', label: 'Ngày Nhận việc', width: 110, visible: true, sortable: true },
   { id: 'created_at', label: 'Ngày tạo', width: 140, visible: false, sortable: true },
   
   // Các cột khác
@@ -113,6 +114,10 @@ interface FilterState {
   project: string;
   assigned_user: string;
   tags: string;
+  interview_from: string;
+  interview_to: string;
+  onboard_from: string;
+  onboard_to: string;
 }
 
 const funnelSteps = [
@@ -143,7 +148,7 @@ function CandidatesContent() {
   const [showFilters, setShowFilters] = useState(false); // Toggle thanh Filter
 
   // Filter & Sort States
-  const [filters, setFilters] = useState<FilterState>({ status: '', project: '', assigned_user: '',tags: '' });
+  const [filters, setFilters] = useState<FilterState>({ status: '', project: '', assigned_user: '',tags: '',interview_from: '', interview_to: '', onboard_from: '', onboard_to: '' });
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
   // Detail States
@@ -166,7 +171,7 @@ function CandidatesContent() {
     if (isAuthLoading || !user_group || !user_id) return;
     setListLoading(true);
     try {
-      const res = await fetch(N8N_URL, {
+      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'list', sort: 'newest', user_group, user_id }),
@@ -232,6 +237,20 @@ if (filters.tags) {
             return tagList.includes(filters.tags);
         });
     }
+    if (filters.interview_from) {
+        result = result.filter(c => c.interview_date && c.interview_date >= filters.interview_from);
+    }
+    if (filters.interview_to) {
+        result = result.filter(c => c.interview_date && c.interview_date <= filters.interview_to);
+    }
+
+    // 2. Lọc Ngày Nhận việc
+    if (filters.onboard_from) {
+        result = result.filter(c => c.onboard_date && c.onboard_date >= filters.onboard_from);
+    }
+    if (filters.onboard_to) {
+        result = result.filter(c => c.onboard_date && c.onboard_date <= filters.onboard_to);
+    }
     // 3. Sorting
     if (sortConfig.key) {
         result.sort((a, b) => {
@@ -286,7 +305,7 @@ if (filters.tags) {
     setSelectedId(id);
     setDetailLoading(true);
     try {
-      const res = await fetch(N8N_URL, {
+      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get', id, user_group, user_id }),
@@ -423,8 +442,11 @@ const handleSave = async () => {
   if (!formData.candidate_name?.trim()) return alert('Họ tên không được để trống');
   if (!formData.phone?.trim()) return alert('Số điện thoại không được để trống');
   
-  const phoneRegex = /^\d{10}$/;
-  if (!phoneRegex.test(formData.phone)) return alert('Số điện thoại phải đúng 10 chữ số');
+const phoneRegex = /^0\d{9}$/; 
+  
+  if (!phoneRegex.test(formData.phone)) {
+    return alert('Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
+  }
 
   if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
     return alert('Email không đúng định dạng');
@@ -433,7 +455,7 @@ const handleSave = async () => {
 
   setIsSaving(true);
     try {
-      const res = await fetch(N8N_URL, {
+      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update',user_group, user_id, id: formData.candidate_id, updates: formData }),
@@ -482,7 +504,7 @@ const handleDelete = async () => {
   setIsSaving(true); // Tận dụng state loading
   try {
     // 2. Gọi API
-    const res = await fetch(N8N_URL, {
+    const res = await fetch(API_CONFIG.CANDIDATE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -630,56 +652,126 @@ const handleDelete = async () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <Link 
+        href="/candidates/import" 
+        className="bg-white border border-emerald-600 text-emerald-600 px-4 py-2 rounded-xl font-bold hover:bg-emerald-50 transition flex items-center gap-2"
+    >
+        <Upload className="w-4 h-4" />
+        IMPORT DS
+    </Link>
             {!selectedId && <Link href="/candidates/new" className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition whitespace-nowrap">THÊM MỚI</Link>}
           </div>
 
           {/* FILTER BAR (Hiện ra khi bấm nút) */}
-          {showFilters && (
-             <div className="mt-3 p-3 bg-blue-50/50 border border-blue-100 rounded-xl grid grid-cols-4 gap-3 animate-in slide-in-from-top-2">
-                 <div>
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Trạng thái</label>
-                    <select 
-                        className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
-                        value={filters.status}
-                        onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                    >
-                        <option value="">Tất cả trạng thái</option>
-                        {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
+{showFilters && (
+             <div className="mt-3 p-4 bg-blue-50/50 border border-blue-100 rounded-xl space-y-3 animate-in slide-in-from-top-2 shadow-inner">
+                 
+                 {/* DÒNG 1: CÁC BỘ LỌC CƠ BẢN */}
+                 <div className="grid grid-cols-4 gap-3">
+                     <div>
+                        <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Trạng thái</label>
+                        <select 
+                            className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
+                            value={filters.status}
+                            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                     </div>
+                     <div>
+                        <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Dự án</label>
+                        <select 
+                            className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
+                            value={filters.project}
+                            onChange={(e) => setFilters(prev => ({ ...prev, project: e.target.value }))}
+                        >
+                            <option value="">Tất cả dự án</option>
+                            {uniqueProjects.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                     </div>
+                     <div>
+                        <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Người phụ trách</label>
+                        <select 
+                            className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
+                            value={filters.assigned_user}
+                            onChange={(e) => setFilters(prev => ({ ...prev, assigned_user: e.target.value }))}
+                        >
+                            <option value="">Tất cả nhân sự</option>
+                            {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                     </div>
+                     <div>
+                        <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Nhãn</label>
+                        <select 
+                            className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
+                            value={filters.tags}
+                            onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}
+                        >
+                            <option value="">Tất cả nhãn</option>
+                            {MASTER_DATA.candidateTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+                        </select>
+                    </div>
                  </div>
-                 <div>
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Dự án</label>
-                    <select 
-                        className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
-                        value={filters.project}
-                        onChange={(e) => setFilters(prev => ({ ...prev, project: e.target.value }))}
-                    >
-                        <option value="">Tất cả dự án</option>
-                        {uniqueProjects.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
+
+                 {/* DÒNG 2: BỘ LỌC THỜI GIAN (MỚI) */}
+                 <div className="grid grid-cols-4 gap-3 border-t border-blue-200 pt-3">
+                    {/* Filter Ngày Phỏng vấn */}
+                    <div className="col-span-2 flex gap-2 items-end">
+                        <div className="flex-1">
+                            <label className="text-[10px] uppercase font-bold text-blue-600 mb-1 block">Ngày Phỏng vấn: Từ</label>
+                            <input 
+                                type="date" 
+                                className="w-full p-2 border rounded-lg text-xs outline-none focus:border-blue-500 bg-white"
+                                value={filters.interview_from}
+                                onChange={(e) => setFilters(prev => ({ ...prev, interview_from: e.target.value }))}
+                            />
+                        </div>
+                        <span className="mb-2 text-gray-400">➜</span>
+                        <div className="flex-1">
+                            <label className="text-[10px] uppercase font-bold text-blue-600 mb-1 block">Đến</label>
+                            <input 
+                                type="date" 
+                                className="w-full p-2 border rounded-lg text-xs outline-none focus:border-blue-500 bg-white"
+                                value={filters.interview_to}
+                                onChange={(e) => setFilters(prev => ({ ...prev, interview_to: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Filter Ngày Onboard */}
+                    <div className="col-span-2 flex gap-2 items-end">
+                        <div className="flex-1">
+                            <label className="text-[10px] uppercase font-bold text-emerald-600 mb-1 block">Ngày Nhận việc: Từ</label>
+                            <input 
+                                type="date" 
+                                className="w-full p-2 border rounded-lg text-xs outline-none focus:border-emerald-500 bg-white"
+                                value={filters.onboard_from}
+                                onChange={(e) => setFilters(prev => ({ ...prev, onboard_from: e.target.value }))}
+                            />
+                        </div>
+                        <span className="mb-2 text-gray-400">➜</span>
+                        <div className="flex-1">
+                            <label className="text-[10px] uppercase font-bold text-emerald-600 mb-1 block">Đến</label>
+                            <input 
+                                type="date" 
+                                className="w-full p-2 border rounded-lg text-xs outline-none focus:border-emerald-500 bg-white"
+                                value={filters.onboard_to}
+                                onChange={(e) => setFilters(prev => ({ ...prev, onboard_to: e.target.value }))}
+                            />
+                        </div>
+                    </div>
                  </div>
-                 <div>
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Người phụ trách</label>
-                    <select 
-                        className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
-                        value={filters.assigned_user}
-                        onChange={(e) => setFilters(prev => ({ ...prev, assigned_user: e.target.value }))}
+                 
+                 {/* Nút Reset Filter (Optional - để tiện sử dụng) */}
+                 <div className="flex justify-end">
+                    <button 
+                        onClick={() => setFilters({ status: '', project: '', assigned_user: '', tags: '', interview_from: '', interview_to: '', onboard_from: '', onboard_to: '' })}
+                        className="text-[10px] font-bold text-red-500 hover:text-red-700 underline"
                     >
-                        <option value="">Tất cả nhân sự</option>
-                        {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
-                    </select>
+                        Xóa bộ lọc
+                    </button>
                  </div>
-               <div>
-      <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Nhãn</label>
-      <select 
-        className="w-full p-2 border rounded-lg text-sm outline-none focus:border-blue-500 bg-white"
-        value={filters.tags}
-        onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}
-      >
-        <option value="">Tất cả nhãn</option>
-        {MASTER_DATA.candidateTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-      </select>
-    </div>
              </div>
           )}
         </div>
