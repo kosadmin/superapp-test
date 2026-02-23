@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Demo Login với Google Apps Script',
-  description: 'Test auth bằng Google Sheets + GAS',
+  title: 'KOS SUPER CRM',
+  description: 'Không gian làm việc tăng hiệu suất cho Tuyển dụng',
 };
 
 export default function RootLayout({
