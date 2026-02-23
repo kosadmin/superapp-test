@@ -4,8 +4,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, AuthProvider } from '@/contexts/AuthContext'; 
+import { API_CONFIG } from '@/constants/masterData'; 
 
-const N8N_URL = 'https://n8n.koutsourcing.vn/webhook/auth'; // webhook verify của bạn
 
 // Component con chịu trách nhiệm xác thực
 function AuthCheck({ children }: { children: React.ReactNode }) {
@@ -22,7 +22,7 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const res = await fetch(N8N_URL, {
+        const res = await fetch(API_CONFIG.LOGIN_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'verify', token }),
