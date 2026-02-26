@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'KOS SUPER CRM',
-  description: 'Không gian làm việc tăng hiệu suất cho Tuyển dụng',
+  description: 'Không gian làm việc hiệu suất cho Bộ phận Tuyển dụng',
 };
 
 export default function RootLayout({
