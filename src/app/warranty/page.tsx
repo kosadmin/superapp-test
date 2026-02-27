@@ -103,7 +103,10 @@ const warrantyFunnelSteps = [
 
 function WarrantyContent() {
   const { user_group, user_id, isLoading: isAuthLoading } = useAuth();
-  const canEditSource = user_group?.toLowerCase() === 'admin';
+const canEditSource = user_group?.toLowerCase() === 'admin';
+// Thêm:
+const can247Edit = user_group?.toLowerCase() === '247' || user_group?.toLowerCase() === 'admin';
+const canOnsiteEdit = user_group?.toLowerCase() === 'adminonsite' || user_group?.toLowerCase() === 'admin';
 
   // Data States
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
@@ -202,11 +205,11 @@ function WarrantyContent() {
     if (filters.project) result = result.filter(c => c.project === filters.project);
     if (filters.assigned_247_user) result = result.filter(c => c.assigned_247_user_name === filters.assigned_247_user);
     if (filters.tags) {
-      result = result.filter(c => {
-        if (!c.tags) return false;
-        const tagList = c.tags.split(',').map((t: string) => t.trim());
-        return tagList.includes(filters.tags);
-      });
+result = result.filter(c => {
+  if (!c.tags_warranty) return false;
+  const tagList = c.tags_warranty.split(',').map((t: string) => t.trim());
+  return tagList.includes(filters.tags);
+});
     }
     if (filters.is_still_working_247) {
       const val = filters.is_still_working_247 === 'true';
@@ -340,32 +343,18 @@ function WarrantyContent() {
     });
   };
 
-  const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setFormData(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        project: val,
-        project_id: MASTER_DATA.projectIdMap[val] || '',
-        project_type: MASTER_DATA.projectTypeMap[val] || '',
-        company: MASTER_DATA.projectCompanyMap[val] || '',
-      };
-    });
-  };
-
   const handleAddTag = (tag: string) => {
     if (!formData) return;
-    const currentTags = formData.tags ? formData.tags.split(',').map((t: string) => t.trim()) : [];
+    const currentTags = formData.tags_warranty ? formData.tags_warranty.split(',').map((t: string) => t.trim()) : [];
     if (!currentTags.includes(tag)) {
-      handleChange('tags', [...currentTags, tag].join(', '));
+      handleChange('tags_warranty', [...currentTags, tag].join(', '));
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    if (!formData || !formData.tags) return;
-    const newTags = formData.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t !== tagToRemove).join(', ');
-    handleChange('tags', newTags);
+    if (!formData || !formData.tags_warranty) return;
+    const newTags = formData.tags_warranty.split(',').map((t: string) => t.trim()).filter((t: string) => t !== tagToRemove).join(', ');
+    handleChange('tags_warranty', newTags);
   };
 
   const handleSave = async () => {
@@ -526,7 +515,7 @@ function WarrantyContent() {
                   <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Nhãn</label>
                   <select className="w-full p-2 border rounded-lg text-sm outline-none focus:border-emerald-500 bg-white" value={filters.tags} onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}>
                     <option value="">Tất cả nhãn</option>
-                    {MASTER_DATA.candidateTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+{MASTER_DATA.warrantyTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
                   </select>
                 </div>
               </div>
@@ -552,25 +541,32 @@ function WarrantyContent() {
               </div>
 
               {/* DÒNG 3: LỌC THEO NGÀY */}
-              <div className="space-y-2 border-t border-emerald-200 pt-3">
-                <p className="text-[10px] uppercase font-bold text-emerald-700">Lọc theo ngày</p>
-
-                {/* Helper DateRange component inline */}
-                {[
-                  { label: 'Ngày Onboard', fromKey: 'onboard_from', toKey: 'onboard_to', color: 'emerald' },
-                  { label: 'Ngày On-job 1 ngày', fromKey: 'on_job_1_day_from', toKey: 'on_job_1_day_to', color: 'blue' },
-                  { label: 'Ngày On-job 3 ngày', fromKey: 'on_job_3_day_from', toKey: 'on_job_3_day_to', color: 'blue' },
-                  { label: 'Ngày On-job 7 ngày', fromKey: 'on_job_7_day_from', toKey: 'on_job_7_day_to', color: 'blue' },
-                  { label: 'Ngày On-job 30 ngày', fromKey: 'on_job_30_day_from', toKey: 'on_job_30_day_to', color: 'blue' },
-                  { label: 'Ngày nghỉ việc', fromKey: 'resigned_date_from', toKey: 'resigned_date_to', color: 'red' },
-                ].map(({ label, fromKey, toKey }) => (
-                  <div key={fromKey} className="grid grid-cols-3 gap-2 items-center">
-                    <label className="text-[10px] font-bold text-gray-500">{label}</label>
-                    <input type="date" className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white" value={(filters as any)[fromKey]} onChange={(e) => setFilters(prev => ({ ...prev, [fromKey]: e.target.value }))} />
-                    <input type="date" className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white" value={(filters as any)[toKey]} onChange={(e) => setFilters(prev => ({ ...prev, [toKey]: e.target.value }))} />
-                  </div>
-                ))}
-              </div>
+  <div className="border-t border-emerald-200 pt-3">
+  <p className="text-[10px] uppercase font-bold text-emerald-700 mb-2">Lọc theo ngày</p>
+  <div className="grid grid-cols-3 gap-x-3 gap-y-1.5 text-[11px]">
+    {[
+      { label: 'Onboard', fromKey: 'onboard_from', toKey: 'onboard_to' },
+      { label: 'On-job 1 ngày', fromKey: 'on_job_1_day_from', toKey: 'on_job_1_day_to' },
+      { label: 'On-job 3 ngày', fromKey: 'on_job_3_day_from', toKey: 'on_job_3_day_to' },
+      { label: 'On-job 7 ngày', fromKey: 'on_job_7_day_from', toKey: 'on_job_7_day_to' },
+      { label: 'On-job 30 ngày', fromKey: 'on_job_30_day_from', toKey: 'on_job_30_day_to' },
+      { label: 'Ngày nghỉ', fromKey: 'resigned_date_from', toKey: 'resigned_date_to' },
+    ].map(({ label, fromKey, toKey }) => (
+      <div key={fromKey}>
+        <label className="text-[10px] font-bold text-gray-500 block mb-0.5">{label}</label>
+        <div className="flex gap-1 items-center">
+          <input type="date" className="flex-1 p-1 border rounded-lg text-[10px] outline-none bg-white min-w-0"
+            value={(filters as any)[fromKey]}
+            onChange={(e) => setFilters(prev => ({ ...prev, [fromKey]: e.target.value }))} />
+          <span className="text-gray-300 text-[9px]">→</span>
+          <input type="date" className="flex-1 p-1 border rounded-lg text-[10px] outline-none bg-white min-w-0"
+            value={(filters as any)[toKey]}
+            onChange={(e) => setFilters(prev => ({ ...prev, [toKey]: e.target.value }))} />
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
 
               <div className="flex justify-end">
                 <button onClick={resetFilters} className="text-[10px] font-bold text-red-500 hover:text-red-700 underline">Xóa bộ lọc</button>
@@ -680,7 +676,7 @@ function WarrantyContent() {
                 {/* TAGS */}
                 <section className="relative">
                   <div className="flex flex-wrap items-center gap-2 p-2 border rounded-xl focus-within:border-pink-500 bg-white transition-all">
-                    {formData.tags?.split(',').map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
+                    {formData.tags_warranty?.split(',').map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
                       <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-pink-50 text-pink-600 rounded-md text-[10px] font-bold border border-pink-100">
                         {tag}
                         <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 text-xs">×</button>
@@ -704,7 +700,7 @@ function WarrantyContent() {
                       {showSuggestions && (
                         <div className="absolute z-50 top-full left-0 mt-1 w-48 bg-white border rounded-lg shadow-xl p-1 animate-in fade-in slide-in-from-top-1">
                           <p className="text-[9px] text-gray-400 font-bold px-2 py-1 uppercase">Gợi ý nhanh</p>
-                          {MASTER_DATA.candidateTags.map(sTag => (
+                          {MASTER_DATA.warrantyTags.map(sTag => (
                             <button key={sTag} onClick={() => { handleAddTag(sTag); setShowSuggestions(false); }} className="w-full text-left px-3 py-1.5 hover:bg-pink-50 hover:text-pink-600 rounded text-xs transition">
                               + {sTag}
                             </button>
@@ -751,24 +747,34 @@ function WarrantyContent() {
                 <section>
                   <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-emerald-400 pl-3 text-xs uppercase tracking-wider">Chăm sóc theo mốc thời gian</h3>
                   <div className="space-y-3">
-                    {[
-                      { label: '1 Ngày', dateKey: 'on_job_1_day_date', resultKey: 'on_job_1_day_call_result' },
-                      { label: '3 Ngày', dateKey: 'on_job_3_day_date', resultKey: 'on_job_3_day_call_result' },
-                      { label: '7 Ngày', dateKey: 'on_job_7_day_date', resultKey: 'on_job_7_day_call_result' },
-                      { label: '30 Ngày', dateKey: 'on_job_30_day_date', resultKey: 'on_job_30_day_call_result' },
-                    ].map(({ label, dateKey, resultKey }) => (
-                      <div key={dateKey} className="grid grid-cols-3 gap-3 items-center p-3 bg-gray-50 rounded-xl border">
-                        <label className="text-xs font-bold text-gray-600 uppercase">Mốc {label}</label>
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày</label>
-                          <input type="date" className="w-full p-2 border rounded-xl mt-1 outline-none focus:border-emerald-500 bg-white text-sm" value={formData[dateKey] || ''} onChange={e => handleChange(dateKey, e.target.value)} />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Kết quả cuộc gọi</label>
-                          <input className="w-full p-2 border rounded-xl mt-1 outline-none focus:border-emerald-500 bg-white text-sm" value={formData[resultKey] || ''} onChange={e => handleChange(resultKey, e.target.value)} placeholder="Ghi nhận..." />
-                        </div>
-                      </div>
-                    ))}
+     // Tìm đoạn render 4 mốc, sửa thành:
+{[
+  { label: '1 Ngày', dateKey: 'on_job_1_day_date', resultKey: 'on_job_1_day_call_result' },
+  { label: '3 Ngày', dateKey: 'on_job_3_day_date', resultKey: 'on_job_3_day_call_result' },
+  { label: '7 Ngày', dateKey: 'on_job_7_day_date', resultKey: 'on_job_7_day_call_result' },
+  { label: '30 Ngày', dateKey: 'on_job_30_day_date', resultKey: 'on_job_30_day_call_result' },
+].map(({ label, dateKey, resultKey }) => (
+  <div key={dateKey} className="grid grid-cols-3 gap-3 items-center p-3 bg-gray-50 rounded-xl border">
+    <label className="text-xs font-bold text-gray-600 uppercase">Mốc {label}</label>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày</label>
+      {/* ĐỔI: readonly */}
+      <input className={readOnlyClass} value={formData[dateKey] || ''} readOnly />
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Kết quả cuộc gọi</label>
+      {/* ĐỔI: dropdown */}
+      <select
+        className="w-full p-2 border rounded-xl mt-1 outline-none focus:border-emerald-500 bg-white text-sm"
+        value={formData[resultKey] || ''}
+        onChange={e => handleChange(resultKey, e.target.value)}
+      >
+        <option value="">-- Chọn kết quả --</option>
+        {MASTER_DATA.callResults.map(r => <option key={r} value={r}>{r}</option>)}
+      </select>
+    </div>
+  </div>
+))}
                   </div>
                   {/* 247 call note */}
                   <div className="mt-3">
@@ -782,92 +788,99 @@ function WarrantyContent() {
                   <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-red-400 pl-3 text-xs uppercase tracking-wider">Tình trạng nghỉ việc</h3>
                   <div className="grid grid-cols-2 gap-6">
                     {/* Cột 247 */}
-                    <div className="space-y-3 p-4 bg-orange-50 rounded-xl border border-orange-100">
-                      <h4 className="text-xs font-black text-orange-600 uppercase tracking-widest">247 — Xác nhận</h4>
-                      <div>
-                        <div
-                          onClick={() => handleChange('is_still_working_247', !(formData.is_still_working_247 === true || formData.is_still_working_247 === 'TRUE'))}
-                          className={`cursor-pointer w-full p-3 rounded-xl border-2 text-center transition-all font-bold text-xs uppercase select-none
-                            ${(formData.is_still_working_247 === true || formData.is_still_working_247 === 'TRUE')
-                              ? 'bg-green-100 border-green-400 text-green-700'
-                              : 'bg-red-100 border-red-300 text-red-600'}`}
-                        >
-                          {(formData.is_still_working_247 === true || formData.is_still_working_247 === 'TRUE') ? '✅ Còn đang làm việc' : '❌ Đã nghỉ việc'}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày nghỉ (247)</label>
-                        <input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-orange-400 bg-white" value={formData.resigned_date_247 || ''} onChange={e => handleChange('resigned_date_247', e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do nghỉ (247)</label>
-                        <textarea className="w-full p-2.5 border rounded-xl mt-1 h-20 outline-none focus:border-orange-400 bg-white text-sm" value={formData.reason_resigned_247 || ''} onChange={e => handleChange('reason_resigned_247', e.target.value)} placeholder="Nhập lý do..." />
-                      </div>
-                    </div>
+<div className={`space-y-3 p-4 bg-orange-50 rounded-xl border border-orange-100 ${!can247Edit ? 'opacity-60' : ''}`}>
+  <h4 className="text-xs font-black text-orange-600 uppercase tracking-widest">247 — Xác nhận</h4>
+  <div>
+    <div
+      onClick={() => can247Edit && handleChange('is_still_working_247', ...)}
+      className={`... ${!can247Edit ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      ...
+    </div>
+  </div>
+  <div>
+    <label ...>Ngày nghỉ (247)</label>
+    <input type="date" ... disabled={!can247Edit} className={`... ${!can247Edit ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
+  </div>
+  <div>
+    <label ...>Lý do nghỉ (247)</label>
+    {/* ĐỔI sang dropdown */}
+    <select disabled={!can247Edit} className={`w-full p-2.5 border rounded-xl mt-1 text-sm ${!can247Edit ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+      value={formData.reason_resigned_247 || ''} onChange={e => handleChange('reason_resigned_247', e.target.value)}>
+      <option value="">-- Chọn lý do --</option>
+      {MASTER_DATA.resignReasons.map(r => <option key={r} value={r}>{r}</option>)}
+    </select>
+  </div>
+</div>
 
                     {/* Cột Official */}
-                    <div className="space-y-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                      <h4 className="text-xs font-black text-blue-600 uppercase tracking-widest">Official — Xác nhận</h4>
-                      <div>
-                        <div
-                          onClick={() => handleChange('is_still_working_official', !(formData.is_still_working_official === true || formData.is_still_working_official === 'TRUE'))}
-                          className={`cursor-pointer w-full p-3 rounded-xl border-2 text-center transition-all font-bold text-xs uppercase select-none
-                            ${(formData.is_still_working_official === true || formData.is_still_working_official === 'TRUE')
-                              ? 'bg-green-100 border-green-400 text-green-700'
-                              : 'bg-red-100 border-red-300 text-red-600'}`}
-                        >
-                          {(formData.is_still_working_official === true || formData.is_still_working_official === 'TRUE') ? '✅ Còn đang làm việc' : '❌ Đã nghỉ việc'}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày nghỉ (Official)</label>
-                        <input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-blue-400 bg-white" value={formData.resigned_date_official || ''} onChange={e => handleChange('resigned_date_official', e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do nghỉ (Official)</label>
-                        <textarea className="w-full p-2.5 border rounded-xl mt-1 h-20 outline-none focus:border-blue-400 bg-white text-sm" value={formData.reason_resigned_official || ''} onChange={e => handleChange('reason_resigned_official', e.target.value)} placeholder="Nhập lý do..." />
-                      </div>
+<div className={`space-y-3 p-4 bg-blue-50 rounded-xl border border-blue-100 ${!canOnsiteEdit ? 'opacity-60' : ''}`}>
+  <h4 className="text-xs font-black text-orange-600 uppercase tracking-widest">Official — Xác nhận</h4>
+  <div>
+    <div
+      onClick={() => canOnsiteEdit && handleChange('is_still_working_official', ...)}
+      className={`... ${!canOnsiteEdit ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      ...
+    </div>
+  </div>
+  <div>
+    <label ...>Ngày nghỉ (Official)</label>
+    <input type="date" ... disabled={!canOnsiteEdit} className={`... ${!canOnsiteEdit ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
+  </div>
+  <div>
+    <label ...>Lý do nghỉ (Official)</label>
+    {/* ĐỔI sang dropdown */}
+    <select disabled={!canOnsiteEdit} className={`w-full p-2.5 border rounded-xl mt-1 text-sm ${!canOnsiteEdit ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+      value={formData.reason_resigned_official || ''} onChange={e => handleChange('reason_resigned_official', e.target.value)}>
+      <option value="">-- Chọn lý do --</option>
+      {MASTER_DATA.resignReasons.map(r => <option key={r} value={r}>{r}</option>)}
+    </select>
+  </div>
                     </div>
                   </div>
                 </section>
 
-                {/* 5. THÔNG TIN TUYỂN DỤNG */}
-                <section>
-                  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Thông tin tuyển dụng</h3>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                    <div className="col-span-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Dự án</label>
-                      <select className="w-full p-2.5 border rounded-xl mt-1 font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.project || ''} onChange={handleProjectChange}>
-                        <option value="">-- Chọn dự án --</option>
-                        {MASTER_DATA.projects.map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">ID Dự án</label>
-                      <input className={readOnlyClass} value={formData.project_id || ''} readOnly />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Loại dự án</label>
-                      <input className={readOnlyClass} value={formData.project_type || ''} readOnly />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Công ty</label>
-                      <input className={readOnlyClass} value={formData.company || ''} readOnly />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Vị trí</label>
-                      <input className="w-full p-2.5 border rounded-xl mt-1" value={formData.position || ''} onChange={e => handleChange('position', e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày onboard</label>
-                      <input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-emerald-500 bg-emerald-50/30" value={formData.onboard_date || ''} onChange={e => handleChange('onboard_date', e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Bộ phận ứng tuyển</label>
-                      <input className="w-full p-2.5 border rounded-xl mt-1" value={formData.department || ''} onChange={e => handleChange('department', e.target.value)} />
-                    </div>
-                  </div>
-                </section>
+         {/* 5. THÔNG TIN TUYỂN DỤNG */}
+<section>
+  <h3 className="text-gray-800 font-bold mb-5 border-l-4 border-blue-600 pl-3 text-xs uppercase tracking-wider">Thông tin tuyển dụng</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+    <div className="col-span-2">
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Dự án</label>
+      <input className={readOnlyClass} value={formData.project || ''} readOnly />
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">ID Dự án</label>
+      <input className={readOnlyClass} value={formData.project_id || ''} readOnly />
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Loại dự án</label>
+      <input className={readOnlyClass} value={formData.project_type || ''} readOnly />
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Công ty</label>
+      <input className={readOnlyClass} value={formData.company || ''} readOnly />
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày onboard</label>
+      <input className={readOnlyClass} value={formData.onboard_date || ''} readOnly />
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Vị trí</label>
+      {canOnsiteEdit
+        ? <input className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-blue-500" value={formData.position || ''} onChange={e => handleChange('position', e.target.value)} />
+        : <input className={readOnlyClass} value={formData.position || ''} readOnly />
+      }
+    </div>
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Bộ phận ứng tuyển</label>
+      {canOnsiteEdit
+        ? <input className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-blue-500" value={formData.department || ''} onChange={e => handleChange('department', e.target.value)} />
+        : <input className={readOnlyClass} value={formData.department || ''} readOnly />
+      }
+    </div>
+  </div>
+</section>
 
                 {/* 6. NGƯỜI PHỤ TRÁCH */}
                 <section>
@@ -889,6 +902,14 @@ function WarrantyContent() {
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nhóm phụ trách (247)</label>
                       <input className={readOnlyClass} value={formData.assigned_247_user_group || ''} readOnly />
                     </div>
+                    <div>
+  <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">NV phụ trách (Admin Onsite)</label>
+  <input className={readOnlyClass} value={formData.assigned_adminonsite_user_name || ''} readOnly />
+</div>
+<div>
+  <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nhóm phụ trách (Admin Onsite)</label>
+  <input className={readOnlyClass} value={formData.assigned_adminonsite_user_group || ''} readOnly />
+</div>
                   </div>
                 </section>
 
@@ -984,10 +1005,6 @@ function WarrantyContent() {
                     <div>
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Tóm tắt kinh nghiệm</label>
                       <textarea className="w-full p-3 border rounded-xl mt-1 h-24 outline-none focus:ring-2 focus:ring-blue-500" value={formData.experience_summary || ''} onChange={e => handleChange('experience_summary', e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ghi chú chăm sóc</label>
-                      <textarea className="w-full p-3 border rounded-xl mt-1 h-24 outline-none focus:ring-2 focus:ring-blue-500" value={formData.take_note || ''} onChange={e => handleChange('take_note', e.target.value)} />
                     </div>
                   </div>
                 </section>
@@ -1095,7 +1112,7 @@ function renderCell(colId: string, cand: any) {
     case 'tags':
       return (
         <div className="flex gap-1 flex-wrap max-w-[150px]">
-          {cand.tags?.split(',').slice(0, 3).map((t: string) => {
+          {cand.tags_warranty?.split(',').slice(0, 3).map((t: string) => {
             const tag = t.trim();
             const styles = getTagStyles(tag);
             return (
@@ -1104,7 +1121,7 @@ function renderCell(colId: string, cand: any) {
               </span>
             );
           })}
-          {cand.tags?.split(',').length > 3 && <span className="text-[9px] text-gray-400 font-bold">...</span>}
+          {cand.tags_warranty?.split(',').length > 3 && <span className="text-[9px] text-gray-400 font-bold">...</span>}
         </div>
       );
     case 'candidate_name': return <div className="font-bold text-emerald-900 leading-tight">{cand.candidate_name}</div>;
