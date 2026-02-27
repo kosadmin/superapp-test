@@ -12,6 +12,8 @@ educationLevels: string[];
   rejectReasonsUnqualified: string[];
   candidateTags: string[];
     warrantyTags: string[];
+      callResults: string[];
+     resignReasons: string[];
   sourceTypeGroupsByDept: {
     [key: string]: string[] | undefined; // Cho phép truy cập bằng key string bất kỳ
     "Marketing": string[];
@@ -214,7 +216,24 @@ export const MASTER_DATA: MasterDataType = {
     "Chưa liên lạc được",
     "Sai số",
     "Cần hỗ trợ"
-  ]
+  ],
+   callResults: [
+    'Liên lạc được - ổn',
+    'Liên lạc được - có vấn đề',
+    'Không nghe máy',
+    'Số không liên lạc được',
+    'Nhắn tin, chưa phản hồi',
+  ],
+  resignReasons: [
+    'Lương không phù hợp',
+    'Môi trường làm việc',
+    'Sức khỏe',
+    'Việc gia đình',
+    'Tìm được việc khác',
+    'Không phù hợp công việc',
+    'Không rõ lý do',
+    // thêm theo thực tế
+  ],
 };
 
 // Export Type để sử dụng ở các file khác nếu cần
