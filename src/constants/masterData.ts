@@ -11,6 +11,7 @@ educationLevels: string[];
   rejectReasonsOffer: string[];     
   rejectReasonsUnqualified: string[];
   candidateTags: string[];
+    warrantyTags: string[];
   sourceTypeGroupsByDept: {
     [key: string]: string[] | undefined; // Cho phép truy cập bằng key string bất kỳ
     "Marketing": string[];
@@ -208,6 +209,11 @@ export const MASTER_DATA: MasterDataType = {
     "Sai số",
     "Đăng ký KTX",
     "Đăng ký tuyến xe"
+  ],
+    warrantyTags: [
+    "Chưa liên lạc được",
+    "Sai số",
+    "Cần hỗ trợ"
   ]
 };
 
