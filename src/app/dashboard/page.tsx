@@ -274,6 +274,10 @@ function DashboardContent() {
               Quản lý Ứng viên
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </Link>
+                        <Link href="/warranty" className="flex items-center justify-center gap-3 w-full bg-slate-900 text-white py-4 rounded-2xl hover:bg-blue-600 transition-all font-bold shadow-lg active:scale-95">
+              OB - Bảo hành
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+            </Link>
             <Link href="/profile" className="block w-full bg-white border-2 border-slate-100 text-slate-500 py-3.5 rounded-2xl hover:border-blue-200 hover:text-blue-600 transition-all font-bold text-sm">
               Thông tin cá nhân
             </Link>
