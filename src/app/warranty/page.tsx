@@ -154,10 +154,10 @@ function WarrantyContent() {
     setListLoading(true);
     try {
       // TODO: Đổi sang API_CONFIG.WARRANTY_URL hoặc endpoint riêng cho module bảo hành
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
+      const res = await fetch(API_CONFIG.WARRANTY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'list_warranty', sort: 'newest', user_group, user_id }),
+        body: JSON.stringify({ action: 'list', sort: 'newest', user_group, user_id }),
       });
       const data = await res.json();
       if (data.success) {
