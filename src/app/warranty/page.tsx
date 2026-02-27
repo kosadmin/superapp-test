@@ -148,10 +148,10 @@ function WarrantyContent() {
     if (isAuthLoading || !user_group || !user_id) return;
     setListLoading(true);
     try {
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
+      const res = await fetch(API_CONFIG.WARRANTY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'list_warranty', sort: 'newest', user_group, user_id }),
+        body: JSON.stringify({ action: 'list', sort: 'newest', user_group, user_id }),
       });
       const data = await res.json();
       if (data.success) setAllCandidates(data.data || []);
@@ -268,7 +268,7 @@ function WarrantyContent() {
     setSelectedId(id);
     setDetailLoading(true);
     try {
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
+      const res = await fetch(API_CONFIG.WARRANTY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get', id, user_group, user_id }),
@@ -320,7 +320,7 @@ function WarrantyContent() {
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) return alert('Email không đúng định dạng');
     setIsSaving(true);
     try {
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
+      const res = await fetch(API_CONFIG.WARRANTY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update', user_group, user_id, id: formData.candidate_id, updates: formData }),
