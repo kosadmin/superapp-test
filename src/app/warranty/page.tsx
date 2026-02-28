@@ -377,19 +377,136 @@ function WarrantyContent() {
     is_still_working_247: '', is_still_working_official: '',
   });
 
+  // Đếm số filter đang active để hiển thị badge
+  const activeFilterCount = [
+    filters.status, filters.project, filters.assigned_247_user, filters.tags,
+    filters.is_still_working_247, filters.is_still_working_official,
+    filters.onboard_from, filters.onboard_to,
+    filters.on_job_1_day_from, filters.on_job_1_day_to,
+    filters.on_job_3_day_from, filters.on_job_3_day_to,
+    filters.on_job_7_day_from, filters.on_job_7_day_to,
+    filters.on_job_30_day_from, filters.on_job_30_day_to,
+    filters.resigned_date_from, filters.resigned_date_to,
+  ].filter(Boolean).length;
+
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden text-sm p-4 gap-4">
+    <div className="flex h-screen bg-gray-100 overflow-hidden text-sm p-4 gap-3">
+
+      {/* FILTER SIDEBAR */}
+      <div className={`flex-shrink-0 flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${showFilters ? 'w-56' : 'w-0 border-0'}`}>
+        {showFilters && (
+          <>
+            <div className="p-3 border-b bg-emerald-600 flex items-center justify-between">
+              <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc</span>
+              <button onClick={resetFilters} className="text-[9px] font-bold text-emerald-200 hover:text-white underline">Xóa tất cả</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
+
+              {/* Trạng thái */}
+              <div>
+                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Trạng thái</label>
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                  value={filters.status} onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}>
+                  <option value="">Tất cả</option>
+                  {warrantyStatusOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+
+              {/* Dự án */}
+              <div>
+                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Dự án</label>
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                  value={filters.project} onChange={e => setFilters(prev => ({ ...prev, project: e.target.value }))}>
+                  <option value="">Tất cả</option>
+                  {uniqueProjects.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+
+              {/* Phụ trách 247 */}
+              <div>
+                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Phụ trách (247)</label>
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                  value={filters.assigned_247_user} onChange={e => setFilters(prev => ({ ...prev, assigned_247_user: e.target.value }))}>
+                  <option value="">Tất cả</option>
+                  {unique247Users.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+
+              {/* Nhãn */}
+              <div>
+                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Nhãn</label>
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                  value={filters.tags} onChange={e => setFilters(prev => ({ ...prev, tags: e.target.value }))}>
+                  <option value="">Tất cả</option>
+                  {MASTER_DATA.warrantyTags.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              {/* Tình trạng làm việc */}
+              <div className="border-t pt-3">
+                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Tình trạng (247)</label>
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                  value={filters.is_still_working_247} onChange={e => setFilters(prev => ({ ...prev, is_still_working_247: e.target.value }))}>
+                  <option value="">Tất cả</option>
+                  <option value="true">Còn làm</option>
+                  <option value="false">Đã nghỉ</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Tình trạng (Official)</label>
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                  value={filters.is_still_working_official} onChange={e => setFilters(prev => ({ ...prev, is_still_working_official: e.target.value }))}>
+                  <option value="">Tất cả</option>
+                  <option value="true">Còn làm</option>
+                  <option value="false">Đã nghỉ</option>
+                </select>
+              </div>
+
+              {/* Lọc theo ngày */}
+              <div className="border-t pt-3 space-y-3">
+                <p className="text-[10px] uppercase font-black text-emerald-600">Lọc theo ngày</p>
+                {[
+                  { label: 'Onboard', f: 'onboard_from', t: 'onboard_to' },
+                  { label: 'On-job 1 ngày', f: 'on_job_1_day_from', t: 'on_job_1_day_to' },
+                  { label: 'On-job 3 ngày', f: 'on_job_3_day_from', t: 'on_job_3_day_to' },
+                  { label: 'On-job 7 ngày', f: 'on_job_7_day_from', t: 'on_job_7_day_to' },
+                  { label: 'On-job 30 ngày', f: 'on_job_30_day_from', t: 'on_job_30_day_to' },
+                  { label: 'Ngày nghỉ', f: 'resigned_date_from', t: 'resigned_date_to' },
+                ].map(({ label, f, t }) => (
+                  <div key={f}>
+                    <label className="text-[10px] font-bold text-gray-500 block mb-1">{label}</label>
+                    <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-emerald-500 mb-1"
+                      value={(filters as any)[f]} onChange={e => setFilters(prev => ({ ...prev, [f]: e.target.value }))} />
+                    <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-emerald-500"
+                      value={(filters as any)[t]} onChange={e => setFilters(prev => ({ ...prev, [t]: e.target.value }))} />
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </>
+        )}
+      </div>
 
       {/* DANH SÁCH */}
-      <div className={`flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-500 overflow-hidden ${selectedId ? 'w-1/2' : 'w-full'}`}>
+      <div className={`flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${selectedId ? 'flex-1' : 'flex-1'}`}>
 
         <div className="p-4 border-b bg-white">
           <div className="flex justify-between items-center mb-3">
             <h1 className="text-xl font-bold text-emerald-700 uppercase tracking-tight">🛡️ Quản lý Bảo hành</h1>
             <div className="flex gap-2">
-              <button onClick={() => setShowFilters(!showFilters)} className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${showFilters ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-white hover:bg-gray-50 text-gray-600'}`}>🔍 BỘ LỌC</button>
+              {/* Nút bộ lọc — có badge đếm filter active */}
+              <button onClick={() => setShowFilters(!showFilters)}
+                className={`relative px-3 py-1.5 rounded-lg border text-xs font-bold transition ${showFilters ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'bg-white hover:bg-gray-50 text-gray-600'}`}>
+                🔍 BỘ LỌC
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
               <button onClick={() => setShowSettings(!showSettings)} className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${showSettings ? 'bg-gray-200' : 'bg-white hover:bg-gray-50 text-gray-600'}`}>⚙️ CỘT</button>
               <button onClick={handleExportExcel} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-green-50 hover:bg-green-100 text-green-700 border-green-200 transition">📥 XUẤT EXCEL</button>
               <Link href="/dashboard" className="p-1.5 text-gray-400 hover:text-red-500 transition">✕</Link>
@@ -403,86 +520,6 @@ function WarrantyContent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-
-          {/* FILTER BAR */}
-          {showFilters && (
-            <div className="mt-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2.5 animate-in slide-in-from-top-2">
-
-              {/* Dòng 1: Cơ bản */}
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { label: 'Trạng thái', key: 'status', opts: warrantyStatusOptions.map(o => ({ v: o, l: o })) },
-                  { label: 'Dự án', key: 'project', opts: uniqueProjects.map(p => ({ v: p as string, l: p as string })) },
-                  { label: 'Phụ trách (247)', key: 'assigned_247_user', opts: unique247Users.map(u => ({ v: u as string, l: u as string })) },
-                ].map(({ label, key, opts }) => (
-                  <div key={key}>
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">{label}</label>
-                    <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white" value={(filters as any)[key]} onChange={e => setFilters(prev => ({ ...prev, [key]: e.target.value }))}>
-                      <option value="">Tất cả</option>
-                      {opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                    </select>
-                  </div>
-                ))}
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Nhãn</label>
-                  <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white" value={filters.tags} onChange={e => setFilters(prev => ({ ...prev, tags: e.target.value }))}>
-                    <option value="">Tất cả</option>
-                    {MASTER_DATA.warrantyTags.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* Dòng 2: Tình trạng làm việc */}
-              <div className="grid grid-cols-2 gap-2 border-t border-emerald-200 pt-2">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Tình trạng (247)</label>
-                  <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white" value={filters.is_still_working_247} onChange={e => setFilters(prev => ({ ...prev, is_still_working_247: e.target.value }))}>
-                    <option value="">Tất cả</option>
-                    <option value="true">Còn làm</option>
-                    <option value="false">Đã nghỉ</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">Tình trạng (Official)</label>
-                  <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white" value={filters.is_still_working_official} onChange={e => setFilters(prev => ({ ...prev, is_still_working_official: e.target.value }))}>
-                    <option value="">Tất cả</option>
-                    <option value="true">Còn làm</option>
-                    <option value="false">Đã nghỉ</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Dòng 3: Lọc ngày — grid 3 cột gọn */}
-              <div className="border-t border-emerald-200 pt-2">
-                <p className="text-[10px] uppercase font-bold text-emerald-700 mb-1.5">Lọc theo ngày</p>
-                <div className="grid grid-cols-3 gap-x-3 gap-y-2">
-                  {[
-                    { label: 'Onboard', f: 'onboard_from', t: 'onboard_to' },
-                    { label: 'On-job 1 ngày', f: 'on_job_1_day_from', t: 'on_job_1_day_to' },
-                    { label: 'On-job 3 ngày', f: 'on_job_3_day_from', t: 'on_job_3_day_to' },
-                    { label: 'On-job 7 ngày', f: 'on_job_7_day_from', t: 'on_job_7_day_to' },
-                    { label: 'On-job 30 ngày', f: 'on_job_30_day_from', t: 'on_job_30_day_to' },
-                    { label: 'Ngày nghỉ', f: 'resigned_date_from', t: 'resigned_date_to' },
-                  ].map(({ label, f, t }) => (
-                    <div key={f}>
-                      <label className="text-[10px] font-bold text-gray-500 block mb-0.5">{label}</label>
-                      <div className="flex gap-1 items-center">
-                        <input type="date" className="flex-1 p-1 border rounded-md text-[10px] outline-none bg-white min-w-0"
-                          value={(filters as any)[f]} onChange={e => setFilters(prev => ({ ...prev, [f]: e.target.value }))} />
-                        <span className="text-gray-300 text-[9px] shrink-0">→</span>
-                        <input type="date" className="flex-1 p-1 border rounded-md text-[10px] outline-none bg-white min-w-0"
-                          value={(filters as any)[t]} onChange={e => setFilters(prev => ({ ...prev, [t]: e.target.value }))} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-end border-t border-emerald-200 pt-2">
-                <button onClick={resetFilters} className="text-[10px] font-bold text-red-500 hover:text-red-700 underline">Xóa bộ lọc</button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* TABLE */}
@@ -539,7 +576,7 @@ function WarrantyContent() {
 
       {/* PANEL CHI TIẾT */}
       {selectedId && (
-        <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden w-1/2">
+        <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden w-[420px] flex-shrink-0">
           {detailLoading
             ? <div className="flex-1 flex items-center justify-center text-gray-400 italic">Đang tải...</div>
             : formData && (
