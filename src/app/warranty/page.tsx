@@ -576,7 +576,7 @@ function WarrantyContent() {
 
       {/* PANEL CHI TIẾT */}
       {selectedId && (
-        <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden w-[420px] flex-shrink-0">
+        <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden w-1/2 flex-shrink-0">
           {detailLoading
             ? <div className="flex-1 flex items-center justify-center text-gray-400 italic">Đang tải...</div>
             : formData && (
