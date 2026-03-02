@@ -609,7 +609,7 @@ function WarrantyContent() {
                       <span className="text-[12px] font-mono text-gray-400">{formData.candidate_id}</span>
                     </div>
                   </div>
-                  <button  onClick={handleRenew}  disabled={isSaving}
+                  <div className="flex gap-2"><button  onClick={handleRenew}  disabled={isSaving}
   className="px-4 py-2 rounded-xl font-bold transition border border-amber-300 text-amber-600 bg-amber-50 hover:bg-amber-500 hover:text-white hover:shadow-amber-100 shadow-sm whitespace-nowrap"
 >
   🔄 KHAI THÁC LẠI
@@ -617,7 +617,7 @@ function WarrantyContent() {
                   <button onClick={handleSave} disabled={isSaving || !hasChanges}
                     className={`px-6 py-2 rounded-xl font-bold transition shadow-lg ${hasChanges ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
                     {isSaving ? 'ĐANG LƯU...' : 'LƯU THAY ĐỔI'}
-                  </button>
+                  </button></div>
                 </div>
 
                 {/* Body */}
