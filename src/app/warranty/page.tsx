@@ -145,7 +145,7 @@ function WarrantyContent() {
   }, []);
 
   const fetchAllCandidates = async () => {
-    if (isAuthLoading || !user_group || !user_id) return;
+    if (isAuthLoading || !user_group || !user_id|| !name) return;
     setListLoading(true);
     try {
       const res = await fetch(API_CONFIG.WARRANTY_URL, {
@@ -159,7 +159,7 @@ function WarrantyContent() {
     finally { setListLoading(false); }
   };
 
-  useEffect(() => { if (user_group && user_id) fetchAllCandidates(); }, [user_group, user_id, isAuthLoading]);
+  useEffect(() => { if (user_group && user_id && name) fetchAllCandidates(); }, [user_group, user_id, name,isAuthLoading]);
   useEffect(() => { setCurrentPage(1); }, [search, filters]);
 
   const processedData = useMemo(() => {
