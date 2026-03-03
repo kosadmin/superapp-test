@@ -323,7 +323,7 @@ function WarrantyContent() {
       const res = await fetch(API_CONFIG.WARRANTY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update', user_group, user_id, id: formData.candidate_id, updates: formData }),
+        body: JSON.stringify({ action: 'update', name, user_group, user_id, id: formData.candidate_id, updates: formData }),
       });
       const data = await res.json();
       if (data.success) { alert('Lưu thành công!'); setOriginalData(formData); fetchAllCandidates(); }
