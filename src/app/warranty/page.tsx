@@ -101,7 +101,7 @@ const warrantyFunnelSteps = [
 ];
 
 function WarrantyContent() {
-  const { user_group, user_id, isLoading: isAuthLoading } = useAuth();
+  const { name, user_group, user_id, isLoading: isAuthLoading } = useAuth();
 
   const userGroupLower = user_group?.toLowerCase() ?? '';
   const can247Edit = userGroupLower === '247' || userGroupLower === 'admin';
@@ -340,7 +340,7 @@ function WarrantyContent() {
     const res = await fetch(API_CONFIG.WARRANTY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'renew', user_group, user_id, id: formData.candidate_id, updates: formData }),
+      body: JSON.stringify({ action: 'renew', name, user_group, user_id, id: formData.candidate_id, updates: formData }),
     });
     const data = await res.json();
     if (data.success) alert('Đã gửi yêu cầu khai thác lại thành công!');
