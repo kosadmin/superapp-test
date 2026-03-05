@@ -13,7 +13,7 @@ const NAV_ITEMS = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user_name, user_group, avatar_url } = useAuth();
+  const { name, user_group, user_id, avatar_url } = useAuth();
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
@@ -44,10 +44,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Link href="/profile" className="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-gray-50 transition">
           {avatar_url
             ? <img src={avatar_url} className="w-7 h-7 rounded-full object-cover border" />
-            : <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-black text-xs">{user_name?.[0] ?? '?'}</div>
+            : <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-black text-xs">{name?.[0] ?? '?'}</div>
           }
           <div className="leading-tight">
-            <div className="text-xs font-bold text-gray-800 leading-none">{user_name}</div>
+            <div className="text-xs font-bold text-gray-800 leading-none">{name}</div>
             <div className="text-[10px] text-gray-400">{user_group}</div>
           </div>
         </Link>
