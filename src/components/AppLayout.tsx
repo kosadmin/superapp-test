@@ -56,9 +56,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* TOP BAR */}
       <header className="flex-shrink-0 h-12 bg-white border-b flex items-center px-4 gap-4 z-50 shadow-sm">
         {/* Logo */}
-        <div className="flex-shrink-0">
-          <Image src="/logo.png" alt="Logo" width={80} height={32} className="object-contain h-8 w-auto" />
-        </div>
+<Link href="/dashboard" className="flex-shrink-0">
+  <Image src="/logo.png" alt="Logo" width={80} height={32} className="object-contain h-8 w-auto" />
+</Link>
 
         <div className="h-6 w-px bg-gray-200 flex-shrink-0" />
 
