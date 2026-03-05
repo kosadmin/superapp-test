@@ -448,16 +448,16 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
       <div className={`flex-shrink-0 flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${showFilters ? 'w-56' : 'w-0 border-0'}`}>
         {showFilters && (
           <>
-            <div className="p-3 border-b bg-emerald-600 flex items-center justify-between">
+            <div className="p-3 border-b bg-orange-600 flex items-center justify-between">
               <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc</span>
-              <button onClick={resetFilters} className="text-[9px] font-bold text-emerald-200 hover:text-white underline">Xóa tất cả</button>
+              <button onClick={resetFilters} className="text-[9px] font-bold text-orange-200 hover:text-white underline">Xóa tất cả</button>
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
 
               {/* Trạng thái */}
               <div>
                 <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Trạng thái</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
                   value={filters.status} onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}>
                   <option value="">Tất cả</option>
                   {warrantyStatusOptions.map(o => <option key={o} value={o}>{o}</option>)}
@@ -467,7 +467,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
               {/* Dự án */}
               <div>
                 <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Dự án</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
                   value={filters.project} onChange={e => setFilters(prev => ({ ...prev, project: e.target.value }))}>
                   <option value="">Tất cả</option>
                   {uniqueProjects.map(p => <option key={p} value={p}>{p}</option>)}
@@ -477,7 +477,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
               {/* Phụ trách 247 */}
               <div>
                 <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Phụ trách (247)</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
                   value={filters.assigned_247_user} onChange={e => setFilters(prev => ({ ...prev, assigned_247_user: e.target.value }))}>
                   <option value="">Tất cả</option>
                   {unique247Users.map(u => <option key={u} value={u}>{u}</option>)}
@@ -487,7 +487,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
               {/* Nhãn */}
               <div>
                 <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Nhãn</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
                   value={filters.tags} onChange={e => setFilters(prev => ({ ...prev, tags: e.target.value }))}>
                   <option value="">Tất cả</option>
                   {MASTER_DATA.warrantyTags.map(t => <option key={t} value={t}>{t}</option>)}
@@ -497,7 +497,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
               {/* Tình trạng làm việc */}
               <div className="border-t pt-3">
                 <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Tình trạng (247)</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
                   value={filters.is_still_working_247} onChange={e => setFilters(prev => ({ ...prev, is_still_working_247: e.target.value }))}>
                   <option value="">Tất cả</option>
                   <option value="true">Còn làm</option>
@@ -506,7 +506,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
               </div>
               <div>
                 <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Tình trạng (Official)</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-emerald-500"
+                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
                   value={filters.is_still_working_official} onChange={e => setFilters(prev => ({ ...prev, is_still_working_official: e.target.value }))}>
                   <option value="">Tất cả</option>
                   <option value="true">Còn làm</option>
@@ -516,7 +516,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
 
               {/* Lọc theo ngày */}
               <div className="border-t pt-3 space-y-3">
-                <p className="text-[10px] uppercase font-black text-emerald-600">Lọc theo ngày</p>
+                <p className="text-[10px] uppercase font-black text-orange-600">Lọc theo ngày</p>
                 {[
                   { label: 'Onboard', f: 'onboard_from', t: 'onboard_to' },
                   { label: 'On-job 1 ngày', f: 'on_job_1_day_from', t: 'on_job_1_day_to' },
@@ -527,9 +527,9 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
                 ].map(({ label, f, t }) => (
                   <div key={f}>
                     <label className="text-[10px] font-bold text-gray-500 block mb-1">{label}</label>
-                    <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-emerald-500 mb-1"
+                    <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
                       value={(filters as any)[f]} onChange={e => setFilters(prev => ({ ...prev, [f]: e.target.value }))} />
-                    <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-emerald-500"
+                    <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
                       value={(filters as any)[t]} onChange={e => setFilters(prev => ({ ...prev, [t]: e.target.value }))} />
                   </div>
                 ))}
@@ -543,33 +543,60 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
       {/* DANH SÁCH */}
       <div className={`flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${selectedId ? 'flex-1' : 'flex-1'}`}>
 
-        <div className="p-4 border-b bg-white">
-          <div className="flex justify-between items-center mb-3">
-            <h1 className="text-xl font-bold text-emerald-700 uppercase tracking-tight">🛡️ Quản lý Bảo hành</h1>
-            <div className="flex gap-2">
-              {/* Nút bộ lọc — có badge đếm filter active */}
-              <button onClick={() => setShowFilters(!showFilters)}
-                className={`relative px-3 py-1.5 rounded-lg border text-xs font-bold transition ${showFilters ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'bg-white hover:bg-gray-50 text-gray-600'}`}>
-                🔍 BỘ LỌC
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-              <button onClick={() => setShowSettings(!showSettings)} className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${showSettings ? 'bg-gray-200' : 'bg-white hover:bg-gray-50 text-gray-600'}`}>⚙️ CỘT</button>
-              <button onClick={handleExportExcel} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-green-50 hover:bg-green-100 text-green-700 border-green-200 transition">📥 XUẤT EXCEL</button>
-              <Link href="/dashboard" className="p-1.5 text-gray-400 hover:text-red-500 transition">✕</Link>
-            </div>
-          </div>
+<div className="p-3 border-b bg-white">
+  <div className="flex items-center gap-2">
+    {/* Thanh tìm kiếm */}
+    <input
+      type="text"
+      placeholder="Tìm theo tên, SĐT hoặc mã ứng viên..."
+      className="flex-1 px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-sm"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+    />
 
-          <input
-            type="text"
-            placeholder="Tìm theo tên, SĐT hoặc mã ứng viên..."
-            className="w-full px-4 py-2 border rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+    {/* Nút Bộ lọc */}
+    <button onClick={() => setShowFilters(!showFilters)}
+      className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition
+        ${showFilters ? 'bg-orange-500 text-white border-orange-500' : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+        <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+      </svg>
+      Lọc
+      {activeFilterCount > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+          {activeFilterCount}
+        </span>
+      )}
+    </button>
+
+    {/* Nút Cột */}
+    <button onClick={() => setShowSettings(!showSettings)}
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition
+        ${showSettings ? 'bg-orange-500 text-white border-orange-500' : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      Cột
+    </button>
+
+    {/* Nút Xuất Excel */}
+    <button onClick={handleExportExcel}
+      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-white hover:bg-orange-50 text-gray-600 border-gray-200 transition">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Xuất
+    </button>
+
+    <Link href="/dashboard" className="p-2 text-gray-300 hover:text-red-400 transition">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </Link>
+  </div>
+</div>
         </div>
 
         {/* TABLE */}
@@ -580,13 +607,13 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
                 {columns.map((col, idx) => col.visible && (
                   <th key={col.id} onClick={() => col.sortable && handleSort(col.id)}
                     style={{ width: col.width, minWidth: col.width, ...getFrozenStyle(col.id, idx) }}
-                    className={`p-3 border-b border-r text-[10px] uppercase font-bold text-gray-600 bg-gray-50 select-none ${col.sortable ? 'cursor-pointer hover:bg-emerald-50 hover:text-emerald-700' : 'cursor-default'}`}>
+                    className={`p-3 border-b border-r text-[10px] uppercase font-bold text-gray-600 bg-gray-50 select-none ${col.sortable ? 'cursor-pointer hover:bg-orange-50 hover:text-orange-700' : 'cursor-default'}`}>
                     <div className="flex items-center justify-between gap-2">
                       <span>{col.label}</span>
                       {col.sortable && (
                         <div className="flex flex-col text-[8px] leading-[6px]">
-                          <span className={sortConfig.key === col.id && sortConfig.direction === 'asc' ? 'text-emerald-600 font-bold' : 'text-gray-300'}>▲</span>
-                          <span className={sortConfig.key === col.id && sortConfig.direction === 'desc' ? 'text-emerald-600 font-bold' : 'text-gray-300'}>▼</span>
+                          <span className={sortConfig.key === col.id && sortConfig.direction === 'asc' ? 'text-orange-600 font-bold' : 'text-gray-300'}>▲</span>
+                          <span className={sortConfig.key === col.id && sortConfig.direction === 'desc' ? 'text-orange-600 font-bold' : 'text-gray-300'}>▼</span>
                         </div>
                       )}
                     </div>
@@ -597,7 +624,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
             <tbody>
               {paginatedData.map(cand => (
                 <tr key={cand.candidate_id} onClick={() => fetchDetail(cand.candidate_id)}
-                  className={`cursor-pointer transition-colors ${selectedId === cand.candidate_id ? 'bg-emerald-50' : 'hover:bg-gray-50 bg-white'}`}>
+                  className={`cursor-pointer transition-colors ${selectedId === cand.candidate_id ? 'bg-orange-50' : 'hover:bg-gray-50 bg-white'}`}>
                   {columns.map((col, idx) => col.visible && (
                     <td key={col.id} style={getFrozenStyle(col.id, idx)} className="p-3 border-r border-b whitespace-nowrap overflow-hidden text-ellipsis bg-inherit">
                       {renderCell(col.id, cand)}
@@ -617,7 +644,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
             <span className="text-gray-500">Hiển thị {paginatedData.length} / {processedData.length} bản ghi</span>
             <div className="flex gap-1">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 border rounded-lg disabled:opacity-40 hover:bg-gray-50">◀</button>
-              <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg font-bold">{currentPage}</span>
+              <span className="px-3 py-1 bg-orange-600 text-white rounded-lg font-bold">{currentPage}</span>
               <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-3 py-1 border rounded-lg disabled:opacity-40 hover:bg-gray-50">▶</button>
             </div>
           </div>
@@ -636,7 +663,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
                   <div className="flex items-center gap-3">
                     <button onClick={() => { setSelectedId(null); setFormData(null); }} className="p-2 hover:bg-gray-200 rounded-full transition">✕</button>
                     <div>
-                      <input className="font-bold text-base uppercase text-emerald-800 leading-none bg-transparent border-b border-transparent hover:border-emerald-300 focus:border-emerald-600 outline-none w-full"
+                      <input className="font-bold text-base uppercase text-orange-800 leading-none bg-transparent border-b border-transparent hover:border-orange-300 focus:border-orange-600 outline-none w-full"
                         value={formData.candidate_name} onChange={e => handleChange('candidate_name', e.target.value)} />
                       <span className="text-[12px] font-mono text-gray-400">{formData.candidate_id}</span>
                     </div>
@@ -691,14 +718,14 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
 
                   {/* 1. PHỄU BẢO HÀNH */}
                   <section>
-                    <h3 className="text-[10px] font-black text-emerald-500 uppercase mb-3 tracking-[0.2em]">Phễu bảo hành</h3>
+                    <h3 className="text-[10px] font-black text-orange-500 uppercase mb-3 tracking-[0.2em]">Phễu bảo hành</h3>
                     <div className="flex items-stretch gap-2 pb-2 scrollbar-thin overflow-x-auto">
                       {warrantyFunnelSteps.map(step => {
                         const isActive = formData[step.key] === true || formData[step.key] === 'TRUE';
                         return (
-                          <label key={step.key} className={`flex-shrink-0 flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all min-w-[100px] ${isActive ? 'border-emerald-600 bg-emerald-600 text-white shadow-md font-bold ring-2 ring-emerald-100' : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-300'}`}>
+                          <label key={step.key} className={`flex-shrink-0 flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all min-w-[100px] ${isActive ? 'border-orange-600 bg-orange-600 text-white shadow-md font-bold ring-2 ring-orange-100' : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-300'}`}>
                             <span className="text-[9px] mb-2 uppercase text-center leading-tight">{step.label}</span>
-                            <input type="checkbox" checked={isActive} onChange={e => handleChange(step.key, e.target.checked)} className="w-4 h-4 rounded-md text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0" />
+                            <input type="checkbox" checked={isActive} onChange={e => handleChange(step.key, e.target.checked)} className="w-4 h-4 rounded-md text-orange-600 focus:ring-orange-500 focus:ring-offset-0" />
                           </label>
                         );
                       })}
@@ -721,7 +748,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
 
                   {/* 3. CHĂM SÓC THEO MỐC */}
                   <section>
-                    <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-emerald-400 pl-3 text-xs uppercase tracking-wider">Chăm sóc theo mốc thời gian</h3>
+                    <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-orange-400 pl-3 text-xs uppercase tracking-wider">Chăm sóc theo mốc thời gian</h3>
                     <div className="space-y-3">
                       {[
                         { label: '1 Ngày', dateKey: 'on_job_1_day_date', resultKey: 'on_job_1_day_call_result' },
@@ -739,7 +766,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
                           </div>
                           <div>
                             <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Kết quả cuộc gọi</label>
-                            <select className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-emerald-500 bg-white text-sm"
+                            <select className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-orange-500 bg-white text-sm"
                               value={formData[resultKey] || ''} onChange={e => handleChange(resultKey, e.target.value)}>
                               <option value="">-- Chọn kết quả --</option>
                               {MASTER_DATA.callResults.map(r => <option key={r} value={r}>{r}</option>)}
@@ -750,7 +777,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
                     </div>
                     <div className="mt-3">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ghi chú cuộc gọi (247)</label>
-                      <textarea className="w-full p-3 border rounded-xl mt-1 h-20 outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                      <textarea className="w-full p-3 border rounded-xl mt-1 h-20 outline-none focus:ring-2 focus:ring-orange-500 text-sm"
                         value={formData['247_call_note'] || ''} onChange={e => handleChange('247_call_note', e.target.value)} placeholder="Ghi chú..." />
                     </div>
                   </section>
@@ -1016,7 +1043,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
       {/* SETTINGS OVERLAY */}
       {showSettings && (
         <div className="absolute right-4 top-4 bottom-4 w-80 bg-white shadow-2xl z-[100] border rounded-2xl flex flex-col animate-in slide-in-from-right overflow-hidden">
-          <div className="p-4 border-b flex justify-between items-center bg-emerald-600 text-white">
+          <div className="p-4 border-b flex justify-between items-center bg-orange-600 text-white">
             <h3 className="font-bold uppercase text-xs tracking-widest">Cấu hình hiển thị</h3>
             <button onClick={() => setShowSettings(false)} className="hover:rotate-90 transition duration-200 text-xl">✕</button>
           </div>
@@ -1024,17 +1051,17 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Ghim cột đầu tiên</label>
             <input type="number" min="0" max="5" value={frozenCount}
               onChange={e => saveViewSettings(columns, parseInt(e.target.value) || 0)}
-              className="w-20 p-2 border rounded-xl text-center font-bold text-emerald-600 shadow-inner" />
+              className="w-20 p-2 border rounded-xl text-center font-bold text-orange-600 shadow-inner" />
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-white scrollbar-thin">
             {columns.map((col, idx) => (
-              <div key={col.id} className={`flex items-center gap-3 p-2.5 border rounded-xl text-[11px] transition ${col.visible ? 'border-emerald-100 bg-emerald-50/30' : 'opacity-50 grayscale bg-gray-50'}`}>
-                <input type="checkbox" checked={col.visible} onChange={() => toggleColumn(col.id)} className="w-4 h-4 rounded text-emerald-600" />
+              <div key={col.id} className={`flex items-center gap-3 p-2.5 border rounded-xl text-[11px] transition ${col.visible ? 'border-orange-100 bg-orange-50/30' : 'opacity-50 grayscale bg-gray-50'}`}>
+                <input type="checkbox" checked={col.visible} onChange={() => toggleColumn(col.id)} className="w-4 h-4 rounded text-orange-600" />
                 <span className="flex-1 font-bold text-gray-700 truncate">{col.label}</span>
                 <input type="number" value={col.width} onChange={e => updateWidth(col.id, parseInt(e.target.value) || 50)} className="w-12 p-1 border rounded text-[10px] text-center bg-white" />
                 <div className="flex flex-col gap-1">
-                  <button onClick={() => moveColumn(idx, 'up')} className="bg-white border shadow-sm px-1.5 rounded-md hover:text-emerald-600">▲</button>
-                  <button onClick={() => moveColumn(idx, 'down')} className="bg-white border shadow-sm px-1.5 rounded-md hover:text-emerald-600">▼</button>
+                  <button onClick={() => moveColumn(idx, 'up')} className="bg-white border shadow-sm px-1.5 rounded-md hover:text-orange-600">▲</button>
+                  <button onClick={() => moveColumn(idx, 'down')} className="bg-white border shadow-sm px-1.5 rounded-md hover:text-orange-600">▼</button>
                 </div>
               </div>
             ))}
@@ -1070,9 +1097,9 @@ function renderCell(colId: string, cand: any) {
           {(cand.tags_warranty?.split(',').length ?? 0) > 3 && <span className="text-[9px] text-gray-400 font-bold">...</span>}
         </div>
       );
-    case 'candidate_name': return <div className="font-bold text-emerald-900 leading-tight">{cand.candidate_name}</div>;
+    case 'candidate_name': return <div className="font-bold text-orange-900 leading-tight">{cand.candidate_name}</div>;
     case 'status': return <WarrantyStatusBadge cand={cand} />;
-    case 'onboard_date': return <span className="text-emerald-600 font-bold">{cand.onboard_date || '—'}</span>;
+    case 'onboard_date': return <span className="text-orange-600 font-bold">{cand.onboard_date || '—'}</span>;
     case 'phone': return <span className="font-mono font-medium">{cand.phone}</span>;
     case 'eligible_for_acceptance': return isTrue(cand.eligible_for_acceptance)
       ? <span className="px-2 py-0.5 rounded-md text-[9px] font-black bg-blue-100 text-blue-700">ĐỦ ĐIỀU KIỆN</span>
@@ -1091,8 +1118,8 @@ function WarrantyStatusBadge({ cand }: { cand: any }) {
   const common = "px-2 py-0.5 rounded-md text-[9px] font-black tracking-tighter shadow-sm inline-block";
   const status = getWarrantyStatus(cand);
   const colorMap: Record<string, string> = {
-    'Đã làm 30 ngày': 'bg-emerald-700 text-white',
-    'Đã làm 7 ngày': 'bg-emerald-500 text-white',
+    'Đã làm 30 ngày': 'bg-orange-700 text-white',
+    'Đã làm 7 ngày': 'bg-orange-500 text-white',
     'Đã làm 3 ngày': 'bg-teal-500 text-white',
     'Đã làm 1 ngày': 'bg-cyan-500 text-white',
     'Onboard': 'bg-blue-500 text-white',
