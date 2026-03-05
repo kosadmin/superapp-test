@@ -327,6 +327,28 @@ if (d.project_type === 'Recruiting' && recruitingFields[field]) {
     if (!formData.phone?.trim()) return alert('Số điện thoại không được để trống');
     if (!/^0\d{9}$/.test(formData.phone)) return alert('Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) return alert('Email không đúng định dạng');
+    // Validation nghỉ việc
+const stillWorking247 = formData.is_still_working_247 === true || formData.is_still_working_247 === 'TRUE';
+const stillWorkingOfficial = formData.is_still_working_official === true || formData.is_still_working_official === 'TRUE';
+
+if (!stillWorking247) {
+  if (!formData.resigned_date_247?.trim()) return alert('Vui lòng nhập Ngày nghỉ (247)');
+  if (!formData.reason_resigned_247?.trim()) return alert('Vui lòng nhập Lý do nghỉ (247)');
+}
+if (!stillWorkingOfficial) {
+  if (!formData.resigned_date_official?.trim()) return alert('Vui lòng nhập Ngày nghỉ (Official)');
+  if (!formData.reason_resigned_official?.trim()) return alert('Vui lòng nhập Lý do nghỉ (Official)');
+}
+
+// Cảnh báo nếu đang làm việc nhưng vẫn còn ngày/lý do nghỉ chưa xóa
+if (stillWorking247 && (formData.resigned_date_247 || formData.reason_resigned_247)) {
+  const ok = window.confirm('⚠️ Ứng viên đang được đánh dấu Còn làm (247) nhưng vẫn còn Ngày nghỉ / Lý do nghỉ. Bạn có muốn lưu không?');
+  if (!ok) return;
+}
+if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_resigned_official)) {
+  const ok = window.confirm('⚠️ Ứng viên đang được đánh dấu Còn làm (Official) nhưng vẫn còn Ngày nghỉ / Lý do nghỉ. Bạn có muốn lưu không?');
+  if (!ok) return;
+}
     setIsSaving(true);
     try {
       const res = await fetch(API_CONFIG.WARRANTY_URL, {
