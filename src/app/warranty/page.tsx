@@ -1101,8 +1101,6 @@ function WarrantyStatusBadge({ cand }: { cand: any }) {
   return <span className={`${common} ${colorMap[status] || 'bg-gray-200 text-gray-500'}`}>{status.toUpperCase()}</span>;
 }
 
-import AppLayout from '@/components/AppLayout';
-
 export default function WarrantyPage() {
   return (
     <ProtectedRoute>
