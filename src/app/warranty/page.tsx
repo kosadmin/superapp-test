@@ -597,7 +597,6 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
     </Link>
   </div>
 </div>
-        </div>
 
         {/* TABLE */}
         <div className="flex-1 overflow-auto bg-white">
