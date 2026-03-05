@@ -133,6 +133,7 @@ function WarrantyContent() {
   const [originalData, setOriginalData] = useState<Candidate | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRenewing, setIsRenewing] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const readOnlyClass = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500 text-sm cursor-not-allowed";
@@ -290,7 +291,15 @@ function WarrantyContent() {
         if (value === true) { for (let i = 0; i < idx; i++) d[funnel[i]] = true; }
         else { for (let i = idx + 1; i < funnel.length; i++) d[funnel[i]] = false; }
       }
-
+// Sync 247 → Official nếu project_type là Recruiting
+const recruitingFields: Record<string, string> = {
+  is_still_working_247: 'is_still_working_official',
+  resigned_date_247: 'resigned_date_official',
+  reason_resigned_247: 'reason_resigned_official',
+};
+if (d.project_type === 'Recruiting' && recruitingFields[field]) {
+  d[recruitingFields[field]] = value;
+}
       if (field === 'date_of_birth') d.birth_year = value ? value.split('-')[0] : '';
 
       if (['address_street', 'address_ward', 'address_city'].includes(field)) {
@@ -335,7 +344,7 @@ function WarrantyContent() {
   if (!formData) return;
   const confirm = window.confirm(`Xác nhận khai thác lại ứng viên "${formData.candidate_name}"?`);
   if (!confirm) return;
-  setIsSaving(true);
+ setIsRenewing(true);
   try {
     const res = await fetch(API_CONFIG.WARRANTY_URL, {
       method: 'POST',
@@ -346,7 +355,7 @@ function WarrantyContent() {
     if (data.success) alert('Đã gửi yêu cầu khai thác lại thành công!');
     else alert('Thất bại: ' + (data.message || 'Lỗi không xác định'));
   } catch { alert('Lỗi kết nối'); }
-  finally { setIsSaving(false); }
+  finally { setIsRenewing(false); }
 };
   
   const handleExportExcel = () => {
@@ -609,11 +618,9 @@ function WarrantyContent() {
                       <span className="text-[12px] font-mono text-gray-400">{formData.candidate_id}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2"><button  onClick={handleRenew}  disabled={isSaving}
+                  <div className="flex gap-2"><button  onClick={handleRenew}  disabled={isRenewing}
   className="px-4 py-2 rounded-xl font-bold transition border border-amber-300 text-amber-600 bg-amber-50 hover:bg-amber-500 hover:text-white hover:shadow-amber-100 shadow-sm whitespace-nowrap"
->
-  🔄 KHAI THÁC LẠI
-</button>
+>{isRenewing ? '⏳ ĐANG GỬI...' : 'KHAI THÁC LẠI'}</button>
                   <button onClick={handleSave} disabled={isSaving || !hasChanges}
                     className={`px-6 py-2 rounded-xl font-bold transition shadow-lg ${hasChanges ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
                     {isSaving ? 'ĐANG LƯU...' : 'LƯU THAY ĐỔI'}
