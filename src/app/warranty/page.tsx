@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import AppLayout from '@/components/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
@@ -441,7 +442,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden text-sm p-4 gap-3">
+    <div className="flex h-full bg-gray-100 overflow-hidden text-sm p-4 gap-3">
 
       {/* FILTER SIDEBAR */}
       <div className={`flex-shrink-0 flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${showFilters ? 'w-56' : 'w-0 border-0'}`}>
@@ -1100,6 +1101,14 @@ function WarrantyStatusBadge({ cand }: { cand: any }) {
   return <span className={`${common} ${colorMap[status] || 'bg-gray-200 text-gray-500'}`}>{status.toUpperCase()}</span>;
 }
 
+import AppLayout from '@/components/AppLayout';
+
 export default function WarrantyPage() {
-  return <ProtectedRoute><WarrantyContent /></ProtectedRoute>;
+  return (
+    <ProtectedRoute>
+      <AppLayout>
+        <WarrantyContent />
+      </AppLayout>
+    </ProtectedRoute>
+  );
 }
