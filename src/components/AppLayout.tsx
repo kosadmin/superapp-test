@@ -63,7 +63,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="h-6 w-px bg-gray-200 flex-shrink-0" />
 
         {/* Tên module */}
-        <span className="text-base font-black uppercase tracking-widest text-orange-500">
+<span className="text-sm font-semibold text-gray-600 tracking-wide">
           {activeLabel}
         </span>
 
