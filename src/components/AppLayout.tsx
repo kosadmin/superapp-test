@@ -13,7 +13,7 @@ const NAV_ITEMS = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { name, user_group, user_id, avatar_url } = useAuth();
+  const { name, user_group, user_id } = useAuth();
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
@@ -42,10 +42,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Profile */}
         <Link href="/profile" className="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-gray-50 transition">
-          {avatar_url
-            ? <img src={avatar_url} className="w-7 h-7 rounded-full object-cover border" />
-            : <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-black text-xs">{name?.[0] ?? '?'}</div>
-          }
+<div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-orange-200">
+  <svg viewBox="0 0 36 36" fill="none" className="w-full h-full">
+    <circle cx="18" cy="18" r="18" fill="#fff7ed"/>
+    <circle cx="18" cy="14" r="6" fill="#fdba74"/>
+    <ellipse cx="18" cy="27" rx="10" ry="6" fill="#fdba74"/>
+  </svg>
+</div>
           <div className="leading-tight">
             <div className="text-xs font-bold text-gray-800 leading-none">{name}</div>
             <div className="text-[10px] text-gray-400">{user_group}</div>
