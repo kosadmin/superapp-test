@@ -47,29 +47,13 @@ function ImportWarrantyResignContent() {
     };
 
     // Xuất file mẫu
-    const handleDownloadTemplate = () => {
-        const ws = XLSX.utils.json_to_sheet([
-            // Dòng 1: mô tả cột
-            {
-                candidate_id: '* Bắt buộc',
-                is_still_working_official: 'true / false',
-                resigned_date_official: 'YYYY-MM-DD',
-                reason_resigned_official: 'Chọn từ danh sách masterdata',
-            },
-            // Dòng 2: ví dụ
-            {
-                candidate_id: 'UV001',
-                is_still_working_official: 'false',
-                resigned_date_official: '2025-12-01',
-                reason_resigned_official: MASTER_DATA.resignReasons[0] || 'Lương không phù hợp',
-            },
-        ]);
-        // Set độ rộng cột
-        ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 22 }, { wch: 35 }];
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Mau_Import');
-        XLSX.writeFile(wb, 'mau_import_nghi_viec_baohanh.xlsx');
-    };
+{/* Tải file mẫu — đổi button thành link tĩnh */}
+<a href="/templates/mau_import_nghi_viec.xlsx" download
+    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
+    <Download className="w-8 h-8 text-orange-400 mb-3 group-hover:scale-110 transition" />
+    <span className="text-orange-600 font-bold text-sm">TẢI FILE MẪU CHUẨN</span>
+    <span className="text-gray-400 text-xs mt-1">mau_import_nghi_viec.xlsx</span>
+</a>
 
     // Đọc & validate file
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,75 +65,71 @@ function ImportWarrantyResignContent() {
             const wb = XLSX.read(bstr, { type: 'binary' });
             const ws = wb.Sheets[wb.SheetNames[0]];
             // range: 1 → bỏ dòng đầu (mô tả), lấy từ dòng 2 trở đi
-            const rawData = XLSX.utils.sheet_to_json(ws, { range: 1 });
+            const rawData = XLSX.utils.sheet_to_json(ws, { range: 2 });
             validateData(rawData);
         };
         reader.readAsBinaryString(file);
     };
 
-    const validateData = (rows: any[]) => {
-        const errLog: { row: number; msg: string }[] = [];
-        const validRows: any[] = [];
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+const validateData = (rows: any[]) => {
+    const errLog: { row: number; msg: string }[] = [];
+    const validRows: any[] = [];
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
-        rows.forEach((row: any, index: number) => {
-            const rowNum = index + 3; // +3 vì dòng 1 header, dòng 2 mô tả
-            const errs: string[] = [];
+    rows.forEach((row: any, index: number) => {
+        const rowNum = index + 3;
+        const errs: string[] = [];
 
-            // Bắt buộc: candidate_id
-            if (!row.candidate_id?.toString().trim()) {
-                errs.push('Thiếu Mã ứng viên (candidate_id)');
+        // 1. candidate_id bắt buộc
+        if (!row.candidate_id?.toString().trim()) {
+            errs.push('Thiếu candidate_id');
+        }
+
+        // 2. Parse is_still_working_official
+        let isStillWorking: boolean | undefined;
+        if (row.is_still_working_official !== undefined && row.is_still_working_official !== '') {
+            const val = String(row.is_still_working_official).toLowerCase().trim();
+            if (BOOL_TRUE_VALUES.includes(val)) isStillWorking = true;
+            else if (BOOL_FALSE_VALUES.includes(val)) isStillWorking = false;
+            else errs.push('is_still_working_official phải là true hoặc false');
+        }
+
+        // 3. Nếu đã nghỉ (false) thì ngày + lý do bắt buộc
+        if (isStillWorking === false) {
+            if (!row.resigned_date_official?.toString().trim()) {
+                errs.push('Đã nghỉ nhưng thiếu resigned_date_official');
             }
-
-            // Validate is_still_working_official nếu có
-            if (row.is_still_working_official !== undefined && row.is_still_working_official !== '') {
-                const val = String(row.is_still_working_official).toLowerCase().trim();
-                if (![...BOOL_TRUE_VALUES, ...BOOL_FALSE_VALUES].includes(val)) {
-                    errs.push('is_still_working_official phải là true/false');
-                }
+            if (!row.reason_resigned_official?.toString().trim()) {
+                errs.push('Đã nghỉ nhưng thiếu reason_resigned_official');
             }
+        }
 
-            // Validate resigned_date_official nếu có
-            if (row.resigned_date_official && !dateRegex.test(String(row.resigned_date_official).trim())) {
-                errs.push('resigned_date_official sai định dạng (YYYY-MM-DD)');
-            }
+        // 4. Validate định dạng ngày
+        if (row.resigned_date_official && !dateRegex.test(String(row.resigned_date_official).trim())) {
+            errs.push('resigned_date_official sai định dạng (YYYY-MM-DD)');
+        }
 
-            // Validate reason_resigned_official nếu có
-            if (row.reason_resigned_official && !MASTER_DATA.resignReasons.includes(String(row.reason_resigned_official).trim())) {
-                errs.push(`Lý do nghỉ không hợp lệ: "${row.reason_resigned_official}"`);
-            }
+        // 5. Validate lý do nghỉ thuộc masterdata
+        if (row.reason_resigned_official && !MASTER_DATA.resignReasons.includes(String(row.reason_resigned_official).trim())) {
+            errs.push(`Lý do nghỉ không hợp lệ: "${row.reason_resigned_official}"`);
+        }
 
-            // Logic: nếu đã nghỉ thì cần ngày + lý do
-            if (row.is_still_working_official !== undefined && row.is_still_working_official !== '') {
-                const val = String(row.is_still_working_official).toLowerCase().trim();
-                if (BOOL_FALSE_VALUES.includes(val)) {
-                    if (!row.resigned_date_official) errs.push('Đã nghỉ nhưng thiếu resigned_date_official');
-                    if (!row.reason_resigned_official) errs.push('Đã nghỉ nhưng thiếu reason_resigned_official');
-                }
-            }
+        if (errs.length > 0) {
+            errLog.push({ row: rowNum, msg: errs.join(' | ') });
+        } else {
+            const mapped: any = {
+                candidate_id: String(row.candidate_id).trim(),
+            };
+            if (isStillWorking !== undefined) mapped.is_still_working_official = isStillWorking;
+            if (row.resigned_date_official) mapped.resigned_date_official = String(row.resigned_date_official).trim();
+            if (row.reason_resigned_official) mapped.reason_resigned_official = String(row.reason_resigned_official).trim();
+            validRows.push(mapped);
+        }
+    });
 
-            if (errs.length > 0) {
-                errLog.push({ row: rowNum, msg: errs.join(' | ') });
-            } else {
-                // Map boolean
-                const mapped: any = {
-                    candidate_id: String(row.candidate_id).trim(),
-                };
-                if (row.is_still_working_official !== undefined && row.is_still_working_official !== '') {
-                    const val = String(row.is_still_working_official).toLowerCase().trim();
-                    mapped.is_still_working_official = BOOL_TRUE_VALUES.includes(val);
-                }
-                if (row.resigned_date_official) mapped.resigned_date_official = String(row.resigned_date_official).trim();
-                if (row.reason_resigned_official) mapped.reason_resigned_official = String(row.reason_resigned_official).trim();
-
-                validRows.push(mapped);
-            }
-        });
-
-        setErrors(errLog);
-        setData(validRows);
-    };
-
+    setErrors(errLog);
+    setData(validRows);
+};
     // Gửi lên API
     const handleSubmit = async () => {
         if (errors.length > 0) return alert('Vui lòng sửa hết lỗi trước khi gửi!');
@@ -158,7 +138,7 @@ function ImportWarrantyResignContent() {
         setIsUploading(true);
         setImportResults([]);
         try {
-            const response = await fetch(API_CONFIG.CANDIDATE_URL, {
+            const response = await fetch(API_CONFIG.WARRANTY_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
