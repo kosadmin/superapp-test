@@ -12,6 +12,22 @@ import { useAuth } from '@/contexts/AuthContext';
 const BOOL_TRUE_VALUES = ['true', '1', 'có', 'còn làm', 'yes'];
 const BOOL_FALSE_VALUES = ['false', '0', 'không', 'đã nghỉ', 'no'];
 
+/**
+ * Convert Excel serial date number → "YYYY-MM-DD" mà không bị lệch timezone.
+ * Excel serial 1 = 1900-01-01 (nhưng có bug ngày 29/2/1900 không tồn tại,
+ * nên offset thực tế là 25569 ngày từ Unix epoch 1970-01-01).
+ */
+function excelSerialToDateStr(serial: number): string {
+    // Excel serial → milliseconds UTC (không dùng new Date() để tránh timezone shift)
+    const utcDays = serial - 25569; // số ngày từ 1970-01-01
+    const utcMs = utcDays * 86400 * 1000;
+    const d = new Date(utcMs);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
 function ImportWarrantyResignContent() {
     const { user_id, user_group } = useAuth();
 
@@ -36,9 +52,12 @@ function ImportWarrantyResignContent() {
         if (importResults.length === 0) return;
         const exportData = importResults.map(item => ({
             "Mã ứng viên": item.candidate_id,
-            "Họ và tên": item.candidate_name || '',
+            "Còn làm việc": item.is_still_working_official ? 'Có' : 'Không',
+            "Ngày nghỉ": item.resigned_date_official || '',
+            "Lý do nghỉ": item.reason_resigned_official || '',
+            "Cập nhật lúc": item.last_updated_at || '',
             "Trạng thái": item.import_status === 'Success' ? 'Thành công' : 'Thất bại',
-            "Ghi chú / Lỗi": item.error || item.import_status,
+            "Ghi chú / Lỗi": item.error || '',
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
@@ -46,135 +65,129 @@ function ImportWarrantyResignContent() {
         XLSX.writeFile(wb, `Ket_qua_Import_BaoHanh_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
-    // Xuất file mẫu
-{/* Tải file mẫu — đổi button thành link tĩnh */}
-<a href="/templates/mau_import_nghi_viec.xlsx" download
-    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
-    <Download className="w-8 h-8 text-orange-400 mb-3 group-hover:scale-110 transition" />
-    <span className="text-orange-600 font-bold text-sm">TẢI FILE MẪU CHUẨN</span>
-    <span className="text-gray-400 text-xs mt-1">mau_import_nghi_viec.xlsx</span>
-</a>
-
     // Đọc & validate file
-const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: 'binary', cellDates: true });
-        const ws = wb.Sheets[wb.SheetNames[0]];
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const bstr = evt.target?.result;
+            // KHÔNG dùng cellDates: true để tránh lệch timezone
+            // Đọc số serial gốc, tự convert bằng excelSerialToDateStr()
+            const wb = XLSX.read(bstr, { type: 'binary' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
 
-        // Dòng 1: tiêu đề hiển thị (bỏ qua)
-        // Dòng 2: tên field → dùng làm header
-        // Dòng 3+: data
-        // header: 1 = dùng dòng đầu tiên của range làm header
-        // range: 1 = bắt đầu đọc từ row index 1 (tức dòng 2 trong Excel)
-        const rawData = XLSX.utils.sheet_to_json(ws, { range: 1, header: 1 });
+            // Dòng 1: tiêu đề hiển thị (bỏ qua)
+            // Dòng 2: tên field → dùng làm header
+            // Dòng 3+: data
+            const rawData = XLSX.utils.sheet_to_json(ws, { range: 1, header: 1 });
 
-        // rawData[0] là mảng tên field (dòng 2 Excel)
-        // rawData[1..n] là data (dòng 3+ Excel)
-        const headers = rawData[0] as string[];
-        const dataRows = rawData.slice(1);
+            const headers = rawData[0] as string[];
+            const dataRows = rawData.slice(1);
 
-        // Map thành object theo header
-        const mapped = dataRows
-            .map((row: any) => {
-                const obj: any = {};
-                headers.forEach((h, i) => {
-                    if (h) obj[h.toString().trim()] = row[i];
+            const mapped = dataRows
+                .map((row: any) => {
+                    const obj: any = {};
+                    headers.forEach((h, i) => {
+                        if (h) obj[h.toString().trim()] = row[i];
+                    });
+                    return obj;
+                })
+                .filter((row: any) => {
+                    return Object.values(row).some(v => v !== undefined && v !== null && v !== '');
                 });
-                return obj;
-            })
-            .filter((row: any) => {
-                // Bỏ dòng hoàn toàn trống
-                return Object.values(row).some(v => v !== undefined && v !== null && v !== '');
-            });
 
-        validateData(dataRows.length, mapped);
-    };
-    reader.readAsBinaryString(file);
-};
-
-const validateData = (totalDataRows: number, rows: any[]) => {
-    const errLog: { row: number; msg: string }[] = [];
-    const mappedRows: any[] = [];
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-
-    // Helper: convert date từ Excel (Date object hoặc string) sang YYYY-MM-DD
-    const toDateStr = (val: any): string => {
-        if (!val) return '';
-        if (val instanceof Date) {
-            return val.toISOString().slice(0, 10);
-        }
-        return String(val).trim();
+            validateData(dataRows.length, mapped);
+        };
+        reader.readAsBinaryString(file);
     };
 
-    rows.forEach((row: any, index: number) => {
-        const rowNum = index + 3; // dòng 3 trở đi trong Excel
-        const errs: string[] = [];
+    const validateData = (totalDataRows: number, rows: any[]) => {
+        const errLog: { row: number; msg: string }[] = [];
+        const mappedRows: any[] = [];
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
-        const rawId = row['candidate_id']?.toString().trim() ?? '';
-        const rawWorking = row['is_still_working_official'] !== undefined && row['is_still_working_official'] !== null
-            ? String(row['is_still_working_official']).toLowerCase().trim()
-            : '';
-        const rawDate = toDateStr(row['resigned_date_official']);
-        const rawReason = row['reason_resigned_official']?.toString().trim() ?? '';
-
-        // 1. candidate_id bắt buộc
-        if (!rawId) {
-            errs.push('Thiếu candidate_id');
-        }
-
-        // 2. Parse is_still_working_official
-        let isStillWorking: boolean | undefined;
-        if (rawWorking !== '') {
-            if (BOOL_TRUE_VALUES.includes(rawWorking)) {
-                isStillWorking = true;
-            } else if (BOOL_FALSE_VALUES.includes(rawWorking)) {
-                isStillWorking = false;
-            } else {
-                errs.push(`is_still_working_official không hợp lệ: "${rawWorking}"`);
+        /**
+         * Convert giá trị ngày từ Excel sang chuỗi YYYY-MM-DD.
+         * - Nếu là số (Excel serial) → dùng excelSerialToDateStr() để tránh lệch timezone
+         * - Nếu là string đúng định dạng → giữ nguyên
+         */
+        const toDateStr = (val: any): string => {
+            if (val === undefined || val === null || val === '') return '';
+            if (typeof val === 'number') {
+                return excelSerialToDateStr(val);
             }
-        }
+            return String(val).trim();
+        };
 
-        // 3. Nếu false → ngày và lý do bắt buộc
-        if (isStillWorking === false) {
-            if (!rawDate) errs.push('Thiếu resigned_date_official (bắt buộc khi đã nghỉ)');
-            if (!rawReason) errs.push('Thiếu reason_resigned_official (bắt buộc khi đã nghỉ)');
-        }
+        rows.forEach((row: any, index: number) => {
+            const rowNum = index + 3;
+            const errs: string[] = [];
 
-        // 4. Định dạng ngày
-        if (rawDate && !dateRegex.test(rawDate)) {
-            errs.push(`resigned_date_official sai định dạng: "${rawDate}" (phải là YYYY-MM-DD)`);
-        }
+            const rawId = row['candidate_id']?.toString().trim() ?? '';
+            const rawWorking = row['is_still_working_official'] !== undefined && row['is_still_working_official'] !== null
+                ? String(row['is_still_working_official']).toLowerCase().trim()
+                : '';
+            const rawDate = toDateStr(row['resigned_date_official']);
+            const rawReason = row['reason_resigned_official']?.toString().trim() ?? '';
 
-        // 5. Lý do phải thuộc masterdata
-        if (rawReason && !MASTER_DATA.resignReasons.includes(rawReason)) {
-            errs.push(`Lý do nghỉ không hợp lệ: "${rawReason}"`);
-        }
+            // 1. candidate_id bắt buộc
+            if (!rawId) {
+                errs.push('Thiếu candidate_id');
+            }
 
-        if (errs.length > 0) {
-            errLog.push({ row: rowNum, msg: errs.join(' | ') });
-        } else {
-            const item: any = { candidate_id: rawId };
-            if (isStillWorking !== undefined) item.is_still_working_official = isStillWorking;
-            if (rawDate) item.resigned_date_official = rawDate;
-            if (rawReason) item.reason_resigned_official = rawReason;
-            mappedRows.push(item);
-        }
-    });
+            // 2. Parse is_still_working_official
+            let isStillWorking: boolean | undefined;
+            if (rawWorking !== '') {
+                if (BOOL_TRUE_VALUES.includes(rawWorking)) {
+                    isStillWorking = true;
+                } else if (BOOL_FALSE_VALUES.includes(rawWorking)) {
+                    isStillWorking = false;
+                } else {
+                    errs.push(`is_still_working_official không hợp lệ: "${rawWorking}"`);
+                }
+            }
 
-    setErrors(errLog);
-    setData(errLog.length === 0 ? mappedRows : []);
-};
-    // Gửi lên API
+            // 3. Nếu false → ngày và lý do bắt buộc
+            if (isStillWorking === false) {
+                if (!rawDate) errs.push('Thiếu resigned_date_official (bắt buộc khi đã nghỉ)');
+                if (!rawReason) errs.push('Thiếu reason_resigned_official (bắt buộc khi đã nghỉ)');
+            }
+
+            // 4. Định dạng ngày
+            if (rawDate && !dateRegex.test(rawDate)) {
+                errs.push(`resigned_date_official sai định dạng: "${rawDate}" (phải là YYYY-MM-DD)`);
+            }
+
+            // 5. Lý do phải thuộc masterdata
+            if (rawReason && !MASTER_DATA.resignReasons.includes(rawReason)) {
+                errs.push(`Lý do nghỉ không hợp lệ: "${rawReason}"`);
+            }
+
+            if (errs.length > 0) {
+                errLog.push({ row: rowNum, msg: errs.join(' | ') });
+            } else {
+                const item: any = { candidate_id: rawId };
+                if (isStillWorking !== undefined) item.is_still_working_official = isStillWorking;
+                if (rawDate) item.resigned_date_official = rawDate;
+                if (rawReason) item.reason_resigned_official = rawReason;
+                mappedRows.push(item);
+            }
+        });
+
+        setErrors(errLog);
+        setData(errLog.length === 0 ? mappedRows : []);
+    };
+
+    // Gửi lên API và đợi kết quả webhook
     const handleSubmit = async () => {
         if (errors.length > 0) return alert('Vui lòng sửa hết lỗi trước khi gửi!');
         if (data.length === 0) return;
 
         setIsUploading(true);
         setImportResults([]);
+        setUploadStatus('idle');
+
         try {
             const response = await fetch(API_CONFIG.WARRANTY_URL, {
                 method: 'POST',
@@ -187,6 +200,7 @@ const validateData = (totalDataRows: number, rows: any[]) => {
                     payload: data,
                 }),
             });
+
             if (response.ok) {
                 const resultData = await response.json();
                 setImportResults(Array.isArray(resultData) ? resultData : []);
@@ -205,7 +219,6 @@ const validateData = (totalDataRows: number, rows: any[]) => {
     };
 
     return (
-        // overflow-y-auto để cuộn được bên trong AppLayout (vốn là h-screen overflow-hidden)
         <div className="h-full overflow-y-auto bg-gray-50">
             <div className="max-w-3xl mx-auto px-6 py-6">
 
@@ -214,7 +227,7 @@ const validateData = (totalDataRows: number, rows: any[]) => {
                     <Link href="/warranty" className="inline-flex items-center gap-2 text-gray-500 hover:text-orange-500 transition text-sm font-bold">
                         <ArrowLeft className="w-4 h-4" /> Quay lại Bảo hành
                     </Link>
-                    {(data.length > 0 || errors.length > 0) && (
+                    {(data.length > 0 || errors.length > 0 || importResults.length > 0) && (
                         <button onClick={handleReset}
                             className="flex items-center gap-2 text-red-600 font-bold text-sm bg-red-50 px-4 py-2 rounded-xl hover:bg-red-100 transition">
                             <RefreshCcw className="w-4 h-4" /> RESET
@@ -233,7 +246,7 @@ const validateData = (totalDataRows: number, rows: any[]) => {
 
                     <div className="p-6 space-y-5">
 
-                        {/* Upload + Template — 2 cột nhỏ gọn */}
+                        {/* Upload + Template */}
                         <div className="grid grid-cols-2 gap-4">
                             <a href="/templates/mau_import_nghi_viec.xlsx" download
                                 className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
@@ -303,19 +316,29 @@ const validateData = (totalDataRows: number, rows: any[]) => {
                             </div>
                         )}
 
-                        {/* Bảng kết quả */}
+                        {/* Loading state khi đang chờ webhook */}
+                        {isUploading && (
+                            <div className="bg-orange-50 rounded-xl p-5 border border-orange-200 flex flex-col items-center gap-3">
+                                <div className="w-8 h-8 border-4 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                                <p className="text-orange-700 font-bold text-sm">Đang đẩy dữ liệu và chờ phản hồi từ hệ thống...</p>
+                                <p className="text-orange-500 text-xs">Vui lòng không đóng trang này</p>
+                            </div>
+                        )}
+
+                        {/* Bảng kết quả sau khi webhook trả về */}
                         {importResults.length > 0 && (
                             <div className="border-t pt-5">
                                 <div className="flex justify-between items-center mb-3">
                                     <h2 className="text-sm font-black text-slate-800 uppercase flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-orange-500" /> Kết quả xử lý
+                                        <CheckCircle2 className="w-4 h-4 text-orange-500" /> Kết quả xử lý hệ thống
                                     </h2>
                                     <button onClick={handleDownloadResults}
                                         className="flex items-center gap-1.5 bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-orange-600 transition">
-                                        <FileDown className="w-3.5 h-3.5" /> Tải kết quả
+                                        <FileDown className="w-3.5 h-3.5" /> Tải kết quả (.xlsx)
                                     </button>
                                 </div>
 
+                                {/* Summary cards */}
                                 <div className="grid grid-cols-3 gap-3 mb-3">
                                     {[
                                         { label: 'Tổng', value: importResults.length, color: 'text-gray-700 bg-gray-50 border-gray-200' },
@@ -335,7 +358,8 @@ const validateData = (totalDataRows: number, rows: any[]) => {
                                             <thead className="bg-gray-50 text-gray-600 font-bold sticky top-0 z-10 text-xs">
                                                 <tr>
                                                     <th className="px-4 py-3">Mã UV</th>
-                                                    <th className="px-4 py-3">Họ tên</th>
+                                                    <th className="px-4 py-3">Ngày nghỉ</th>
+                                                    <th className="px-4 py-3">Lý do</th>
                                                     <th className="px-4 py-3">Trạng thái</th>
                                                     <th className="px-4 py-3">Ghi chú</th>
                                                 </tr>
@@ -344,7 +368,8 @@ const validateData = (totalDataRows: number, rows: any[]) => {
                                                 {importResults.map((res, idx) => (
                                                     <tr key={idx} className="hover:bg-gray-50/50 transition">
                                                         <td className="px-4 py-3 font-mono font-bold text-gray-700 text-xs">{res.candidate_id}</td>
-                                                        <td className="px-4 py-3 text-xs">{res.candidate_name || '—'}</td>
+                                                        <td className="px-4 py-3 text-xs text-gray-600">{res.resigned_date_official || '—'}</td>
+                                                        <td className="px-4 py-3 text-xs text-gray-600">{res.reason_resigned_official || '—'}</td>
                                                         <td className="px-4 py-3">
                                                             {res.import_status === 'Success'
                                                                 ? <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded font-bold text-[10px]">THÀNH CÔNG</span>
@@ -385,7 +410,7 @@ const validateData = (totalDataRows: number, rows: any[]) => {
                     title="Lên đầu trang"
                 >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                        <polyline points="18 15 12 9 6 15"/>
+                        <polyline points="18 15 12 9 6 15" />
                     </svg>
                 </button>
 
