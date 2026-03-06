@@ -65,7 +65,7 @@ function ImportWarrantyResignContent() {
             const wb = XLSX.read(bstr, { type: 'binary' });
             const ws = wb.Sheets[wb.SheetNames[0]];
             // range: 1 → bỏ dòng đầu (mô tả), lấy từ dòng 2 trở đi
-            const rawData = XLSX.utils.sheet_to_json(ws, { range: 3 });
+            const rawData = XLSX.utils.sheet_to_json(ws, { range: 2 });
             validateData(rawData);
         };
         reader.readAsBinaryString(file);
@@ -73,62 +73,70 @@ function ImportWarrantyResignContent() {
 
 const validateData = (rows: any[]) => {
     const errLog: { row: number; msg: string }[] = [];
-    const validRows: any[] = [];
+    const mappedRows: any[] = [];
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
     rows.forEach((row: any, index: number) => {
-        const rowNum = index + 3;
+        const rowNum = index + 3; // dòng 1 header, dòng 2 tên field, data từ dòng 3
         const errs: string[] = [];
 
+        // --- Lấy giá trị raw ---
+        const rawId = row.candidate_id?.toString().trim() ?? '';
+        const rawWorking = row.is_still_working_official !== undefined
+            ? String(row.is_still_working_official).toLowerCase().trim()
+            : '';
+        const rawDate = row.resigned_date_official?.toString().trim() ?? '';
+        const rawReason = row.reason_resigned_official?.toString().trim() ?? '';
+
         // 1. candidate_id bắt buộc
-        if (!row.candidate_id?.toString().trim()) {
+        if (!rawId) {
             errs.push('Thiếu candidate_id');
         }
 
-        // 2. Parse is_still_working_official
+        // 2. Parse is_still_working_official — phải là true/false rõ ràng
         let isStillWorking: boolean | undefined;
-        if (row.is_still_working_official !== undefined && row.is_still_working_official !== '') {
-            const val = String(row.is_still_working_official).toLowerCase().trim();
-            if (BOOL_TRUE_VALUES.includes(val)) isStillWorking = true;
-            else if (BOOL_FALSE_VALUES.includes(val)) isStillWorking = false;
-            else errs.push('is_still_working_official phải là true hoặc false');
+        if (rawWorking !== '') {
+            if (BOOL_TRUE_VALUES.includes(rawWorking)) {
+                isStillWorking = true;
+            } else if (BOOL_FALSE_VALUES.includes(rawWorking)) {
+                isStillWorking = false;
+            } else {
+                errs.push(`is_still_working_official không hợp lệ: "${rawWorking}" (chỉ nhận true/false)`);
+            }
         }
 
-        // 3. Nếu đã nghỉ (false) thì ngày + lý do bắt buộc
+        // 3. Nếu is_still_working_official = false → ngày và lý do bắt buộc
         if (isStillWorking === false) {
-            if (!row.resigned_date_official?.toString().trim()) {
-                errs.push('Đã nghỉ nhưng thiếu resigned_date_official');
-            }
-            if (!row.reason_resigned_official?.toString().trim()) {
-                errs.push('Đã nghỉ nhưng thiếu reason_resigned_official');
-            }
+            if (!rawDate) errs.push('Thiếu resigned_date_official (bắt buộc khi đã nghỉ)');
+            if (!rawReason) errs.push('Thiếu reason_resigned_official (bắt buộc khi đã nghỉ)');
         }
 
-        // 4. Validate định dạng ngày
-        if (row.resigned_date_official && !dateRegex.test(String(row.resigned_date_official).trim())) {
-            errs.push('resigned_date_official sai định dạng (YYYY-MM-DD)');
+        // 4. Nếu có ngày → kiểm tra định dạng YYYY-MM-DD
+        if (rawDate && !dateRegex.test(rawDate)) {
+            errs.push(`resigned_date_official sai định dạng: "${rawDate}" (phải là YYYY-MM-DD)`);
         }
 
-        // 5. Validate lý do nghỉ thuộc masterdata
-        if (row.reason_resigned_official && !MASTER_DATA.resignReasons.includes(String(row.reason_resigned_official).trim())) {
-            errs.push(`Lý do nghỉ không hợp lệ: "${row.reason_resigned_official}"`);
+        // 5. Nếu có lý do → phải thuộc resignReasons trong masterdata
+        if (rawReason && !MASTER_DATA.resignReasons.includes(rawReason)) {
+            errs.push(`reason_resigned_official không hợp lệ: "${rawReason}"`);
         }
 
+        // --- Ghi nhận kết quả ---
         if (errs.length > 0) {
             errLog.push({ row: rowNum, msg: errs.join(' | ') });
         } else {
-            const mapped: any = {
-                candidate_id: String(row.candidate_id).trim(),
-            };
+            const mapped: any = { candidate_id: rawId };
             if (isStillWorking !== undefined) mapped.is_still_working_official = isStillWorking;
-            if (row.resigned_date_official) mapped.resigned_date_official = String(row.resigned_date_official).trim();
-            if (row.reason_resigned_official) mapped.reason_resigned_official = String(row.reason_resigned_official).trim();
-            validRows.push(mapped);
+            if (rawDate) mapped.resigned_date_official = rawDate;
+            if (rawReason) mapped.reason_resigned_official = rawReason;
+            mappedRows.push(mapped);
         }
     });
 
+    // Toàn bộ file phải đúng hết mới cho import
+    // → nếu có lỗi thì set data = [] để disable nút submit
     setErrors(errLog);
-    setData(validRows);
+    setData(errLog.length === 0 ? mappedRows : []);
 };
     // Gửi lên API
     const handleSubmit = async () => {
