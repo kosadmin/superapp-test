@@ -46,14 +46,6 @@ function ImportWarrantyResignContent() {
         XLSX.writeFile(wb, `Ket_qua_Import_BaoHanh_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
-    // Xuất file mẫu
-{/* Tải file mẫu — đổi button thành link tĩnh */}
-<a href="/templates/mau_import_nghi_viec.xlsx" download
-    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
-    <Download className="w-8 h-8 text-orange-400 mb-3 group-hover:scale-110 transition" />
-    <span className="text-orange-600 font-bold text-sm">TẢI FILE MẪU CHUẨN</span>
-    <span className="text-gray-400 text-xs mt-1">mau_import_nghi_viec.xlsx</span>
-</a>
 
     // Đọc & validate file
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +63,7 @@ function ImportWarrantyResignContent() {
         reader.readAsBinaryString(file);
     };
 
-const validateData = (rows: any[]) => {
+ const validateData = (rows: any[]) => {
     const errLog: { row: number; msg: string }[] = [];
     const validRows: any[] = [];
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -194,12 +186,12 @@ const validateData = (rows: any[]) => {
                     {/* Upload + Template */}
                     <div className="grid grid-cols-2 gap-6 mb-8">
                         {/* Tải file mẫu */}
-                        <button onClick={handleDownloadTemplate}
-                            className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
-                            <Download className="w-8 h-8 text-orange-400 mb-3 group-hover:scale-110 transition" />
-                            <span className="text-orange-600 font-bold text-sm">TẢI FILE MẪU CHUẨN</span>
-                            <span className="text-gray-400 text-xs mt-1">mau_import_nghi_viec_baohanh.xlsx</span>
-                        </button>
+<a href="/templates/mau_import_nghi_viec.xlsx" download
+    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
+    <Download className="w-8 h-8 text-orange-400 mb-3 group-hover:scale-110 transition" />
+    <span className="text-orange-600 font-bold text-sm">TẢI FILE MẪU CHUẨN</span>
+    <span className="text-gray-400 text-xs mt-1">mau_import_nghi_viec.xlsx</span>
+</a>
 
                         {/* Upload file */}
                         <div className="border-2 border-dashed border-orange-200 bg-orange-50/30 rounded-2xl p-6 flex flex-col items-center text-center relative hover:border-orange-400 transition cursor-pointer">
