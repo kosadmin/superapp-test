@@ -46,6 +46,14 @@ function ImportWarrantyResignContent() {
         XLSX.writeFile(wb, `Ket_qua_Import_BaoHanh_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
+    // Xuất file mẫu
+{/* Tải file mẫu — đổi button thành link tĩnh */}
+<a href="/templates/mau_import_nghi_viec.xlsx" download
+    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
+    <Download className="w-8 h-8 text-orange-400 mb-3 group-hover:scale-110 transition" />
+    <span className="text-orange-600 font-bold text-sm">TẢI FILE MẪU CHUẨN</span>
+    <span className="text-gray-400 text-xs mt-1">mau_import_nghi_viec.xlsx</span>
+</a>
 
     // Đọc & validate file
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,13 +65,13 @@ function ImportWarrantyResignContent() {
             const wb = XLSX.read(bstr, { type: 'binary' });
             const ws = wb.Sheets[wb.SheetNames[0]];
             // range: 1 → bỏ dòng đầu (mô tả), lấy từ dòng 2 trở đi
-            const rawData = XLSX.utils.sheet_to_json(ws, { range: 2 });
+            const rawData = XLSX.utils.sheet_to_json(ws, { range: 3 });
             validateData(rawData);
         };
         reader.readAsBinaryString(file);
     };
 
- const validateData = (rows: any[]) => {
+const validateData = (rows: any[]) => {
     const errLog: { row: number; msg: string }[] = [];
     const validRows: any[] = [];
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -159,180 +167,190 @@ function ImportWarrantyResignContent() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-4xl mx-auto">
+        // overflow-y-auto để cuộn được bên trong AppLayout (vốn là h-screen overflow-hidden)
+        <div className="h-full overflow-y-auto bg-gray-50">
+            <div className="max-w-3xl mx-auto px-6 py-6">
 
-                {/* Back */}
-                <Link href="/warranty" className="inline-flex items-center gap-2 text-gray-500 mb-6 hover:text-orange-500 transition text-sm font-bold">
-                    <ArrowLeft className="w-4 h-4" /> Quay lại Bảo hành
-                </Link>
-
-                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-
-                    {/* Header */}
-                    <div className="flex justify-between items-start mb-8">
-                        <div>
-                            <h1 className="text-2xl font-black text-slate-800 uppercase">Import tình trạng nghỉ việc</h1>
-                            <p className="text-gray-500 text-sm mt-1">Cập nhật hàng loạt tình trạng nghỉ việc (Official) cho ứng viên bảo hành.</p>
-                        </div>
-                        {(data.length > 0 || errors.length > 0) && (
-                            <button onClick={handleReset}
-                                className="flex items-center gap-2 text-red-600 font-bold text-sm bg-red-50 px-4 py-2 rounded-xl hover:bg-red-100 transition">
-                                <RefreshCcw className="w-4 h-4" /> RESET / CHỌN FILE KHÁC
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Upload + Template */}
-                    <div className="grid grid-cols-2 gap-6 mb-8">
-                        {/* Tải file mẫu */}
-<a href="/templates/mau_import_nghi_viec.xlsx" download
-    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
-    <Download className="w-8 h-8 text-orange-400 mb-3 group-hover:scale-110 transition" />
-    <span className="text-orange-600 font-bold text-sm">TẢI FILE MẪU CHUẨN</span>
-    <span className="text-gray-400 text-xs mt-1">mau_import_nghi_viec.xlsx</span>
-</a>
-
-                        {/* Upload file */}
-                        <div className="border-2 border-dashed border-orange-200 bg-orange-50/30 rounded-2xl p-6 flex flex-col items-center text-center relative hover:border-orange-400 transition cursor-pointer">
-                            <UploadCloud className="w-8 h-8 text-orange-500 mb-3" />
-                            <span className="text-orange-700 font-bold text-sm">BẤM ĐỂ UP FILE DATA</span>
-                            <span className="text-gray-400 text-xs mt-1">.xlsx / .xls</span>
-                            <input key={fileInputKey} type="file" onChange={handleFileUpload} accept=".xlsx,.xls"
-                                className="absolute inset-0 opacity-0 cursor-pointer" />
-                        </div>
-                    </div>
-
-                    {/* Mô tả cột */}
-                    <div className="bg-gray-50 rounded-2xl p-5 mb-8 border border-gray-100">
-                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Cấu trúc file Excel</p>
-                        <div className="grid grid-cols-4 gap-3 text-xs">
-                            {[
-                                { col: 'candidate_id', note: 'Bắt buộc', color: 'text-red-600 bg-red-50' },
-                                { col: 'is_still_working_official', note: 'true / false', color: 'text-blue-600 bg-blue-50' },
-                                { col: 'resigned_date_official', note: 'YYYY-MM-DD', color: 'text-gray-600 bg-gray-100' },
-                                { col: 'reason_resigned_official', note: 'Theo masterdata', color: 'text-gray-600 bg-gray-100' },
-                            ].map(({ col, note, color }) => (
-                                <div key={col} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
-                                    <div className="font-mono font-bold text-[11px] text-gray-800 mb-1">{col}</div>
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${color}`}>{note}</span>
-                                </div>
-                            ))}
-                        </div>
-                        {/* Danh sách lý do hợp lệ */}
-                        <div className="mt-3">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1.5">Lý do nghỉ hợp lệ:</p>
-                            <div className="flex flex-wrap gap-1.5">
-                                {MASTER_DATA.resignReasons.map(r => (
-                                    <span key={r} className="text-[10px] bg-white border border-gray-200 px-2 py-0.5 rounded-md text-gray-600 font-mono">{r}</span>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Lỗi */}
-                    {errors.length > 0 && (
-                        <div className="bg-red-50 rounded-2xl p-6 mb-8 border border-red-200 shadow-inner">
-                            <div className="flex items-center gap-2 text-red-700 font-black mb-4">
-                                <AlertCircle className="w-5 h-5" /> PHÁT HIỆN {errors.length} DÒNG LỖI
-                            </div>
-                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
-                                {errors.map((err, i) => (
-                                    <div key={i} className="text-[12px] bg-white p-2 rounded border border-red-100 flex gap-2">
-                                        <span className="font-bold text-red-600 shrink-0">Dòng {err.row}:</span>
-                                        <span className="text-gray-700">{err.msg}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                {/* Top bar: Back + Reset */}
+                <div className="flex items-center justify-between mb-5">
+                    <Link href="/warranty" className="inline-flex items-center gap-2 text-gray-500 hover:text-orange-500 transition text-sm font-bold">
+                        <ArrowLeft className="w-4 h-4" /> Quay lại Bảo hành
+                    </Link>
+                    {(data.length > 0 || errors.length > 0) && (
+                        <button onClick={handleReset}
+                            className="flex items-center gap-2 text-red-600 font-bold text-sm bg-red-50 px-4 py-2 rounded-xl hover:bg-red-100 transition">
+                            <RefreshCcw className="w-4 h-4" /> RESET
+                        </button>
                     )}
+                </div>
 
-                    {/* Sẵn sàng */}
-                    {data.length > 0 && errors.length === 0 && (
-                        <div className="bg-orange-50 rounded-2xl p-6 mb-8 border border-orange-200 flex items-center gap-3">
-                            <CheckCircle2 className="w-6 h-6 text-orange-500 shrink-0" />
-                            <div>
-                                <span className="text-orange-800 font-bold">File hợp lệ! Sẵn sàng xử lý </span>
-                                <span className="text-orange-600 font-black text-lg">{data.length}</span>
-                                <span className="text-orange-800 font-bold"> dòng dữ liệu.</span>
+                {/* Card chính */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+                    {/* Header card */}
+                    <div className="px-6 py-5 border-b border-gray-100">
+                        <h1 className="text-lg font-black text-slate-800 uppercase tracking-wide">Import tình trạng nghỉ việc</h1>
+                        <p className="text-gray-400 text-xs mt-0.5">Cập nhật hàng loạt tình trạng nghỉ việc (Official) cho ứng viên bảo hành.</p>
+                    </div>
+
+                    <div className="p-6 space-y-5">
+
+                        {/* Upload + Template — 2 cột nhỏ gọn */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <a href="/templates/mau_import_nghi_viec.xlsx" download
+                                className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center text-center hover:border-orange-300 hover:bg-orange-50/30 transition group">
+                                <Download className="w-6 h-6 text-orange-400 mb-2 group-hover:scale-110 transition" />
+                                <span className="text-orange-600 font-bold text-xs">TẢI FILE MẪU</span>
+                                <span className="text-gray-400 text-[10px] mt-0.5">mau_import_nghi_viec.xlsx</span>
+                            </a>
+                            <div className="border-2 border-dashed border-orange-200 bg-orange-50/30 rounded-xl p-4 flex flex-col items-center text-center relative hover:border-orange-400 transition cursor-pointer">
+                                <UploadCloud className="w-6 h-6 text-orange-500 mb-2" />
+                                <span className="text-orange-700 font-bold text-xs">BẤM ĐỂ UP FILE</span>
+                                <span className="text-gray-400 text-[10px] mt-0.5">.xlsx / .xls</span>
+                                <input key={fileInputKey} type="file" onChange={handleFileUpload} accept=".xlsx,.xls"
+                                    className="absolute inset-0 opacity-0 cursor-pointer" />
                             </div>
                         </div>
-                    )}
 
-                    {/* Bảng kết quả */}
-                    {importResults.length > 0 && (
-                        <div className="mt-8 border-t pt-8">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-black text-slate-800 uppercase flex items-center gap-2">
-                                    <CheckCircle2 className="w-5 h-5 text-orange-500" /> Kết quả xử lý
-                                </h2>
-                                <button onClick={handleDownloadResults}
-                                    className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-orange-600 shadow-md shadow-orange-100 transition">
-                                    <FileDown className="w-4 h-4" /> Tải kết quả (.xlsx)
-                                </button>
-                            </div>
-
-                            {/* Summary */}
-                            <div className="grid grid-cols-3 gap-4 mb-4">
+                        {/* Cấu trúc cột */}
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Cấu trúc file Excel</p>
+                            <div className="grid grid-cols-4 gap-2 text-xs mb-3">
                                 {[
-                                    { label: 'Tổng', value: importResults.length, color: 'text-gray-700 bg-gray-50 border-gray-200' },
-                                    { label: 'Thành công', value: importResults.filter(r => r.import_status === 'Success').length, color: 'text-green-700 bg-green-50 border-green-200' },
-                                    { label: 'Thất bại', value: importResults.filter(r => r.import_status !== 'Success').length, color: 'text-red-700 bg-red-50 border-red-200' },
-                                ].map(({ label, value, color }) => (
-                                    <div key={label} className={`rounded-xl p-4 border text-center font-black ${color}`}>
-                                        <div className="text-2xl">{value}</div>
-                                        <div className="text-xs font-bold uppercase tracking-wider opacity-70">{label}</div>
+                                    { col: 'candidate_id', note: 'Bắt buộc', color: 'text-red-600 bg-red-50' },
+                                    { col: 'is_still_working_official', note: 'true / false', color: 'text-blue-600 bg-blue-50' },
+                                    { col: 'resigned_date_official', note: 'YYYY-MM-DD', color: 'text-gray-600 bg-gray-100' },
+                                    { col: 'reason_resigned_official', note: 'Theo masterdata', color: 'text-gray-600 bg-gray-100' },
+                                ].map(({ col, note, color }) => (
+                                    <div key={col} className="bg-white rounded-lg p-2.5 border border-gray-100 shadow-sm">
+                                        <div className="font-mono font-bold text-[10px] text-gray-800 mb-1 break-all">{col}</div>
+                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${color}`}>{note}</span>
                                     </div>
                                 ))}
                             </div>
-
-                            <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm max-h-[400px] overflow-y-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-50 text-gray-600 font-bold sticky top-0 z-10">
-                                        <tr>
-                                            <th className="p-4">Mã UV</th>
-                                            <th className="p-4">Họ tên</th>
-                                            <th className="p-4">Trạng thái</th>
-                                            <th className="p-4">Ghi chú / Lỗi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {importResults.map((res, idx) => (
-                                            <tr key={idx} className="hover:bg-gray-50/50 transition">
-                                                <td className="p-4 font-mono font-bold text-gray-700">{res.candidate_id}</td>
-                                                <td className="p-4">{res.candidate_name || '—'}</td>
-                                                <td className="p-4">
-                                                    {res.import_status === 'Success'
-                                                        ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded-lg font-bold text-[11px]">THÀNH CÔNG</span>
-                                                        : <span className="text-red-600 bg-red-50 px-2 py-1 rounded-lg font-bold text-[11px]">THẤT BẠI</span>
-                                                    }
-                                                </td>
-                                                <td className="p-4">
-                                                    {res.import_status === 'Success'
-                                                        ? <span className="text-gray-400 text-xs">Đã cập nhật</span>
-                                                        : <span className="text-red-500 italic text-xs">{res.error}</span>
-                                                    }
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1.5">Lý do nghỉ hợp lệ:</p>
+                                <div className="flex flex-wrap gap-1">
+                                    {MASTER_DATA.resignReasons.map(r => (
+                                        <span key={r} className="text-[10px] bg-white border border-gray-200 px-2 py-0.5 rounded text-gray-600 font-mono">{r}</span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Submit */}
-                    <div className="mt-8">
+                        {/* Lỗi */}
+                        {errors.length > 0 && (
+                            <div className="bg-red-50 rounded-xl p-4 border border-red-200">
+                                <div className="flex items-center gap-2 text-red-700 font-black mb-3 text-sm">
+                                    <AlertCircle className="w-4 h-4" /> PHÁT HIỆN {errors.length} DÒNG LỖI
+                                </div>
+                                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                                    {errors.map((err, i) => (
+                                        <div key={i} className="text-[11px] bg-white p-2 rounded border border-red-100 flex gap-2">
+                                            <span className="font-bold text-red-600 shrink-0">Dòng {err.row}:</span>
+                                            <span className="text-gray-700">{err.msg}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Sẵn sàng */}
+                        {data.length > 0 && errors.length === 0 && (
+                            <div className="bg-orange-50 rounded-xl p-4 border border-orange-200 flex items-center gap-3">
+                                <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
+                                <span className="text-orange-800 font-bold text-sm">
+                                    File hợp lệ! Sẵn sàng xử lý <span className="text-orange-600 font-black text-base">{data.length}</span> dòng.
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Bảng kết quả */}
+                        {importResults.length > 0 && (
+                            <div className="border-t pt-5">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h2 className="text-sm font-black text-slate-800 uppercase flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-orange-500" /> Kết quả xử lý
+                                    </h2>
+                                    <button onClick={handleDownloadResults}
+                                        className="flex items-center gap-1.5 bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-orange-600 transition">
+                                        <FileDown className="w-3.5 h-3.5" /> Tải kết quả
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-3 mb-3">
+                                    {[
+                                        { label: 'Tổng', value: importResults.length, color: 'text-gray-700 bg-gray-50 border-gray-200' },
+                                        { label: 'Thành công', value: importResults.filter(r => r.import_status === 'Success').length, color: 'text-green-700 bg-green-50 border-green-200' },
+                                        { label: 'Thất bại', value: importResults.filter(r => r.import_status !== 'Success').length, color: 'text-red-700 bg-red-50 border-red-200' },
+                                    ].map(({ label, value, color }) => (
+                                        <div key={label} className={`rounded-xl p-3 border text-center font-black ${color}`}>
+                                            <div className="text-xl">{value}</div>
+                                            <div className="text-[10px] font-bold uppercase tracking-wide opacity-70">{label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                                    <div className="overflow-x-auto max-h-72 overflow-y-auto">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-gray-50 text-gray-600 font-bold sticky top-0 z-10 text-xs">
+                                                <tr>
+                                                    <th className="px-4 py-3">Mã UV</th>
+                                                    <th className="px-4 py-3">Họ tên</th>
+                                                    <th className="px-4 py-3">Trạng thái</th>
+                                                    <th className="px-4 py-3">Ghi chú</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50">
+                                                {importResults.map((res, idx) => (
+                                                    <tr key={idx} className="hover:bg-gray-50/50 transition">
+                                                        <td className="px-4 py-3 font-mono font-bold text-gray-700 text-xs">{res.candidate_id}</td>
+                                                        <td className="px-4 py-3 text-xs">{res.candidate_name || '—'}</td>
+                                                        <td className="px-4 py-3">
+                                                            {res.import_status === 'Success'
+                                                                ? <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded font-bold text-[10px]">THÀNH CÔNG</span>
+                                                                : <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded font-bold text-[10px]">THẤT BẠI</span>
+                                                            }
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            {res.import_status === 'Success'
+                                                                ? <span className="text-gray-400 text-[10px]">Đã cập nhật</span>
+                                                                : <span className="text-red-500 italic text-[10px]">{res.error}</span>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Submit */}
                         <button onClick={handleSubmit}
                             disabled={data.length === 0 || errors.length > 0 || isUploading}
-                            className={`w-full py-4 rounded-2xl font-black text-white transition-all text-base
+                            className={`w-full py-3.5 rounded-xl font-black text-white transition-all text-sm
                                 ${isUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-100 active:scale-[0.99]'}
-                                disabled:opacity-50 disabled:shadow-none`}>
-                            {isUploading ? '⏳ ĐANG ĐẨY DỮ LIỆU LÊN HỆ THỐNG...' : `XÁC NHẬN IMPORT ${data.length > 0 ? `(${data.length} dòng)` : ''}`}
+                                disabled:opacity-40 disabled:shadow-none`}>
+                            {isUploading ? '⏳ ĐANG ĐẨY DỮ LIỆU...' : `XÁC NHẬN IMPORT${data.length > 0 ? ` (${data.length} dòng)` : ''}`}
                         </button>
-                    </div>
 
+                    </div>
                 </div>
+
+                {/* Scroll to top button */}
+                <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="fixed bottom-6 right-6 w-10 h-10 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition flex items-center justify-center z-50"
+                    title="Lên đầu trang"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                        <polyline points="18 15 12 9 6 15"/>
+                    </svg>
+                </button>
+
             </div>
         </div>
     );
