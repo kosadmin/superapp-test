@@ -136,40 +136,64 @@ function ImportWarrantyResignContent() {
         setData(errLog.length === 0 ? mappedRows : []);
     };
 
-    const handleSubmit = async () => {
-        if (errors.length > 0) return alert('Vui lòng sửa hết lỗi trước khi gửi!');
-        if (data.length === 0) return;
+  const handleSubmit = async () => {
+    if (errors.length > 0) return alert('Vui lòng sửa hết lỗi trước khi gửi!');
+    if (data.length === 0) return;
 
-        setIsUploading(true);
-        setImportResults([]);
+    setIsUploading(true);
+    setImportResults([]); // Clear kết quả cũ trước khi bắt đầu
 
-        try {
-            const response = await fetch(API_CONFIG.WARRANTY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'import_warranty_resign',
-                    user_id,
-                    user_group,
-                    timestamp: new Date().toISOString(),
-                    payload: data,
-                }),
-            });
+    try {
+        const response = await fetch(API_CONFIG.WARRANTY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'import_warranty_resign',
+                user_id,
+                user_group,
+                timestamp: new Date().toISOString(),
+                payload: data,
+            }),
+        });
 
-            if (!response.ok) {
-                alert(`Lỗi từ server (${response.status})`);
-                return;
-            }
-
-            const resultData = await response.json();
-            setImportResults(Array.isArray(resultData) ? resultData : []);
-            setData([]);
-        } catch (err) {
-            alert('Lỗi kết nối: ' + err);
-        } finally {
-            setIsUploading(false);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server Error ${response.status}: ${errorText}`);
         }
-    };
+
+        const resultData = await response.json();
+        
+        // Debug: Xem webhook thực sự trả về gì
+        console.log("Raw Response:", resultData);
+
+        // Xử lý trường hợp webhook trả về mảng hoặc object chứa mảng
+        let finalResults = [];
+        if (Array.isArray(resultData)) {
+            finalResults = resultData;
+        } else if (resultData && typeof resultData === 'object') {
+            // Thử tìm mảng trong các key phổ biến
+            finalResults = resultData.data || resultData.results || resultData.payload || [];
+        }
+
+        if (finalResults.length > 0) {
+            setImportResults(finalResults);
+            setData([]); // Chỉ xóa dữ liệu input khi đã có kết quả trả về
+            
+            // Tự động cuộn xuống khu vực kết quả sau 100ms
+            setTimeout(() => {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }, 100);
+        } else {
+            alert('Webhook phản hồi thành công nhưng không có dữ liệu kết quả.');
+        }
+
+    } catch (err) {
+        console.error("Import Error:", err);
+        alert('Lỗi kết nối hoặc xử lý: ' + (err as Error).message);
+    } finally {
+        setIsUploading(false);
+    }
+};
 
     return (
         <div className="h-full overflow-y-auto bg-gray-50">
