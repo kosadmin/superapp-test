@@ -56,44 +56,77 @@ function ImportWarrantyResignContent() {
 </a>
 
     // Đọc & validate file
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const bstr = evt.target?.result;
-            const wb = XLSX.read(bstr, { type: 'binary' });
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            // range: 1 → bỏ dòng đầu (mô tả), lấy từ dòng 2 trở đi
-            const rawData = XLSX.utils.sheet_to_json(ws, { range: 2 });
-            validateData(rawData);
-        };
-        reader.readAsBinaryString(file);
-    };
+const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
 
-const validateData = (rows: any[]) => {
+        // Dòng 1: tiêu đề hiển thị (bỏ qua)
+        // Dòng 2: tên field → dùng làm header
+        // Dòng 3+: data
+        // header: 1 = dùng dòng đầu tiên của range làm header
+        // range: 1 = bắt đầu đọc từ row index 1 (tức dòng 2 trong Excel)
+        const rawData = XLSX.utils.sheet_to_json(ws, { range: 1, header: 1 });
+
+        // rawData[0] là mảng tên field (dòng 2 Excel)
+        // rawData[1..n] là data (dòng 3+ Excel)
+        const headers = rawData[0] as string[];
+        const dataRows = rawData.slice(1);
+
+        // Map thành object theo header
+        const mapped = dataRows
+            .map((row: any) => {
+                const obj: any = {};
+                headers.forEach((h, i) => {
+                    if (h) obj[h.toString().trim()] = row[i];
+                });
+                return obj;
+            })
+            .filter((row: any) => {
+                // Bỏ dòng hoàn toàn trống
+                return Object.values(row).some(v => v !== undefined && v !== null && v !== '');
+            });
+
+        validateData(dataRows.length, mapped);
+    };
+    reader.readAsBinaryString(file);
+};
+
+const validateData = (totalDataRows: number, rows: any[]) => {
     const errLog: { row: number; msg: string }[] = [];
     const mappedRows: any[] = [];
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
+    // Helper: convert date từ Excel (Date object hoặc string) sang YYYY-MM-DD
+    const toDateStr = (val: any): string => {
+        if (!val) return '';
+        if (val instanceof Date) {
+            return val.toISOString().slice(0, 10);
+        }
+        return String(val).trim();
+    };
+
     rows.forEach((row: any, index: number) => {
-        const rowNum = index + 3; // dòng 1 header, dòng 2 tên field, data từ dòng 3
+        const rowNum = index + 3; // dòng 3 trở đi trong Excel
         const errs: string[] = [];
 
-        // --- Lấy giá trị raw ---
-        const rawId = row.candidate_id?.toString().trim() ?? '';
-        const rawWorking = row.is_still_working_official !== undefined
-            ? String(row.is_still_working_official).toLowerCase().trim()
+        const rawId = row['candidate_id']?.toString().trim() ?? '';
+        const rawWorking = row['is_still_working_official'] !== undefined && row['is_still_working_official'] !== null
+            ? String(row['is_still_working_official']).toLowerCase().trim()
             : '';
-        const rawDate = row.resigned_date_official?.toString().trim() ?? '';
-        const rawReason = row.reason_resigned_official?.toString().trim() ?? '';
+        const rawDate = toDateStr(row['resigned_date_official']);
+        const rawReason = row['reason_resigned_official']?.toString().trim() ?? '';
 
         // 1. candidate_id bắt buộc
         if (!rawId) {
             errs.push('Thiếu candidate_id');
         }
 
-        // 2. Parse is_still_working_official — phải là true/false rõ ràng
+        // 2. Parse is_still_working_official
         let isStillWorking: boolean | undefined;
         if (rawWorking !== '') {
             if (BOOL_TRUE_VALUES.includes(rawWorking)) {
@@ -101,40 +134,37 @@ const validateData = (rows: any[]) => {
             } else if (BOOL_FALSE_VALUES.includes(rawWorking)) {
                 isStillWorking = false;
             } else {
-                errs.push(`is_still_working_official không hợp lệ: "${rawWorking}" (chỉ nhận true/false)`);
+                errs.push(`is_still_working_official không hợp lệ: "${rawWorking}"`);
             }
         }
 
-        // 3. Nếu is_still_working_official = false → ngày và lý do bắt buộc
+        // 3. Nếu false → ngày và lý do bắt buộc
         if (isStillWorking === false) {
             if (!rawDate) errs.push('Thiếu resigned_date_official (bắt buộc khi đã nghỉ)');
             if (!rawReason) errs.push('Thiếu reason_resigned_official (bắt buộc khi đã nghỉ)');
         }
 
-        // 4. Nếu có ngày → kiểm tra định dạng YYYY-MM-DD
+        // 4. Định dạng ngày
         if (rawDate && !dateRegex.test(rawDate)) {
             errs.push(`resigned_date_official sai định dạng: "${rawDate}" (phải là YYYY-MM-DD)`);
         }
 
-        // 5. Nếu có lý do → phải thuộc resignReasons trong masterdata
+        // 5. Lý do phải thuộc masterdata
         if (rawReason && !MASTER_DATA.resignReasons.includes(rawReason)) {
-            errs.push(`reason_resigned_official không hợp lệ: "${rawReason}"`);
+            errs.push(`Lý do nghỉ không hợp lệ: "${rawReason}"`);
         }
 
-        // --- Ghi nhận kết quả ---
         if (errs.length > 0) {
             errLog.push({ row: rowNum, msg: errs.join(' | ') });
         } else {
-            const mapped: any = { candidate_id: rawId };
-            if (isStillWorking !== undefined) mapped.is_still_working_official = isStillWorking;
-            if (rawDate) mapped.resigned_date_official = rawDate;
-            if (rawReason) mapped.reason_resigned_official = rawReason;
-            mappedRows.push(mapped);
+            const item: any = { candidate_id: rawId };
+            if (isStillWorking !== undefined) item.is_still_working_official = isStillWorking;
+            if (rawDate) item.resigned_date_official = rawDate;
+            if (rawReason) item.reason_resigned_official = rawReason;
+            mappedRows.push(item);
         }
     });
 
-    // Toàn bộ file phải đúng hết mới cho import
-    // → nếu có lỗi thì set data = [] để disable nút submit
     setErrors(errLog);
     setData(errLog.length === 0 ? mappedRows : []);
 };
