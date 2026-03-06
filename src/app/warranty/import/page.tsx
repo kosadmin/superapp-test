@@ -180,44 +180,45 @@ function ImportWarrantyResignContent() {
     };
 
     // Gửi lên API và đợi kết quả webhook
-    const handleSubmit = async () => {
-        if (errors.length > 0) return alert('Vui lòng sửa hết lỗi trước khi gửi!');
-        if (data.length === 0) return;
+// Gửi lên API và đợi kết quả webhook
+const handleSubmit = async () => {
+    if (errors.length > 0) return alert('Vui lòng sửa hết lỗi trước khi gửi!');
+    if (data.length === 0) return;
 
-        setIsUploading(true);
-        setImportResults([]);
-        setUploadStatus('idle');
+    setIsUploading(true);
+    setImportResults([]);
+    setUploadStatus('idle');
 
-        try {
-            const response = await fetch(API_CONFIG.WARRANTY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'import_warranty_resign',
-                    user_id,
-                    user_group,
-                    timestamp: new Date().toISOString(),
-                    payload: data,
-                }),
-            });
+    try {
+        const response = await fetch(API_CONFIG.WARRANTY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'import_warranty_resign',
+                user_id,
+                user_group,
+                timestamp: new Date().toISOString(),
+                payload: data,
+            }),
+        });
 
-            if (response.ok) {
-                const resultData = await response.json();
-                setImportResults(Array.isArray(resultData) ? resultData : []);
-                setUploadStatus('success');
-                setData([]);
-            } else {
-                setUploadStatus('error');
-                alert('Có lỗi xảy ra từ phía server');
-            }
-        } catch (error) {
+        if (!response.ok) {
             setUploadStatus('error');
-            alert('Lỗi kết nối: ' + error);
-        } finally {
-            setIsUploading(false);
+            alert(`Lỗi từ server (${response.status})`);
+            return;
         }
-    };
 
+        const resultData = await response.json();
+        setImportResults(Array.isArray(resultData) ? resultData : []);
+        setUploadStatus('success');
+        setData([]);
+    } catch (error) {
+        setUploadStatus('error');
+        alert('Lỗi kết nối: ' + error);
+    } finally {
+        setIsUploading(false);
+    }
+};
     return (
         <div className="h-full overflow-y-auto bg-gray-50">
             <div className="max-w-3xl mx-auto px-6 py-6">
