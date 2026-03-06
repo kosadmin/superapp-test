@@ -236,6 +236,7 @@ export const MASTER_DATA: MasterDataType = {
     'Tìm được việc khác',
     'Không phù hợp công việc',
     'Không rõ lý do',
+    'Khác',
     // thêm theo thực tế
   ],
 };
