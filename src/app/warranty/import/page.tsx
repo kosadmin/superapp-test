@@ -8,20 +8,12 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import AppLayout from '@/components/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Các giá trị hợp lệ cho is_still_working
 const BOOL_TRUE_VALUES = ['true', '1', 'có', 'còn làm', 'yes'];
 const BOOL_FALSE_VALUES = ['false', '0', 'không', 'đã nghỉ', 'no'];
 
-/**
- * Convert Excel serial date number → "YYYY-MM-DD" mà không bị lệch timezone.
- * Excel serial 1 = 1900-01-01 (nhưng có bug ngày 29/2/1900 không tồn tại,
- * nên offset thực tế là 25569 ngày từ Unix epoch 1970-01-01).
- */
+// Convert Excel serial date → "YYYY-MM-DD" không bị lệch timezone
 function excelSerialToDateStr(serial: number): string {
-    // Excel serial → milliseconds UTC (không dùng new Date() để tránh timezone shift)
-    const utcDays = serial - 25569; // số ngày từ 1970-01-01
-    const utcMs = utcDays * 86400 * 1000;
-    const d = new Date(utcMs);
+    const d = new Date((serial - 25569) * 86400 * 1000);
     const yyyy = d.getUTCFullYear();
     const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
     const dd = String(d.getUTCDate()).padStart(2, '0');
@@ -35,19 +27,15 @@ function ImportWarrantyResignContent() {
     const [data, setData] = useState<any[]>([]);
     const [errors, setErrors] = useState<{ row: number; msg: string }[]>([]);
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [fileInputKey, setFileInputKey] = useState(Date.now());
 
-    // Reset
     const handleReset = () => {
         setData([]);
         setErrors([]);
         setImportResults([]);
-        setUploadStatus('idle');
         setFileInputKey(Date.now());
     };
 
-    // Xuất kết quả
     const handleDownloadResults = () => {
         if (importResults.length === 0) return;
         const exportData = importResults.map(item => ({
@@ -65,58 +53,38 @@ function ImportWarrantyResignContent() {
         XLSX.writeFile(wb, `Ket_qua_Import_BaoHanh_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
-    // Đọc & validate file
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (evt) => {
             const bstr = evt.target?.result;
-            // KHÔNG dùng cellDates: true để tránh lệch timezone
-            // Đọc số serial gốc, tự convert bằng excelSerialToDateStr()
             const wb = XLSX.read(bstr, { type: 'binary' });
             const ws = wb.Sheets[wb.SheetNames[0]];
-
-            // Dòng 1: tiêu đề hiển thị (bỏ qua)
-            // Dòng 2: tên field → dùng làm header
-            // Dòng 3+: data
+            // range:1 bỏ dòng 1 (tiêu đề hiển thị), dòng 2 làm header, dòng 3+ là data
             const rawData = XLSX.utils.sheet_to_json(ws, { range: 1, header: 1 });
-
             const headers = rawData[0] as string[];
             const dataRows = rawData.slice(1);
-
             const mapped = dataRows
                 .map((row: any) => {
                     const obj: any = {};
-                    headers.forEach((h, i) => {
-                        if (h) obj[h.toString().trim()] = row[i];
-                    });
+                    headers.forEach((h, i) => { if (h) obj[h.toString().trim()] = row[i]; });
                     return obj;
                 })
-                .filter((row: any) => {
-                    return Object.values(row).some(v => v !== undefined && v !== null && v !== '');
-                });
-
-            validateData(dataRows.length, mapped);
+                .filter((row: any) => Object.values(row).some(v => v !== undefined && v !== null && v !== ''));
+            validateData(mapped);
         };
         reader.readAsBinaryString(file);
     };
 
-    const validateData = (totalDataRows: number, rows: any[]) => {
+    const validateData = (rows: any[]) => {
         const errLog: { row: number; msg: string }[] = [];
         const mappedRows: any[] = [];
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
-        /**
-         * Convert giá trị ngày từ Excel sang chuỗi YYYY-MM-DD.
-         * - Nếu là số (Excel serial) → dùng excelSerialToDateStr() để tránh lệch timezone
-         * - Nếu là string đúng định dạng → giữ nguyên
-         */
         const toDateStr = (val: any): string => {
             if (val === undefined || val === null || val === '') return '';
-            if (typeof val === 'number') {
-                return excelSerialToDateStr(val);
-            }
+            if (typeof val === 'number') return excelSerialToDateStr(val);
             return String(val).trim();
         };
 
@@ -125,43 +93,32 @@ function ImportWarrantyResignContent() {
             const errs: string[] = [];
 
             const rawId = row['candidate_id']?.toString().trim() ?? '';
-            const rawWorking = row['is_still_working_official'] !== undefined && row['is_still_working_official'] !== null
+            const rawWorking = (row['is_still_working_official'] !== undefined && row['is_still_working_official'] !== null)
                 ? String(row['is_still_working_official']).toLowerCase().trim()
                 : '';
             const rawDate = toDateStr(row['resigned_date_official']);
             const rawReason = row['reason_resigned_official']?.toString().trim() ?? '';
 
-            // 1. candidate_id bắt buộc
-            if (!rawId) {
-                errs.push('Thiếu candidate_id');
-            }
+            if (!rawId) errs.push('Thiếu candidate_id');
 
-            // 2. Parse is_still_working_official
             let isStillWorking: boolean | undefined;
             if (rawWorking !== '') {
-                if (BOOL_TRUE_VALUES.includes(rawWorking)) {
-                    isStillWorking = true;
-                } else if (BOOL_FALSE_VALUES.includes(rawWorking)) {
-                    isStillWorking = false;
-                } else {
-                    errs.push(`is_still_working_official không hợp lệ: "${rawWorking}"`);
-                }
+                if (BOOL_TRUE_VALUES.includes(rawWorking)) isStillWorking = true;
+                else if (BOOL_FALSE_VALUES.includes(rawWorking)) isStillWorking = false;
+                else errs.push(`is_still_working_official không hợp lệ: "${rawWorking}"`);
             }
 
-            // 3. Nếu false → ngày và lý do bắt buộc
             if (isStillWorking === false) {
-                if (!rawDate) errs.push('Thiếu resigned_date_official (bắt buộc khi đã nghỉ)');
-                if (!rawReason) errs.push('Thiếu reason_resigned_official (bắt buộc khi đã nghỉ)');
+                if (!rawDate) errs.push('Thiếu resigned_date_official');
+                if (!rawReason) errs.push('Thiếu reason_resigned_official');
             }
 
-            // 4. Định dạng ngày
             if (rawDate && !dateRegex.test(rawDate)) {
-                errs.push(`resigned_date_official sai định dạng: "${rawDate}" (phải là YYYY-MM-DD)`);
+                errs.push(`Ngày sai định dạng: "${rawDate}" (cần YYYY-MM-DD)`);
             }
 
-            // 5. Lý do phải thuộc masterdata
             if (rawReason && !MASTER_DATA.resignReasons.includes(rawReason)) {
-                errs.push(`Lý do nghỉ không hợp lệ: "${rawReason}"`);
+                errs.push(`Lý do không hợp lệ: "${rawReason}"`);
             }
 
             if (errs.length > 0) {
@@ -179,51 +136,46 @@ function ImportWarrantyResignContent() {
         setData(errLog.length === 0 ? mappedRows : []);
     };
 
-    // Gửi lên API và đợi kết quả webhook
-// Gửi lên API và đợi kết quả webhook
-const handleSubmit = async () => {
-    if (errors.length > 0) return alert('Vui lòng sửa hết lỗi trước khi gửi!');
-    if (data.length === 0) return;
+    const handleSubmit = async () => {
+        if (errors.length > 0) return alert('Vui lòng sửa hết lỗi trước khi gửi!');
+        if (data.length === 0) return;
 
-    setIsUploading(true);
-    setImportResults([]);
-    setUploadStatus('idle');
+        setIsUploading(true);
+        setImportResults([]);
 
-    try {
-        const response = await fetch(API_CONFIG.WARRANTY_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'import_warranty_resign',
-                user_id,
-                user_group,
-                timestamp: new Date().toISOString(),
-                payload: data,
-            }),
-        });
+        try {
+            const response = await fetch(API_CONFIG.WARRANTY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'import_warranty_resign',
+                    user_id,
+                    user_group,
+                    timestamp: new Date().toISOString(),
+                    payload: data,
+                }),
+            });
 
-        if (!response.ok) {
-            setUploadStatus('error');
-            alert(`Lỗi từ server (${response.status})`);
-            return;
+            if (!response.ok) {
+                alert(`Lỗi từ server (${response.status})`);
+                return;
+            }
+
+            const resultData = await response.json();
+            setImportResults(Array.isArray(resultData) ? resultData : []);
+            setData([]);
+        } catch (err) {
+            alert('Lỗi kết nối: ' + err);
+        } finally {
+            setIsUploading(false);
         }
+    };
 
-        const resultData = await response.json();
-        setImportResults(Array.isArray(resultData) ? resultData : []);
-        setUploadStatus('success');
-        setData([]);
-    } catch (error) {
-        setUploadStatus('error');
-        alert('Lỗi kết nối: ' + error);
-    } finally {
-        setIsUploading(false);
-    }
-};
     return (
         <div className="h-full overflow-y-auto bg-gray-50">
             <div className="max-w-3xl mx-auto px-6 py-6">
 
-                {/* Top bar: Back + Reset */}
+                {/* Top bar */}
                 <div className="flex items-center justify-between mb-5">
                     <Link href="/warranty" className="inline-flex items-center gap-2 text-gray-500 hover:text-orange-500 transition text-sm font-bold">
                         <ArrowLeft className="w-4 h-4" /> Quay lại Bảo hành
@@ -239,7 +191,6 @@ const handleSubmit = async () => {
                 {/* Card chính */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
-                    {/* Header card */}
                     <div className="px-6 py-5 border-b border-gray-100">
                         <h1 className="text-lg font-black text-slate-800 uppercase tracking-wide">Import tình trạng nghỉ việc</h1>
                         <p className="text-gray-400 text-xs mt-0.5">Cập nhật hàng loạt tình trạng nghỉ việc (Official) cho ứng viên bảo hành.</p>
@@ -290,7 +241,7 @@ const handleSubmit = async () => {
                             </div>
                         </div>
 
-                        {/* Lỗi */}
+                        {/* Lỗi validate */}
                         {errors.length > 0 && (
                             <div className="bg-red-50 rounded-xl p-4 border border-red-200">
                                 <div className="flex items-center gap-2 text-red-700 font-black mb-3 text-sm">
@@ -307,7 +258,7 @@ const handleSubmit = async () => {
                             </div>
                         )}
 
-                        {/* Sẵn sàng */}
+                        {/* Sẵn sàng import */}
                         {data.length > 0 && errors.length === 0 && (
                             <div className="bg-orange-50 rounded-xl p-4 border border-orange-200 flex items-center gap-3">
                                 <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
@@ -317,7 +268,7 @@ const handleSubmit = async () => {
                             </div>
                         )}
 
-                        {/* Loading state khi đang chờ webhook */}
+                        {/* Loading */}
                         {isUploading && (
                             <div className="bg-orange-50 rounded-xl p-5 border border-orange-200 flex flex-col items-center gap-3">
                                 <div className="w-8 h-8 border-4 border-orange-400 border-t-transparent rounded-full animate-spin" />
@@ -326,7 +277,7 @@ const handleSubmit = async () => {
                             </div>
                         )}
 
-                        {/* Bảng kết quả sau khi webhook trả về */}
+                        {/* Bảng kết quả */}
                         {importResults.length > 0 && (
                             <div className="border-t pt-5">
                                 <div className="flex justify-between items-center mb-3">
@@ -339,7 +290,6 @@ const handleSubmit = async () => {
                                     </button>
                                 </div>
 
-                                {/* Summary cards */}
                                 <div className="grid grid-cols-3 gap-3 mb-3">
                                     {[
                                         { label: 'Tổng', value: importResults.length, color: 'text-gray-700 bg-gray-50 border-gray-200' },
@@ -404,12 +354,11 @@ const handleSubmit = async () => {
                     </div>
                 </div>
 
-                {/* Scroll to top button */}
+                {/* Scroll to top */}
                 <button
                     onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     className="fixed bottom-6 right-6 w-10 h-10 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition flex items-center justify-center z-50"
-                    title="Lên đầu trang"
-                >
+                    title="Lên đầu trang">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                         <polyline points="18 15 12 9 6 15" />
                     </svg>
