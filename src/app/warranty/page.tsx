@@ -105,8 +105,8 @@ function WarrantyContent() {
   const { name, user_group, user_id, isLoading: isAuthLoading } = useAuth();
 
   const userGroupLower = user_group?.toLowerCase() ?? '';
-  const can247Edit = userGroupLower === '247' || userGroupLower === 'admin';
-  const canOnsiteEdit = userGroupLower === 'adminonsite' || userGroupLower === 'admin';
+  const can247Edit = userGroupLower === '247' || userGroupLower === 'admin' || userGroupLower === 'manager';
+  const canOnsiteEdit = userGroupLower === 'adminonsite' || userGroupLower === 'admin' || userGroupLower === 'manager' || userGroupLower === 'c&b';
 
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -589,14 +589,16 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
       </svg>
       Xuất
     </button>
-<Link href="/warranty/import"
-  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-white hover:bg-orange-50 text-gray-600 border-gray-200 transition">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-    <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-  </svg>
-  Import nghỉ việc
-</Link>
+{canOnsiteEdit && (
+  <Link href="/warranty/import"
+    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-white hover:bg-orange-50 text-gray-600 border-gray-200 transition">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    Import nghỉ việc
+  </Link>
+)}
     <Link href="/dashboard" className="p-2 text-gray-300 hover:text-red-400 transition">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
