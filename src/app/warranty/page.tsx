@@ -596,7 +596,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
       <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
     </svg>
-    Import nghỉ việc
+    Import thông tin
   </Link>
 )}
     <Link href="/dashboard" className="p-2 text-gray-300 hover:text-red-400 transition">
