@@ -8,6 +8,7 @@ import { MASTER_DATA } from '@/constants/masterData';
 import { API_CONFIG } from '@/constants/masterData'; // Hoặc đường dẫn file bạn vừa tạo
 import * as XLSX from 'xlsx';
 import { Upload } from 'lucide-react';
+import { ONBOARD_DEFAULT_ASSIGNMENTS } from '@/constants/onboardDefaults';
 
 const ITEMS_PER_PAGE = 50;
 
@@ -370,6 +371,44 @@ if (field === 'date_of_birth') {
       }
     }
 
+    // --- AUTO-FILL KHI ONBOARD ---
+if (field === 'onboard' || (field === 'onboard_date' && newData.onboard)) {
+  if (newData.onboard && newData.onboard_date) {
+    const base = new Date(newData.onboard_date);
+    const addDays = (d: Date, n: number) => {
+      const result = new Date(d);
+      result.setDate(result.getDate() + n);
+      return result.toISOString().split('T')[0];
+    };
+    newData.on_job_1_day_date         = addDays(base, 1);
+    newData.on_job_3_day_date         = addDays(base, 3);
+    newData.on_job_7_day_date         = addDays(base, 7);
+    newData.on_job_30_day_date        = addDays(base, 30);
+    newData.on_job_1_day              = false;
+    newData.on_job_3_day              = false;
+    newData.on_job_7_day              = false;
+    newData.on_job_30_days            = false;
+    newData.eligible_for_acceptance   = false;
+    newData.is_still_working_247      = true;
+    newData.is_still_working_official = true;
+    Object.assign(newData, ONBOARD_DEFAULT_ASSIGNMENTS);
+  } else if (field === 'onboard' && !newData.onboard) {
+    // Bỏ tick onboard -> reset toàn bộ về rỗng
+    newData.on_job_1_day_date         = '';
+    newData.on_job_3_day_date         = '';
+    newData.on_job_7_day_date         = '';
+    newData.on_job_30_day_date        = '';
+    newData.on_job_1_day              = false;
+    newData.on_job_3_day              = false;
+    newData.on_job_7_day              = false;
+    newData.on_job_30_days            = false;
+    newData.eligible_for_acceptance   = false;
+    newData.is_still_working_247      = false;
+    newData.is_still_working_official = false;
+    Object.assign(newData, ONBOARD_DEFAULT_ASSIGNMENTS); // reset assigned về rỗng
+  }
+}
+    
     return newData;
   });
 };
