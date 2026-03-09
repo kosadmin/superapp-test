@@ -8,7 +8,7 @@ import { MASTER_DATA } from '@/constants/masterData';
 import { API_CONFIG } from '@/constants/masterData'; // Hoặc đường dẫn file bạn vừa tạo
 import * as XLSX from 'xlsx';
 import { Upload } from 'lucide-react';
-import { ONBOARD_DEFAULT_ASSIGNMENTS } from '@/constants/onboardDefaults';
+import { getOnboardAssignments } from '@/constants/onboardDefaults';
 
 const ITEMS_PER_PAGE = 50;
 
@@ -391,7 +391,7 @@ if (field === 'onboard' || (field === 'onboard_date' && newData.onboard)) {
     newData.eligible_for_acceptance   = false;
     newData.is_still_working_247      = true;
     newData.is_still_working_official = true;
-    Object.assign(newData, ONBOARD_DEFAULT_ASSIGNMENTS);
+Object.assign(newData, getOnboardAssignments(newData.project || ''));
   } else if (field === 'onboard' && !newData.onboard) {
     // Bỏ tick onboard -> reset toàn bộ về rỗng
     newData.on_job_1_day_date         = '';
@@ -405,7 +405,7 @@ if (field === 'onboard' || (field === 'onboard_date' && newData.onboard)) {
     newData.eligible_for_acceptance   = false;
     newData.is_still_working_247      = false;
     newData.is_still_working_official = false;
-    Object.assign(newData, ONBOARD_DEFAULT_ASSIGNMENTS); // reset assigned về rỗng
+Object.assign(newData, getOnboardAssignments(newData.project || ''));
   }
 }
     
