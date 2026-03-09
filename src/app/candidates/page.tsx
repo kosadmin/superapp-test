@@ -512,6 +512,7 @@ try {
   }
 } catch { alert('Lỗi kết nối'); }
 finally { setIsSaving(false); }
+};
 
 // Thêm vào trong component CandidatesContent
 const [showSuggestions, setShowSuggestions] = useState(false);
