@@ -371,6 +371,43 @@ if (field === 'date_of_birth') {
       }
     }
 
+    // --- AUTO-FILL KHI ONBOARD ---
+if (field === 'onboard' || (field === 'onboard_date' && newData.onboard)) {
+  if (newData.onboard && newData.onboard_date) {
+    const base = new Date(newData.onboard_date);
+    const addDays = (d: Date, n: number) => {
+      const result = new Date(d);
+      result.setDate(result.getDate() + n);
+      return result.toISOString().split('T')[0];
+    };
+    newData.on_job_1_day_date         = addDays(base, 1);
+    newData.on_job_3_day_date         = addDays(base, 3);
+    newData.on_job_7_day_date         = addDays(base, 7);
+    newData.on_job_30_day_date        = addDays(base, 30);
+    newData.on_job_1_day              = false;
+    newData.on_job_3_day              = false;
+    newData.on_job_7_day              = false;
+    newData.on_job_30_days            = false;
+    newData.eligible_for_acceptance   = false;
+    newData.is_still_working_247      = true;
+    newData.is_still_working_official = true;
+Object.assign(newData, getOnboardAssignments(newData.project || ''));
+  } else if (field === 'onboard' && !newData.onboard) {
+    // Bỏ tick onboard -> reset toàn bộ về rỗng
+    newData.on_job_1_day_date         = '';
+    newData.on_job_3_day_date         = '';
+    newData.on_job_7_day_date         = '';
+    newData.on_job_30_day_date        = '';
+    newData.on_job_1_day              = false;
+    newData.on_job_3_day              = false;
+    newData.on_job_7_day              = false;
+    newData.on_job_30_days            = false;
+    newData.eligible_for_acceptance   = false;
+    newData.is_still_working_247      = false;
+    newData.is_still_working_official = false;
+Object.assign(newData, getOnboardAssignments(newData.project || ''));
+  }
+}
     
     return newData;
   });
@@ -455,64 +492,22 @@ const phoneRegex = /^0\d{9}$/;
   }
   // --------------------------
 
-setIsSaving(true);
-try {
-  // Chuẩn bị payload, tính toán onboard fields ngay trước khi gửi
-  let updates = { ...formData };
-console.log('DEBUG onboard:', updates.onboard, '| onboard_date:', updates.onboard_date);
-  if (updates.onboard && updates.onboard_date) {
-    const base = new Date(updates.onboard_date);
-    const addDays = (d: Date, n: number) => {
-      const result = new Date(d);
-      result.setDate(result.getDate() + n);
-      return result.toISOString().split('T')[0];
-    };
-    updates.on_job_1_day_date         = addDays(base, 1);
-    updates.on_job_3_day_date         = addDays(base, 3);
-    updates.on_job_7_day_date         = addDays(base, 7);
-    updates.on_job_30_day_date        = addDays(base, 30);
-    updates.on_job_1_day              = false;
-    updates.on_job_3_day              = false;
-    updates.on_job_7_day              = false;
-    updates.on_job_30_days            = false;
-    updates.eligible_for_acceptance   = false;
-    updates.is_still_working_247      = true;
-    updates.is_still_working_official = true;
-    Object.assign(updates, getOnboardAssignments(updates.project || ''));
-  } else if (!updates.onboard) {
-    updates.on_job_1_day_date         = '';
-    updates.on_job_3_day_date         = '';
-    updates.on_job_7_day_date         = '';
-    updates.on_job_30_day_date        = '';
-    updates.on_job_1_day              = false;
-    updates.on_job_3_day              = false;
-    updates.on_job_7_day              = false;
-    updates.on_job_30_days            = false;
-    updates.eligible_for_acceptance   = false;
-    updates.is_still_working_247      = false;
-    updates.is_still_working_official = false;
-    updates.assigned_adminonsite_user       = '';
-    updates.assigned_adminonsite_user_name  = '';
-    updates.assigned_adminonsite_user_group = '';
-    updates.assigned_247_user               = '';
-    updates.assigned_247_user_name          = '';
-    updates.assigned_247_user_group         = '';
-  }
-
-  const res = await fetch(API_CONFIG.CANDIDATE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'update', user_group, user_id, id: formData.candidate_id, updates }),
-  });
-  const data = await res.json();
-  if (data.success) {
-    alert('Lưu thành công!');
-    setOriginalData(formData);
-    fetchAllCandidates();
-  }
-} catch { alert('Lỗi kết nối'); }
-finally { setIsSaving(false); }
-};
+  setIsSaving(true);
+    try {
+      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update',user_group, user_id, id: formData.candidate_id, updates: formData }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Lưu thành công!');
+        setOriginalData(formData);
+        fetchAllCandidates(); // Reload list to update sorted/filtered data
+      }
+    } catch { alert('Lỗi kết nối'); }
+    finally { setIsSaving(false); }
+  };
 
 // Thêm vào trong component CandidatesContent
 const [showSuggestions, setShowSuggestions] = useState(false);
