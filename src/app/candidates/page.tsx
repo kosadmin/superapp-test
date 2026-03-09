@@ -387,7 +387,7 @@ if (field === 'onboard' || (field === 'onboard_date' && newData.onboard)) {
     newData.on_job_1_day              = false;
     newData.on_job_3_day              = false;
     newData.on_job_7_day              = false;
-    newData.on_job_30_days            = false;
+    newData.on_job_30_day             = false;
     newData.eligible_for_acceptance   = false;
     newData.is_still_working_247      = true;
     newData.is_still_working_official = true;
@@ -401,7 +401,7 @@ Object.assign(newData, getOnboardAssignments(newData.project || ''));
     newData.on_job_1_day              = false;
     newData.on_job_3_day              = false;
     newData.on_job_7_day              = false;
-    newData.on_job_30_days            = false;
+    newData.on_job_30_day             = false;
     newData.eligible_for_acceptance   = false;
     newData.is_still_working_247      = false;
     newData.is_still_working_official = false;
