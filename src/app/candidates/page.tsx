@@ -459,7 +459,7 @@ setIsSaving(true);
 try {
   // Chuẩn bị payload, tính toán onboard fields ngay trước khi gửi
   let updates = { ...formData };
-
+console.log('DEBUG onboard:', updates.onboard, '| onboard_date:', updates.onboard_date);
   if (updates.onboard && updates.onboard_date) {
     const base = new Date(updates.onboard_date);
     const addDays = (d: Date, n: number) => {
