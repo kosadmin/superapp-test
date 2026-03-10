@@ -675,7 +675,7 @@ function CandidatesContent() {
 
       {/* CHI TIẾT */}
       {selectedId && (
-        <div className="w-[420px] flex-shrink-0 flex flex-col bg-white rounded-xl shadow-xl border overflow-hidden">
+        <div className="w-1/2 flex-shrink-0 flex flex-col bg-white rounded-xl shadow-xl border overflow-hidden">
           {detailLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2">
               <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
