@@ -73,10 +73,10 @@ interface Candidate {
 }
 
 interface FilterState {
-  status: string;
-  project: string;
-  assigned_247_user: string;
-  tags: string;
+  status: string[];
+  project: string[];
+  assigned_247_user: string[];
+  tags: string[];
   onboard_from: string;
   onboard_to: string;
   on_job_1_day_from: string;
@@ -101,6 +101,30 @@ const warrantyFunnelSteps = [
   { key: 'on_job_30_days', label: 'Đã làm 30 ngày' },
 ];
 
+// --- MULTI CHECK LIST COMPONENT ---
+function MultiCheckList({ label, options, selected, onChange }: {
+  label: string; options: string[]; selected: string[]; onChange: (val: string[]) => void;
+}) {
+  const toggle = (opt: string) => {
+    if (selected.includes(opt)) onChange(selected.filter(s => s !== opt));
+    else onChange([...selected, opt]);
+  };
+  return (
+    <div>
+      <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">{label}</label>
+      <div className="space-y-1 max-h-36 overflow-y-auto scrollbar-thin pr-1">
+        {options.map(opt => (
+          <label key={opt} className={`flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer text-[11px] transition ${selected.includes(opt) ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
+            <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)}
+              className="w-3 h-3 rounded accent-orange-500" />
+            {opt}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function WarrantyContent() {
   const { name, user_group, user_id, isLoading: isAuthLoading } = useAuth();
 
@@ -118,7 +142,7 @@ function WarrantyContent() {
   const [showFilters, setShowFilters] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
-    status: '', project: '', assigned_247_user: '', tags: '',
+    status: [], project: [], assigned_247_user: [], tags: [],
     onboard_from: '', onboard_to: '',
     on_job_1_day_from: '', on_job_1_day_to: '',
     on_job_3_day_from: '', on_job_3_day_to: '',
@@ -176,22 +200,27 @@ function WarrantyContent() {
       );
     }
 
-    if (filters.status) {
+    if (filters.status.length > 0) {
       const statusMap: Record<string, string> = {
         'Onboard': 'onboard', 'Đã làm 1 ngày': 'on_job_1_day',
         'Đã làm 3 ngày': 'on_job_3_day', 'Đã làm 7 ngày': 'on_job_7_day',
         'Đã làm 30 ngày': 'on_job_30_days',
       };
-      const mappedKey = statusMap[filters.status];
-      if (mappedKey) result = result.filter(c => c[mappedKey] === true || c[mappedKey] === 'TRUE');
+      result = result.filter(c =>
+        filters.status.some(sel => {
+          const mappedKey = statusMap[sel];
+          return mappedKey && (c[mappedKey] === true || c[mappedKey] === 'TRUE');
+        })
+      );
     }
 
-    if (filters.project) result = result.filter(c => c.project === filters.project);
-    if (filters.assigned_247_user) result = result.filter(c => c.assigned_247_user_name === filters.assigned_247_user);
-    if (filters.tags) {
+    if (filters.project.length > 0) result = result.filter(c => filters.project.includes(c.project));
+    if (filters.assigned_247_user.length > 0) result = result.filter(c => filters.assigned_247_user.includes(c.assigned_247_user_name));
+    if (filters.tags.length > 0) {
       result = result.filter(c => {
         if (!c.tags_warranty) return false;
-        return c.tags_warranty.split(',').map((t: string) => t.trim()).includes(filters.tags);
+        const tagList = c.tags_warranty.split(',').map((t: string) => t.trim());
+        return filters.tags.some(sel => tagList.includes(sel));
       });
     }
     if (filters.is_still_working_247) {
@@ -417,7 +446,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
   };
 
   const resetFilters = () => setFilters({
-    status: '', project: '', assigned_247_user: '', tags: '',
+    status: [], project: [], assigned_247_user: [], tags: [],
     onboard_from: '', onboard_to: '',
     on_job_1_day_from: '', on_job_1_day_to: '',
     on_job_3_day_from: '', on_job_3_day_to: '',
@@ -427,17 +456,18 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
     is_still_working_247: '', is_still_working_official: '',
   });
 
-  // Đếm số filter đang active để hiển thị badge
-  const activeFilterCount = [
-    filters.status, filters.project, filters.assigned_247_user, filters.tags,
-    filters.is_still_working_247, filters.is_still_working_official,
-    filters.onboard_from, filters.onboard_to,
-    filters.on_job_1_day_from, filters.on_job_1_day_to,
-    filters.on_job_3_day_from, filters.on_job_3_day_to,
-    filters.on_job_7_day_from, filters.on_job_7_day_to,
-    filters.on_job_30_day_from, filters.on_job_30_day_to,
-    filters.resigned_date_from, filters.resigned_date_to,
-  ].filter(Boolean).length;
+  const activeFilterCount =
+    filters.status.length + filters.project.length +
+    filters.assigned_247_user.length + filters.tags.length +
+    [
+      filters.is_still_working_247, filters.is_still_working_official,
+      filters.onboard_from, filters.onboard_to,
+      filters.on_job_1_day_from, filters.on_job_1_day_to,
+      filters.on_job_3_day_from, filters.on_job_3_day_to,
+      filters.on_job_7_day_from, filters.on_job_7_day_to,
+      filters.on_job_30_day_from, filters.on_job_30_day_to,
+      filters.resigned_date_from, filters.resigned_date_to,
+    ].filter(Boolean).length;
 
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
 
@@ -454,45 +484,33 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
 
-              {/* Trạng thái */}
-              <div>
-                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Trạng thái</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
-                  value={filters.status} onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}>
-                  <option value="">Tất cả</option>
-                  {warrantyStatusOptions.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
+              <MultiCheckList
+                label="Trạng thái"
+                options={warrantyStatusOptions}
+                selected={filters.status}
+                onChange={val => setFilters(prev => ({ ...prev, status: val }))}
+              />
 
-              {/* Dự án */}
-              <div>
-                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Dự án</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
-                  value={filters.project} onChange={e => setFilters(prev => ({ ...prev, project: e.target.value }))}>
-                  <option value="">Tất cả</option>
-                  {uniqueProjects.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
+              <MultiCheckList
+                label="Dự án"
+                options={uniqueProjects as string[]}
+                selected={filters.project}
+                onChange={val => setFilters(prev => ({ ...prev, project: val }))}
+              />
 
-              {/* Phụ trách 247 */}
-              <div>
-                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Phụ trách (247)</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
-                  value={filters.assigned_247_user} onChange={e => setFilters(prev => ({ ...prev, assigned_247_user: e.target.value }))}>
-                  <option value="">Tất cả</option>
-                  {unique247Users.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-              </div>
+              <MultiCheckList
+                label="Phụ trách (247)"
+                options={unique247Users as string[]}
+                selected={filters.assigned_247_user}
+                onChange={val => setFilters(prev => ({ ...prev, assigned_247_user: val }))}
+              />
 
-              {/* Nhãn */}
-              <div>
-                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Nhãn</label>
-                <select className="w-full p-1.5 border rounded-lg text-xs outline-none bg-white focus:border-orange-500"
-                  value={filters.tags} onChange={e => setFilters(prev => ({ ...prev, tags: e.target.value }))}>
-                  <option value="">Tất cả</option>
-                  {MASTER_DATA.warrantyTags.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
+              <MultiCheckList
+                label="Nhãn"
+                options={MASTER_DATA.warrantyTags}
+                selected={filters.tags}
+                onChange={val => setFilters(prev => ({ ...prev, tags: val }))}
+              />
 
               {/* Tình trạng làm việc */}
               <div className="border-t pt-3">
