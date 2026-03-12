@@ -206,6 +206,7 @@ export const MASTER_DATA: MasterDataType = {
         "Không gọi được quá nhiều lần",
     "Không thuộc địa điểm được phép tuyển",
     "Không thuộc độ tuổi được phép tuyển",
+        "Sai số",
     "Khác"
   ],
   candidateTags: [
