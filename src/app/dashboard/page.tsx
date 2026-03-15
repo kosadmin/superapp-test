@@ -282,7 +282,7 @@ function DashboardContent() {
                 <LeaderboardCard
                   title="Xếp hạng nhân viên"
                   data={stats?.ranking.leaderboard}
-                  highlightId={user_id}
+                  highlightId={user_id ?? undefined}
                 />
 
                 {/* Xếp hạng CTV/Vendor — chỉ manager + admin */}
