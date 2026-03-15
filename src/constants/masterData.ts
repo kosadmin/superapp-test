@@ -11,6 +11,9 @@ educationLevels: string[];
   rejectReasonsOffer: string[];     
   rejectReasonsUnqualified: string[];
   candidateTags: string[];
+    warrantyTags: string[];
+      callResults: string[];
+     resignReasons: string[];
   sourceTypeGroupsByDept: {
     [key: string]: string[] | undefined; // Cho phép truy cập bằng key string bất kỳ
     "Marketing": string[];
@@ -39,6 +42,7 @@ export const MASTER_DATA: MasterDataType = {
     "Taishodo Tuyển dụng",
     "Tinh Lợi Tuyển dụng",
     "USI Tuyển dụng",
+    "VinFast Chính thức Tuyển dụng",
     "Yazaki Tuyển dụng",
     "DH Vina Outsourcing",
     "Fairmont Outsourcing",
@@ -64,6 +68,7 @@ export const MASTER_DATA: MasterDataType = {
     "Meiko Tuyển dụng": "Recruit_MEIKO",
         "Molex Tuyển dụng": "Recruit_MOLEX",
     "USI Tuyển dụng": "Recruit_USI",
+        "VinFast Chính thức Tuyển dụng": "Recruit_VinFast",
     "Yazaki Tuyển dụng": "Recruit_YAZAKI",
     "ShinEtsu Tuyển dụng": "Recruit_SHINETSU",
     "Stavian Packaging Tuyển dụng": "Recruit_STAPACK",
@@ -91,6 +96,7 @@ export const MASTER_DATA: MasterDataType = {
     "Meiko Tuyển dụng": "Recruiting",
         "Molex Tuyển dụng": "Recruiting",
     "USI Tuyển dụng": "Recruiting",
+        "VinFast Chính thức Tuyển dụng": "Recruiting",
     "Yazaki Tuyển dụng": "Recruiting",
     "ShinEtsu Tuyển dụng": "Recruiting",
     "Stavian Packaging Tuyển dụng": "Recruiting",
@@ -119,6 +125,7 @@ export const MASTER_DATA: MasterDataType = {
     "Meiko Tuyển dụng": "Meiko - Hà Nội",
         "Molex Tuyển dụng": "Molex - Hưng Yên",
     "USI Tuyển dụng": "USI - Hải Phòng",
+        "VinFast Chính thức Tuyển dụng": "VinFast - Hải Phòng",
     "Yazaki Tuyển dụng": "Yazaki - Hải Phòng",
     "ShinEtsu Tuyển dụng": "ShinEtsu - Quảng Ninh",
     "Stavian Packaging Tuyển dụng": "Stavian Packaging - Hưng Yên",
@@ -176,7 +183,7 @@ export const MASTER_DATA: MasterDataType = {
   sourceTypesByGroup: {
     "Ads": ["Facebook Ads", "Tiktok Ads", "Zalo Ads"],
     "Tiktok Organic": ["Tiktok Video", "Tiktok Live", "Tiktok Inbox"],
-    "MKT Organic khác": ["Hotline", "Zalo OA", "Website", "Group Facebook","Social khác"],
+    "MKT Organic khác": ["Hotline", "Zalo OA", "Website", "Group Facebook", "Fanpage Facebook","Khai thác lại","Social khác"],
     "Seeding": ["Seeding thường", "Seeding tự động"],
     "Vendor/CTV": ["CTV cá nhân", "Vendor"],
     "Offline": ["Trường học", "Sự kiện tuyển dụng", "Cơ quan địa phương"]
@@ -209,7 +216,29 @@ export const MASTER_DATA: MasterDataType = {
     "Sai số",
     "Đăng ký KTX",
     "Đăng ký tuyến xe"
-  ]
+  ],
+    warrantyTags: [
+    "Chưa liên lạc được",
+    "Sai số",
+    "Cần hỗ trợ"
+  ],
+   callResults: [
+    'Liên lạc được - ổn',
+    'Liên lạc được - có vấn đề',
+    'Chưa liên lạc được',
+    'Nhắn tin, chờ phản hồi',
+  ],
+  resignReasons: [
+    'Lương không phù hợp',
+    'Môi trường làm việc',
+    'Sức khỏe',
+    'Việc gia đình',
+    'Tìm được việc khác',
+    'Không phù hợp công việc',
+    'Không rõ lý do',
+    'Khác',
+    // thêm theo thực tế
+  ],
 };
 
 // Export Type để sử dụng ở các file khác nếu cần
@@ -217,5 +246,7 @@ export type SourceDeptType = keyof typeof MASTER_DATA.sourceTypeGroupsByDept;
 
 export const API_CONFIG = {
   LOGIN_URL: 'https://n8n.koutsourcing.vn/webhook/auth',
+  DASHBOARD_URL: 'https://n8n.koutsourcing.vn/webhook/dashboard',
   CANDIDATE_URL: 'https://n8n.koutsourcing.vn/webhook/candidate',
+  WARRANTY_URL: 'https://n8n.koutsourcing.vn/webhook/warranty',
 };
