@@ -340,6 +340,18 @@ function CandidatesContent() {
         if (value === true) { for (let i = 0; i < idx; i++) newData[funnelKeys[i]] = true; }
         else { for (let i = idx + 1; i < funnelKeys.length; i++) newData[funnelKeys[i]] = false; }
       }
+          if (field === 'onboard' && value === true) {
+      newData.reject_offer = false;
+      newData.unqualified  = false;
+    }
+    if (field === 'reject_offer' && value === true) {
+      newData.onboard     = false;
+      newData.unqualified = false;
+    }
+    if (field === 'unqualified' && value === true) {
+      newData.onboard      = false;
+      newData.reject_offer = false;
+    }
       if (field === 'onboard' || (field === 'onboard_date' && newData.onboard)) {
         if (newData.onboard && newData.onboard_date) {
           const base = new Date(newData.onboard_date);
@@ -351,12 +363,18 @@ function CandidatesContent() {
           newData.on_job_1_day = false; newData.on_job_3_day = false; newData.on_job_7_day = false; newData.on_job_30_day = false;
           newData.eligible_for_acceptance = false; newData.is_still_working_247 = true; newData.is_still_working_official = true;
           Object.assign(newData, getOnboardAssignments(newData.project || ''));
-        } else if (field === 'onboard' && !newData.onboard) {
-          newData.on_job_1_day_date = ''; newData.on_job_3_day_date = ''; newData.on_job_7_day_date = ''; newData.on_job_30_day_date = '';
-          newData.on_job_1_day = false; newData.on_job_3_day = false; newData.on_job_7_day = false; newData.on_job_30_day = false;
-          newData.eligible_for_acceptance = false; newData.is_still_working_247 = false; newData.is_still_working_official = false;
-          Object.assign(newData, getOnboardAssignments(newData.project || ''));
-        }
+} else if (field === 'onboard' && !newData.onboard) {
+  newData.on_job_1_day_date = ''; newData.on_job_3_day_date = ''; newData.on_job_7_day_date = ''; newData.on_job_30_day_date = '';
+  newData.on_job_1_day = false; newData.on_job_3_day = false; newData.on_job_7_day = false; newData.on_job_30_day = false;
+  newData.eligible_for_acceptance = false; newData.is_still_working_247 = false; newData.is_still_working_official = false;
+  // THAY Object.assign bằng reset thủ công
+  newData.assigned_adminonsite_user = '';
+  newData.assigned_adminonsite_user_name = '';
+  newData.assigned_adminonsite_user_group = '';
+  newData.assigned_247_user = '';
+  newData.assigned_247_user_name = '';
+  newData.assigned_247_user_group = '';
+}
       }
       return newData;
     });
