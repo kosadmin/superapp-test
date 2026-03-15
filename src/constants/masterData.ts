@@ -247,6 +247,7 @@ export type SourceDeptType = keyof typeof MASTER_DATA.sourceTypeGroupsByDept;
 
 export const API_CONFIG = {
   LOGIN_URL: 'https://n8n.koutsourcing.vn/webhook/auth',
+  DASHBOARD_URL: 'https://n8n.koutsourcing.vn/webhook/dashboard',
   CANDIDATE_URL: 'https://n8n.koutsourcing.vn/webhook/candidate',
   WARRANTY_URL: 'https://n8n.koutsourcing.vn/webhook/warranty',
 };
