@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_CONFIG } from '@/constants/masterData';
 
-const N8N_STATS_URL = 'https://n8n.koutsourcing.vn/webhook/dashboard';
 
 interface LeaderboardItem {
   id: string;
@@ -48,7 +48,7 @@ function DashboardContent() {
     const fetchStats = async () => {
       if (authLoading || !user_group || !user_id) return;
       try {
-        const res = await fetch(N8N_STATS_URL, {
+        const res = await fetch(API_CONFIG.DASHBOARD_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_group, user_id }),
