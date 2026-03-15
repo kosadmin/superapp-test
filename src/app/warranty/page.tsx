@@ -91,6 +91,8 @@ interface FilterState {
   resigned_date_to: string;
   is_still_working_247: string;
   is_still_working_official: string;
+  checkin_range_from: string;
+  checkin_range_to: string;
 }
 
 const warrantyFunnelSteps = [
@@ -150,6 +152,7 @@ function WarrantyContent() {
     on_job_30_day_from: '', on_job_30_day_to: '',
     resigned_date_from: '', resigned_date_to: '',
     is_still_working_247: '', is_still_working_official: '',
+    checkin_range_from: '', checkin_range_to: '',
   });
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
@@ -250,6 +253,23 @@ function WarrantyContent() {
         if (filters.resigned_date_from && earliest < filters.resigned_date_from) return false;
         if (filters.resigned_date_to && earliest > filters.resigned_date_to) return false;
         return true;
+      });
+    }
+
+    // Smart checkin range: hiển thị nếu BẤT KỲ mốc nào (1, 3, 7, 30 ngày) thuộc khoảng
+    if (filters.checkin_range_from || filters.checkin_range_to) {
+      result = result.filter(c => {
+        const checkDates = [
+          c.on_job_1_day_date,
+          c.on_job_3_day_date,
+          c.on_job_7_day_date,
+          c.on_job_30_day_date,
+        ].filter(Boolean);
+        return checkDates.some(d => {
+          if (filters.checkin_range_from && d < filters.checkin_range_from) return false;
+          if (filters.checkin_range_to && d > filters.checkin_range_to) return false;
+          return true;
+        });
       });
     }
 
@@ -454,6 +474,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
     on_job_30_day_from: '', on_job_30_day_to: '',
     resigned_date_from: '', resigned_date_to: '',
     is_still_working_247: '', is_still_working_official: '',
+    checkin_range_from: '', checkin_range_to: '',
   });
 
   const activeFilterCount =
@@ -467,6 +488,7 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
       filters.on_job_7_day_from, filters.on_job_7_day_to,
       filters.on_job_30_day_from, filters.on_job_30_day_to,
       filters.resigned_date_from, filters.resigned_date_to,
+      filters.checkin_range_from, filters.checkin_range_to,
     ].filter(Boolean).length;
 
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
@@ -530,6 +552,40 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
                   <option value="true">Còn làm</option>
                   <option value="false">Đã nghỉ</option>
                 </select>
+              </div>
+
+              {/* ✨ BỘ LỌC THÔNG MINH: Mốc check-in */}
+              <div className="border-t pt-3">
+                <div className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 p-3 shadow-lg shadow-purple-200">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-white text-[11px] font-black uppercase tracking-wider">⚡ Mốc Check-in</span>
+                  </div>
+                  <p className="text-purple-100 text-[9px] mb-2.5 leading-tight">Hiển thị UV có BẤT KỲ mốc nào (1, 3, 7, 30 ngày) rơi trong khoảng này</p>
+                  <div className="space-y-1.5">
+                    <input
+                      type="date"
+                      className="w-full p-1.5 border-0 rounded-lg text-[10px] outline-none bg-white/90 focus:bg-white focus:ring-2 focus:ring-white/50 transition font-medium text-purple-800"
+                      placeholder="Từ ngày"
+                      value={filters.checkin_range_from}
+                      onChange={e => setFilters(prev => ({ ...prev, checkin_range_from: e.target.value }))}
+                    />
+                    <input
+                      type="date"
+                      className="w-full p-1.5 border-0 rounded-lg text-[10px] outline-none bg-white/90 focus:bg-white focus:ring-2 focus:ring-white/50 transition font-medium text-purple-800"
+                      placeholder="Đến ngày"
+                      value={filters.checkin_range_to}
+                      onChange={e => setFilters(prev => ({ ...prev, checkin_range_to: e.target.value }))}
+                    />
+                  </div>
+                  {(filters.checkin_range_from || filters.checkin_range_to) && (
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, checkin_range_from: '', checkin_range_to: '' }))}
+                      className="mt-2 w-full text-[9px] font-bold text-purple-200 hover:text-white underline text-center transition"
+                    >
+                      Xóa bộ lọc này
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Lọc theo ngày */}
