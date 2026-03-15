@@ -506,6 +506,36 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
 
+              {/* ✨ BỘ LỌC THÔNG MINH: Mốc check-in */}
+              <div className="rounded-xl bg-violet-50 border border-violet-200 p-3">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-violet-500">⚡ Mốc Check-in</span>
+                </div>
+                <p className="text-violet-400 text-[9px] mb-2.5 leading-tight">UV có BẤT KỲ mốc nào (1, 3, 7, 30 ngày) rơi trong khoảng</p>
+                <div className="space-y-1.5">
+                  <input
+                    type="date"
+                    className="w-full p-1.5 border border-violet-200 rounded-lg text-[10px] outline-none bg-white focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition text-violet-700"
+                    value={filters.checkin_range_from}
+                    onChange={e => setFilters(prev => ({ ...prev, checkin_range_from: e.target.value }))}
+                  />
+                  <input
+                    type="date"
+                    className="w-full p-1.5 border border-violet-200 rounded-lg text-[10px] outline-none bg-white focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition text-violet-700"
+                    value={filters.checkin_range_to}
+                    onChange={e => setFilters(prev => ({ ...prev, checkin_range_to: e.target.value }))}
+                  />
+                </div>
+                {(filters.checkin_range_from || filters.checkin_range_to) && (
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, checkin_range_from: '', checkin_range_to: '' }))}
+                    className="mt-2 w-full text-[9px] font-bold text-violet-400 hover:text-violet-600 underline text-center transition"
+                  >
+                    Xóa bộ lọc này
+                  </button>
+                )}
+              </div>
+
               <MultiCheckList
                 label="Trạng thái"
                 options={warrantyStatusOptions}
@@ -552,40 +582,6 @@ if (stillWorkingOfficial && (formData.resigned_date_official || formData.reason_
                   <option value="true">Còn làm</option>
                   <option value="false">Đã nghỉ</option>
                 </select>
-              </div>
-
-              {/* ✨ BỘ LỌC THÔNG MINH: Mốc check-in */}
-              <div className="border-t pt-3">
-                <div className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 p-3 shadow-lg shadow-purple-200">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-white text-[11px] font-black uppercase tracking-wider">⚡ Mốc Check-in</span>
-                  </div>
-                  <p className="text-purple-100 text-[9px] mb-2.5 leading-tight">Hiển thị UV có BẤT KỲ mốc nào (1, 3, 7, 30 ngày) rơi trong khoảng này</p>
-                  <div className="space-y-1.5">
-                    <input
-                      type="date"
-                      className="w-full p-1.5 border-0 rounded-lg text-[10px] outline-none bg-white/90 focus:bg-white focus:ring-2 focus:ring-white/50 transition font-medium text-purple-800"
-                      placeholder="Từ ngày"
-                      value={filters.checkin_range_from}
-                      onChange={e => setFilters(prev => ({ ...prev, checkin_range_from: e.target.value }))}
-                    />
-                    <input
-                      type="date"
-                      className="w-full p-1.5 border-0 rounded-lg text-[10px] outline-none bg-white/90 focus:bg-white focus:ring-2 focus:ring-white/50 transition font-medium text-purple-800"
-                      placeholder="Đến ngày"
-                      value={filters.checkin_range_to}
-                      onChange={e => setFilters(prev => ({ ...prev, checkin_range_to: e.target.value }))}
-                    />
-                  </div>
-                  {(filters.checkin_range_from || filters.checkin_range_to) && (
-                    <button
-                      onClick={() => setFilters(prev => ({ ...prev, checkin_range_from: '', checkin_range_to: '' }))}
-                      className="mt-2 w-full text-[9px] font-bold text-purple-200 hover:text-white underline text-center transition"
-                    >
-                      Xóa bộ lọc này
-                    </button>
-                  )}
-                </div>
               </div>
 
               {/* Lọc theo ngày */}
