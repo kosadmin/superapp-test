@@ -181,40 +181,37 @@ function DashboardContent() {
       {/* ══════════════════════════════════════════
           SECTION 1 — HÔM NAY (hero banner)
       ══════════════════════════════════════════ */}
-      <div className="bg-orange-600 rounded-xl shadow-md overflow-hidden">
-        {/* Ngày */}
-        <div className="px-5 pt-4 pb-2 flex items-center justify-between border-b border-orange-500">
-          <span className="text-[10px] font-black text-orange-200 uppercase tracking-[0.2em]">
-            {todayLabel}
-          </span>
-          <span className="text-[10px] font-bold text-orange-300 uppercase tracking-widest">Hôm nay</span>
-        </div>
-
-        {/* Thông điệp + số liệu */}
-        <div className="px-5 pt-4 pb-1">
-          <h2 className="text-white font-black text-sm uppercase tracking-wide leading-snug mb-4">
+      <div className="bg-orange-50 border border-orange-200 rounded-xl shadow-sm overflow-hidden">
+        {/* Thông điệp + ngày cùng dòng */}
+        <div className="px-5 py-4 flex items-center justify-between border-b border-orange-100">
+          <h2 className="text-orange-700 font-black text-sm uppercase tracking-wide leading-none">
             HÔM NAY {isManager ? 'ĐỘI NGŨ CỦA BẠN' : 'BẠN'} CÓ
           </h2>
+          <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest ml-4 whitespace-nowrap">
+            {todayLabel}
+          </span>
         </div>
-        <div className="grid grid-cols-2 divide-x divide-orange-500 border-t border-orange-500">
+
+        {/* 2 số liệu */}
+        <div className="grid grid-cols-2 divide-x divide-orange-100">
           <div className="px-6 py-5 text-center">
-            <p className="text-5xl font-black text-white leading-none">
+            <p className="text-5xl font-black text-orange-600 leading-none">
               {loading
-                ? <span className="inline-block w-14 h-10 bg-orange-400 rounded animate-pulse" />
+                ? <span className="inline-block w-14 h-10 bg-orange-100 rounded animate-pulse" />
                 : (stats?.today.interview ?? '—')}
             </p>
-            <p className="text-[11px] font-bold text-orange-200 uppercase tracking-wider mt-2">
-              Ứng viên phỏng vấn
+            <p className="text-[11px] font-bold text-orange-400 uppercase tracking-wider mt-2">
+              Ứng viên đăng ký phỏng vấn
             </p>
           </div>
           <div className="px-6 py-5 text-center">
-            <p className="text-5xl font-black text-white leading-none">
+            <p className="text-5xl font-black text-emerald-600 leading-none">
               {loading
-                ? <span className="inline-block w-14 h-10 bg-orange-400 rounded animate-pulse" />
+                ? <span className="inline-block w-14 h-10 bg-orange-100 rounded animate-pulse" />
                 : (stats?.today.onboard ?? '—')}
             </p>
-            <p className="text-[11px] font-bold text-orange-200 uppercase tracking-wider mt-2">
-              Ứng viên nhận việc
+            <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider mt-2">
+              Ứng viên đăng ký nhận việc
             </p>
           </div>
         </div>
@@ -228,7 +225,7 @@ function DashboardContent() {
         {/* Header tháng nổi bật */}
         <div className="p-4 border-b bg-gray-800 flex items-center justify-between">
           <span className="text-sm font-black text-white uppercase tracking-[0.15em]">
-            📊 Số liệu {monthLabel}
+            Số liệu {monthLabel}
           </span>
           <span className="text-[10px] font-bold text-gray-400 bg-gray-700 px-2 py-0.5 rounded-full uppercase">
             {stats?.applied_permission || '...'}
