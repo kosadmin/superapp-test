@@ -225,9 +225,8 @@ export const MASTER_DATA: MasterDataType = {
    callResults: [
     'Liên lạc được - ổn',
     'Liên lạc được - có vấn đề',
-    'Không nghe máy',
-    'Số không liên lạc được',
-    'Nhắn tin, chưa phản hồi',
+    'Chưa liên lạc được',
+    'Nhắn tin, chờ phản hồi',
   ],
   resignReasons: [
     'Lương không phù hợp',
