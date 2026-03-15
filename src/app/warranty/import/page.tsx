@@ -296,6 +296,34 @@ function ImportWarrantyUploadContent() {
         setIsUploading(true);
         setImportResults([]);
 
+        // ── Enrich: fill birth_year, address_full, project_id, project_type, company ──
+        const enrichedData = data.map(item => {
+            const enriched = { ...item };
+
+            // birth_year: lấy năm từ date_of_birth (YYYY-MM-DD)
+            if (item.date_of_birth) {
+                const year = parseInt(item.date_of_birth.slice(0, 4), 10);
+                if (!isNaN(year)) enriched.birth_year = year;
+            }
+
+            // address_full: ghép các phần có giá trị, ngăn cách bằng ' - '
+            const addressParts = [item.address_street, item.address_ward, item.address_city]
+                .filter(Boolean);
+            if (addressParts.length > 0) enriched.address_full = addressParts.join(' - ');
+
+            // project_id, project_type, company - tra theo MASTER_DATA
+            if (item.project) {
+                const projectId   = MASTER_DATA.projectIdMap[item.project];
+                const projectType = MASTER_DATA.projectTypeMap[item.project];
+                const company     = MASTER_DATA.projectCompanyMap[item.project];
+                if (projectId)   enriched.project_id   = projectId;
+                if (projectType) enriched.project_type = projectType;
+                if (company)     enriched.company       = company;
+            }
+
+            return enriched;
+        });
+
         try {
             const response = await fetch(API_CONFIG.WARRANTY_URL, {
                 method: 'POST',
@@ -305,7 +333,7 @@ function ImportWarrantyUploadContent() {
                     user_id,
                     user_group,
                     timestamp:  new Date().toISOString(),
-                    payload:    data,
+                    payload:    enrichedData,
                 }),
             });
 
