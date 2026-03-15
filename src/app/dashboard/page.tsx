@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import AppLayout from '@/components/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_CONFIG } from '@/constants/masterData';
-
 
 interface LeaderboardItem {
   id: string;
@@ -64,234 +64,283 @@ function DashboardContent() {
     fetchStats();
   }, [user_group, user_id, authLoading]);
 
-  const RenderLeaderboard = (title: string, data: LeaderboardItem[] | undefined) => (
-    <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm mt-4">
-      <div className="mb-4">
-        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{title} (Tháng)</h4>
-      </div>
-      <div className="space-y-3">
-        {!loading && data?.map((user, idx) => (
-          <div key={user.id} className={`flex items-center justify-between p-3 rounded-xl transition-all ${user.id === user_id ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}>
-            <div className="flex items-center gap-3">
-              <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black ${idx === 0 ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-orange-400 text-white' : 'bg-slate-200 text-slate-500'}`}>
-                {idx + 1}
-              </span>
-              <div className="flex flex-col">
-                <span className={`text-xs font-bold ${user.id === user_id ? 'text-blue-700' : 'text-slate-700'}`}>{user.name}</span>
-                <span className="text-[9px] text-slate-400 font-mono">ID: {user.id}</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-sm font-black text-slate-800">{user.onboardCount}</span>
-              <span className="text-[9px] block font-bold text-slate-400 uppercase">Onboard</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+  const Skeleton = () => (
+    <span className="inline-block w-12 h-4 bg-gray-200 rounded animate-pulse" />
   );
 
-  const renderSection2 = () => {
-    return (
-      <div className="space-y-6">
-        {/* Header Scope */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-            Scope: {stats?.applied_permission || '...'} ({user_group})
-          </div>
-          <span className="text-[10px] font-bold text-gray-400 uppercase">Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}</span>
-        </div>
-
-        {/* SECTION: ADMIN COMMISSION REPORT */}
-        {isAdmin && (
-          <div className="bg-slate-900 rounded-[2rem] p-6 text-white shadow-2xl relative overflow-hidden border border-slate-700">
-            <div className="relative z-10">
-              <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-4">Tổng phí tuyển dụng trong năm qua</h4>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                  <span className="text-xs font-medium text-slate-400">Hoa hồng tạo nguồn MKT</span>
-                  <span className="text-sm font-bold text-white">{loading ? '...' : (stats?.commission_report?.mkt || 0).toLocaleString()} đ</span>
+  const LeaderboardSection = ({
+    title,
+    data,
+  }: {
+    title: string;
+    data: LeaderboardItem[] | undefined;
+  }) => (
+    <section>
+      <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-orange-600 pl-3 text-xs uppercase tracking-wider">
+        {title}
+        <span className="ml-2 text-[10px] font-normal text-gray-400 normal-case">Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}</span>
+      </h3>
+      <div className="space-y-2">
+        {loading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border animate-pulse">
+                <div className="w-6 h-6 rounded-full bg-gray-200" />
+                <div className="flex-1 h-3 bg-gray-200 rounded" />
+                <div className="w-8 h-3 bg-gray-200 rounded" />
+              </div>
+            ))
+          : data?.map((user, idx) => (
+              <div
+                key={user.id}
+                className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                  user.id === user_id
+                    ? 'bg-orange-50 border-orange-200'
+                    : 'bg-gray-50 border-gray-100 hover:bg-gray-100'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black ${
+                      idx === 0
+                        ? 'bg-yellow-400 text-white'
+                        : idx === 1
+                        ? 'bg-gray-400 text-white'
+                        : idx === 2
+                        ? 'bg-orange-400 text-white'
+                        : 'bg-gray-200 text-gray-500'
+                    }`}
+                  >
+                    {idx + 1}
+                  </span>
+                  <div className="flex flex-col">
+                    <span
+                      className={`text-xs font-bold ${
+                        user.id === user_id ? 'text-orange-700' : 'text-gray-700'
+                      }`}
+                    >
+                      {user.name}
+                    </span>
+                    <span className="text-[9px] text-gray-400 font-mono">ID: {user.id}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                  <span className="text-xs font-medium text-slate-400">Hoa hồng nhân viên tuyển dụng</span>
-                  <span className="text-sm font-bold text-white">{loading ? '...' : (stats?.commission_report?.recruiter || 0).toLocaleString()} đ</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-medium text-slate-400">Hoa hồng CTV/vendor</span>
-                  <span className="text-sm font-bold text-emerald-400">{loading ? '...' : (stats?.commission_report?.vendor || 0).toLocaleString()} đ</span>
+                <div className="text-right">
+                  <span className="text-sm font-black text-gray-800">{user.onboardCount}</span>
+                  <span className="text-[9px] block font-bold text-gray-400 uppercase">Onboard</span>
                 </div>
               </div>
+            ))}
+        {!loading && (!data || data.length === 0) && (
+          <p className="text-center text-xs text-gray-400 italic py-4">Chưa có dữ liệu</p>
+        )}
+      </div>
+    </section>
+  );
+
+  if (authLoading || loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-gray-400 italic text-sm">Đang tải dữ liệu...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full bg-gray-100 overflow-hidden text-sm p-4 gap-3">
+
+      {/* LEFT: MAIN CONTENT */}
+      <div className="flex flex-col flex-1 gap-3 overflow-y-auto scrollbar-thin pb-4">
+
+        {/* TOOLBAR */}
+        <div className="bg-white rounded-xl shadow-sm border p-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              Scope: {stats?.applied_permission || '...'} ({user_group})
+            </span>
+          </div>
+          <span className="text-[10px] font-bold text-gray-400 uppercase">
+            Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
+          </span>
+        </div>
+
+        {/* ADMIN COMMISSION REPORT */}
+        {isAdmin && (
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex-shrink-0">
+            <div className="p-3 border-b bg-gray-800">
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                Tổng phí tuyển dụng trong năm qua
+              </span>
             </div>
-            <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-3xl"></div>
+            <div className="p-4 space-y-3">
+              {[
+                { label: 'Hoa hồng tạo nguồn MKT', value: stats?.commission_report?.mkt },
+                { label: 'Hoa hồng nhân viên tuyển dụng', value: stats?.commission_report?.recruiter },
+                { label: 'Hoa hồng CTV / Vendor', value: stats?.commission_report?.vendor, highlight: true },
+              ].map((item, i) => (
+                <div key={i} className={`flex items-center justify-between py-2 ${i < 2 ? 'border-b border-gray-100' : ''}`}>
+                  <span className="text-xs text-gray-500">{item.label}</span>
+                  <span className={`text-sm font-bold ${item.highlight ? 'text-emerald-600' : 'text-gray-800'}`}>
+                    {loading ? <Skeleton /> : (item.value || 0).toLocaleString()} đ
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100">
-            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Dự án đang tuyển</p>
-            <p className="text-xl font-black text-slate-400">--</p>
-          </div>
-          <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100">
-            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Tổng ứng viên</p>
-            <p className="text-xl font-black text-slate-800">{loading ? '...' : stats?.total_this_month}</p>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-            <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Nhận việc mới (Tháng)</p>
-            <p className="text-xl font-black text-blue-700">{loading ? '...' : stats?.onboard_this_month}</p>
-          </div>
-          <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100">
-            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Tỷ lệ chuyển đổi</p>
-            <p className="text-xl font-black text-slate-400">--%</p>
-          </div>
+        {/* QUICK STATS GRID */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 flex-shrink-0">
+          {[
+            { label: 'Dự án đang tuyển', value: '--', color: 'text-gray-400', bg: '' },
+            { label: 'Tổng ứng viên', value: stats?.total_this_month, color: 'text-gray-800', bg: '' },
+            { label: 'Nhận việc (Tháng)', value: stats?.onboard_this_month, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-100' },
+            { label: 'Tỷ lệ chuyển đổi', value: '--%', color: 'text-gray-400', bg: '' },
+          ].map((item, i) => (
+            <div key={i} className={`bg-white rounded-xl shadow-sm border p-4 ${item.bg}`}>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{item.label}</p>
+              <p className={`text-2xl font-black ${item.color}`}>
+                {loading && typeof item.value === 'number' ? <Skeleton /> : item.value ?? '--'}
+              </p>
+            </div>
+          ))}
         </div>
 
-        {/* Schedule Today Card */}
-        <div className="bg-indigo-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
-          <div className="relative z-10">
-            <p className="text-[10px] font-bold opacity-70 uppercase mb-3 tracking-widest">
-              {isAdmin ? 'Hệ thống hôm nay có' : isManager ? 'Đội ngũ của bạn có' : 'Hôm nay bạn có'}
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-2xl font-black">{loading ? '..' : stats?.today.interview}</p>
-                <p className="text-[10px] font-medium opacity-80">Đăng ký Phỏng vấn</p>
-              </div>
-              <div>
-                <p className="text-2xl font-black">{loading ? '..' : stats?.today.onboard}</p>
-                <p className="text-[10px] font-medium opacity-80">Đăng ký Nhận việc</p>
-              </div>
+        {/* TODAY CARD */}
+        <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex-shrink-0">
+          <div className="p-3 border-b bg-orange-600 flex items-center justify-between">
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">Hôm nay</span>
+            <span className="text-[10px] text-orange-200 font-bold">
+              {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </span>
+          </div>
+          <div className="p-4 grid grid-cols-2 divide-x divide-gray-100">
+            <div className="text-center pr-4">
+              <p className="text-3xl font-black text-orange-600">
+                {loading ? <Skeleton /> : stats?.today.interview}
+              </p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase mt-1">Phỏng vấn</p>
+            </div>
+            <div className="text-center pl-4">
+              <p className="text-3xl font-black text-emerald-600">
+                {loading ? <Skeleton /> : stats?.today.onboard}
+              </p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase mt-1">Nhận việc</p>
             </div>
           </div>
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" /></svg>
-          </div>
         </div>
 
-        {/* Recruitment Funnel */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Phễu tuyển dụng (Tháng)</h4>
-          <div className="grid grid-cols-4 gap-2">
+        {/* RECRUITMENT FUNNEL */}
+        <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex-shrink-0">
+          <div className="p-3 border-b">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Phễu tuyển dụng (Tháng)</span>
+          </div>
+          <div className="p-4 grid grid-cols-4 gap-2">
             {[
-              { label: 'Mới', value: stats?.funnel.new, color: 'bg-slate-100 text-slate-600' },
-              { label: 'Hẹn PV', value: stats?.funnel.scheduled, color: 'bg-blue-50 text-blue-600' },
-              { label: 'Đỗ PV', value: stats?.funnel.pass, color: 'bg-indigo-50 text-indigo-600' },
-              { label: 'Onboard', value: stats?.funnel.onboard, color: 'bg-emerald-50 text-emerald-600' },
+              { label: 'Mới', value: stats?.funnel.new, color: 'bg-gray-50 text-gray-600 border-gray-100' },
+              { label: 'Hẹn PV', value: stats?.funnel.scheduled, color: 'bg-blue-50 text-blue-600 border-blue-100' },
+              { label: 'Đỗ PV', value: stats?.funnel.pass, color: 'bg-orange-50 text-orange-600 border-orange-100' },
+              { label: 'Onboard', value: stats?.funnel.onboard, color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
             ].map((item, i) => (
-              <div key={i} className={`${item.color} p-3 rounded-xl text-center`}>
-                <p className="text-lg font-black">{loading ? '..' : item.value}</p>
-                <p className="text-[9px] font-bold uppercase whitespace-nowrap">{item.label}</p>
+              <div key={i} className={`${item.color} border rounded-xl p-3 text-center`}>
+                <p className="text-xl font-black">{loading ? '..' : item.value ?? '--'}</p>
+                <p className="text-[9px] font-bold uppercase mt-1 whitespace-nowrap">{item.label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Sources Distribution - Hide for Vendors */}
+        {/* SOURCE DISTRIBUTION */}
         {!isVendor && (
-          <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nguồn ứng viên mới (Tháng)</h4>
-              <span className="text-xs font-bold text-slate-800">{loading ? '...' : stats?.new_this_month_count} hồ sơ</span>
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex-shrink-0">
+            <div className="p-3 border-b flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nguồn ứng viên mới (Tháng)</span>
+              <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+                {loading ? '...' : stats?.new_this_month_count} hồ sơ
+              </span>
             </div>
-            <div className="space-y-2">
-              {!loading && stats?.source_distribution_monthly.map((item, idx) => (
-                <div key={idx} className="group flex flex-col gap-1">
-                  <div className="flex justify-between text-[11px] font-bold text-gray-600">
-                    <span>{item.name}</span>
-                    <span>{item.count}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-blue-500 h-full rounded-full transition-all duration-1000" style={{ width: `${item.percentage}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Leaderboards */}
-        {!isVendor && (
-          <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
-            <div className="mb-4">
-              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Xếp hạng nhân viên (Tháng)</h4>
-              {!isManager && (
-                 <p className="text-xs text-slate-600">
-                  Bạn đang đứng <span className="text-blue-600 font-black">Top {stats?.ranking.my_rank}</span> trong nhóm <span className="font-bold">{stats?.ranking.my_group}</span>.
-                </p>
+            <div className="p-4 space-y-3">
+              {loading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-1 animate-pulse">
+                      <div className="flex justify-between">
+                        <div className="h-3 bg-gray-200 rounded w-1/3" />
+                        <div className="h-3 bg-gray-200 rounded w-8" />
+                      </div>
+                      <div className="h-1.5 bg-gray-100 rounded-full" />
+                    </div>
+                  ))
+                : stats?.source_distribution_monthly.map((item, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-bold text-gray-600">
+                        <span>{item.name}</span>
+                        <span>{item.count}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-orange-500 h-full rounded-full transition-all duration-700"
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+              {!loading && (!stats?.source_distribution_monthly || stats.source_distribution_monthly.length === 0) && (
+                <p className="text-center text-xs text-gray-400 italic py-4">Chưa có dữ liệu</p>
               )}
             </div>
-            <div className="space-y-3 mt-4">
-              {!loading && stats?.ranking.leaderboard.map((user, idx) => (
-                <div key={user.id} className={`flex items-center justify-between p-3 rounded-xl transition-all ${user.id === user_id ? 'bg-blue-50 border border-blue-100' : 'bg-slate-50'}`}>
-                  <div className="flex items-center gap-3">
-                    <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black ${idx === 0 ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-orange-400 text-white' : 'bg-slate-200 text-slate-500'}`}>{idx + 1}</span>
-                    <div className="flex flex-col">
-                      <span className={`text-xs font-bold ${user.id === user_id ? 'text-blue-700' : 'text-slate-700'}`}>{user.name}</span>
-                      <span className="text-[9px] text-slate-400 font-mono">ID: {user.id}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-black text-slate-800">{user.onboardCount}</span>
-                    <span className="text-[9px] block font-bold text-slate-400 uppercase">Onboard</span>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         )}
-
-        {isManager && RenderLeaderboard("Xếp hạng CTV / Vendor", stats?.ranking.vendor_leaderboard)}
-
-        {/* Empty State Projects */}
-        <div className="border border-gray-100 rounded-2xl p-5 bg-white shadow-sm">
-          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Dự án đang triển khai</h4>
-          <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-slate-100 rounded-xl">
-             <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mb-2">
-                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-             </div>
-             <p className="text-[11px] text-slate-400 font-medium italic">Hiện chưa có dữ liệu dự án</p>
-          </div>
-        </div>
       </div>
-    );
-  };
 
-  if (authLoading) return null;
+      {/* RIGHT: RANKINGS SIDEBAR */}
+      {!isVendor && (
+        <div className="w-80 flex-shrink-0 flex flex-col gap-3 overflow-y-auto scrollbar-thin pb-4">
 
-  return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 lg:p-8 font-sans">
-      <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left Profile Panel */}
-        <div className="bg-white p-8 lg:p-12 rounded-[2rem] shadow-xl border border-gray-200/50 text-center flex flex-col justify-center items-center h-fit sticky top-8">
-          <div className="w-24 h-24 bg-gradient-to-tr from-emerald-400 to-teal-600 rounded-3xl mb-6 flex items-center justify-center shadow-2xl rotate-3 transform transition hover:rotate-0">
-            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          {/* MY RANK BADGE (non-manager only) */}
+          {!isManager && stats?.ranking && (
+            <div className="bg-white rounded-xl shadow-sm border p-4 flex-shrink-0">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Thứ hạng của bạn</p>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
+                  <span className="text-xl font-black text-orange-600">#{stats.ranking.my_rank}</span>
+                </div>
+                <div>
+                  <p className="font-bold text-gray-800 text-sm">{name}</p>
+                  <p className="text-[10px] text-gray-400">Nhóm: <span className="font-bold text-gray-600">{stats.ranking.my_group}</span></p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* EMPLOYEE LEADERBOARD */}
+          <div className="bg-white rounded-xl shadow-sm border p-4 flex-shrink-0">
+            <LeaderboardSection title="Xếp hạng nhân viên" data={stats?.ranking.leaderboard} />
           </div>
-          <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">Portal Access</p>
-          <h1 className="text-2xl font-black text-slate-800 mb-10 leading-tight">{name}</h1>
-          <div className="w-full space-y-3">
-            <Link href="/candidates" className="flex items-center justify-center gap-3 w-full bg-slate-900 text-white py-4 rounded-2xl hover:bg-blue-600 transition-all font-bold shadow-lg active:scale-95">
-              Quản lý Ứng viên
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-            </Link>
-                        <Link href="/warranty" className="flex items-center justify-center gap-3 w-full bg-slate-900 text-white py-4 rounded-2xl hover:bg-blue-600 transition-all font-bold shadow-lg active:scale-95">
-              OB - Bảo hành
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-            </Link>
-            <Link href="/profile" className="block w-full bg-white border-2 border-slate-100 text-slate-500 py-3.5 rounded-2xl hover:border-blue-200 hover:text-blue-600 transition-all font-bold text-sm">
-              Thông tin cá nhân
-            </Link>
-            <button onClick={logout} className="text-red-400 hover:text-red-600 py-4 transition font-bold text-[10px] uppercase tracking-widest">
-              Đăng xuất hệ thống
-            </button>
+
+          {/* VENDOR LEADERBOARD */}
+          {isManager && (
+            <div className="bg-white rounded-xl shadow-sm border p-4 flex-shrink-0">
+              <LeaderboardSection title="Xếp hạng CTV / Vendor" data={stats?.ranking.vendor_leaderboard} />
+            </div>
+          )}
+
+          {/* ACTIVE PROJECTS PLACEHOLDER */}
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex-shrink-0">
+            <div className="p-3 border-b">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dự án đang triển khai</span>
+            </div>
+            <div className="p-6 flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded-xl m-3">
+              <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <p className="text-[11px] text-gray-400 italic">Hiện chưa có dữ liệu dự án</p>
+            </div>
           </div>
+
         </div>
-        
-        {/* Right Dashboard Data */}
-        <div className="bg-white p-8 lg:p-10 rounded-[2rem] shadow-xl border border-gray-200/50">
-          {renderSection2()}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -299,7 +348,9 @@ function DashboardContent() {
 export default function DashboardPage() {
   return (
     <ProtectedRoute>
-      <DashboardContent />
+      <AppLayout>
+        <DashboardContent />
+      </AppLayout>
     </ProtectedRoute>
   );
 }
