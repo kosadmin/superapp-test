@@ -310,16 +310,16 @@ function DashboardContent() {
                   Phễu tuyển dụng
                 </span>
               </div>
-              <div className="p-3 grid grid-cols-2 gap-2">
+              <div className="p-3 grid grid-cols-4 gap-2">
                 {[
-                  { label: 'Mới',     value: stats?.funnel.new,       color: 'bg-white text-gray-600 border-gray-200' },
-                  { label: 'Hẹn PV',  value: stats?.funnel.scheduled, color: 'bg-blue-50 text-blue-600 border-blue-100' },
-                  { label: 'Đỗ PV',   value: stats?.funnel.pass,      color: 'bg-orange-50 text-orange-600 border-orange-100' },
-                  { label: 'Onboard', value: stats?.funnel.onboard,   color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+                  { label: 'Mới',          value: stats?.funnel.new,       color: 'bg-white text-gray-600 border-gray-200' },
+                  { label: 'Đăng ký PV',   value: stats?.funnel.scheduled, color: 'bg-blue-50 text-blue-600 border-blue-100' },
+                  { label: 'Đỗ PV',        value: stats?.funnel.pass,      color: 'bg-orange-50 text-orange-600 border-orange-100' },
+                  { label: 'Onboard',      value: stats?.funnel.onboard,   color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
                 ].map((item, i) => (
                   <div key={i} className={`${item.color} border rounded-xl p-3 text-center`}>
                     <p className="text-xl font-black">{loading ? '..' : (item.value ?? '--')}</p>
-                    <p className="text-[9px] font-bold uppercase mt-1">{item.label}</p>
+                    <p className="text-[9px] font-bold uppercase mt-1 whitespace-nowrap">{item.label}</p>
                   </div>
                 ))}
               </div>
