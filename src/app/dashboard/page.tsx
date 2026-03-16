@@ -22,6 +22,7 @@ interface DashboardStats {
   total_this_month: number;
   onboard_this_month: number;
   new_this_month_count: number;
+  conversion_rate: number;
   applied_permission: string;
   commission_report?: { mkt: number; recruiter: number; vendor: number };
   today: { interview: number; onboard: number };
@@ -100,7 +101,7 @@ function DashboardContent() {
       <div className="p-3 border-b bg-white">
         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</span>
       </div>
-      <div className="p-3 space-y-2">
+      <div className="p-3 space-y-2 max-h-[232px] overflow-y-auto scrollbar-thin">
         {loading
           ? Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white border animate-pulse">
@@ -240,7 +241,7 @@ function DashboardContent() {
               { label: 'Dự án đang tuyển',  value: '--',                        valueColor: 'text-gray-400', bg: 'bg-gray-50 border-gray-100' },
               { label: 'Tổng ứng viên',      value: stats?.total_this_month,     valueColor: 'text-gray-800', bg: 'bg-gray-50 border-gray-100' },
               { label: 'Nhận việc mới',      value: stats?.onboard_this_month,   valueColor: 'text-orange-600', bg: 'bg-orange-50 border-orange-100' },
-              { label: 'Tỷ lệ chuyển đổi',  value: '--%',                       valueColor: 'text-gray-400', bg: 'bg-gray-50 border-gray-100' },
+              { label: 'Tỷ lệ chuyển đổi',  value: stats?.conversion_rate !== undefined ? `${stats.conversion_rate}%` : '--%', valueColor: stats?.conversion_rate ? 'text-emerald-600' : 'text-gray-400', bg: 'bg-gray-50 border-gray-100' },
             ].map((item, i) => (
               <div key={i} className={`rounded-xl border p-4 ${item.bg}`}>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
