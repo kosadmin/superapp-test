@@ -22,6 +22,7 @@ interface DashboardStats {
   total_this_month: number;
   onboard_this_month: number;
   new_this_month_count: number;
+  conversion_rate: number;
   applied_permission: string;
   commission_report?: { mkt: number; recruiter: number; vendor: number };
   today: { interview: number; onboard: number };
@@ -100,7 +101,7 @@ function DashboardContent() {
       <div className="p-3 border-b bg-white">
         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</span>
       </div>
-      <div className="p-3 space-y-2">
+      <div className="p-3 space-y-2 max-h-[232px] overflow-y-auto scrollbar-thin">
         {loading
           ? Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white border animate-pulse">
@@ -240,7 +241,7 @@ function DashboardContent() {
               { label: 'Dự án đang tuyển',  value: '--',                        valueColor: 'text-gray-400', bg: 'bg-gray-50 border-gray-100' },
               { label: 'Tổng ứng viên',      value: stats?.total_this_month,     valueColor: 'text-gray-800', bg: 'bg-gray-50 border-gray-100' },
               { label: 'Nhận việc mới',      value: stats?.onboard_this_month,   valueColor: 'text-orange-600', bg: 'bg-orange-50 border-orange-100' },
-              { label: 'Tỷ lệ chuyển đổi',  value: '--%',                       valueColor: 'text-gray-400', bg: 'bg-gray-50 border-gray-100' },
+              { label: 'Tỷ lệ chuyển đổi',  value: stats?.conversion_rate !== undefined ? `${stats.conversion_rate}%` : '--%', valueColor: stats?.conversion_rate ? 'text-emerald-600' : 'text-gray-400', bg: 'bg-gray-50 border-gray-100' },
             ].map((item, i) => (
               <div key={i} className={`rounded-xl border p-4 ${item.bg}`}>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
@@ -310,16 +311,16 @@ function DashboardContent() {
                   Phễu tuyển dụng
                 </span>
               </div>
-              <div className="p-3 grid grid-cols-2 gap-2">
+              <div className="p-3 grid grid-cols-4 gap-2">
                 {[
-                  { label: 'Mới',     value: stats?.funnel.new,       color: 'bg-white text-gray-600 border-gray-200' },
-                  { label: 'Hẹn PV',  value: stats?.funnel.scheduled, color: 'bg-blue-50 text-blue-600 border-blue-100' },
-                  { label: 'Đỗ PV',   value: stats?.funnel.pass,      color: 'bg-orange-50 text-orange-600 border-orange-100' },
-                  { label: 'Onboard', value: stats?.funnel.onboard,   color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+                  { label: 'Mới',          value: stats?.funnel.new,       color: 'bg-white text-gray-600 border-gray-200' },
+                  { label: 'Đăng ký PV',   value: stats?.funnel.scheduled, color: 'bg-blue-50 text-blue-600 border-blue-100' },
+                  { label: 'Đỗ PV',        value: stats?.funnel.pass,      color: 'bg-orange-50 text-orange-600 border-orange-100' },
+                  { label: 'Onboard',      value: stats?.funnel.onboard,   color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
                 ].map((item, i) => (
                   <div key={i} className={`${item.color} border rounded-xl p-3 text-center`}>
                     <p className="text-xl font-black">{loading ? '..' : (item.value ?? '--')}</p>
-                    <p className="text-[9px] font-bold uppercase mt-1">{item.label}</p>
+                    <p className="text-[9px] font-bold uppercase mt-1 whitespace-nowrap">{item.label}</p>
                   </div>
                 ))}
               </div>
