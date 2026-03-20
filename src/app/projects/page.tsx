@@ -117,7 +117,7 @@ function ProjectCard({ project }: { project: Project }) {
       {/* Ribbon — chỉ text, không icon */}
       {ribbon && (
         <div className="absolute top-0 right-0 z-10">
-          <div className={`${tagColor(ribbon)} text-[9px] font-black px-3 py-1 rounded-bl-xl tracking-wide`}>
+          <div className={`${tagColor(ribbon)} text-[8px] font-black px-2 py-0.5 rounded-bl-lg tracking-wide`}>
             {ribbon}
           </div>
         </div>
@@ -132,7 +132,8 @@ function ProjectCard({ project }: { project: Project }) {
             <span className="text-xl">{project.project_type === 'Recruiting' ? '🏭' : '🏢'}</span>
           )}
         </div>
-        <div className="flex-1 min-w-0 pr-10">
+        {/* pr đủ rộng để tên không chạy vào vùng ribbon */}
+        <div className="flex-1 min-w-0 pr-16">
           <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2 group-hover:text-orange-700 transition-colors">
             {project.project}
           </h3>
