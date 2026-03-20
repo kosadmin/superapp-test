@@ -71,17 +71,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
 
       {/* TOP BAR */}
-      <header className="flex-shrink-0 h-12 bg-white border-b flex items-center px-4 gap-4 z-50 shadow-sm relative">
+      <header className="flex-shrink-0 h-12 bg-white border-b flex items-center px-4 gap-4 z-50 shadow-sm">
 
         {/* Logo — luôn hiện */}
         <Link href="/dashboard" className="flex-shrink-0">
           <Image src="/logo.png" alt="Logo" width={80} height={32} className="object-contain h-8 w-auto" />
         </Link>
 
-        <div className="h-6 w-px bg-gray-200 flex-shrink-0 hidden sm:block" />
+        <div className="h-6 w-px bg-gray-200 flex-shrink-0" />
 
-        {/* Tên module — căn giữa tuyệt đối trên mobile, inline trên desktop */}
-        <span className="absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0 text-sm sm:text-base font-bold uppercase tracking-wide text-orange-500 pointer-events-none">
+        {/* Tên module — ẩn trên mobile */}
+        <span className="hidden sm:block text-base font-bold uppercase tracking-wide text-orange-500">
           {activeLabel}
         </span>
 
