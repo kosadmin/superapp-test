@@ -54,6 +54,14 @@ const LOGOUT_ICON = (
   </svg>
 );
 
+const AvatarIcon = () => (
+  <svg viewBox="0 0 36 36" fill="none" className="w-full h-full">
+    <circle cx="18" cy="18" r="18" fill="#fff7ed"/>
+    <circle cx="18" cy="14" r="6" fill="#fdba74"/>
+    <ellipse cx="18" cy="27" rx="10" ry="6" fill="#fdba74"/>
+  </svg>
+);
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { name, user_group } = useAuth();
@@ -64,30 +72,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* TOP BAR */}
       <header className="flex-shrink-0 h-12 bg-white border-b flex items-center px-4 gap-4 z-50 shadow-sm">
-        {/* Logo */}
-<Link href="/dashboard" className="flex-shrink-0">
-  <Image src="/logo.png" alt="Logo" width={80} height={32} className="object-contain h-8 w-auto" />
-</Link>
 
-        <div className="h-6 w-px bg-gray-200 flex-shrink-0" />
+        {/* Logo — ẩn trên mobile */}
+        <Link href="/dashboard" className="flex-shrink-0 hidden sm:block">
+          <Image src="/logo.png" alt="Logo" width={80} height={32} className="object-contain h-8 w-auto" />
+        </Link>
 
-        {/* Tên module */}
-<span className="text-base font-bold uppercase tracking-wide text-orange-500">
+        <div className="h-6 w-px bg-gray-200 flex-shrink-0 hidden sm:block" />
+
+        {/* Tên module — nhỏ hơn trên mobile */}
+        <span className="text-sm sm:text-base font-bold uppercase tracking-wide text-orange-500">
           {activeLabel}
         </span>
 
         <div className="flex-1" />
 
-        {/* Profile */}
+        {/* Profile — chỉ avatar trên mobile, đầy đủ trên desktop */}
         <Link href="/profile" className="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-gray-50 transition">
           <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-orange-200">
-            <svg viewBox="0 0 36 36" fill="none" className="w-full h-full">
-              <circle cx="18" cy="18" r="18" fill="#fff7ed"/>
-              <circle cx="18" cy="14" r="6" fill="#fdba74"/>
-              <ellipse cx="18" cy="27" rx="10" ry="6" fill="#fdba74"/>
-            </svg>
+            <AvatarIcon />
           </div>
-          <div className="leading-tight">
+          {/* Tên + nhóm — ẩn trên mobile */}
+          <div className="leading-tight hidden sm:block">
             <div className="text-xs font-bold text-gray-800 leading-none">{name}</div>
             <div className="text-[10px] text-gray-400">{user_group}</div>
           </div>
@@ -97,8 +103,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* BODY */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* SIDEBAR NAV */}
-        <nav className="flex-shrink-0 w-14 bg-white border-r flex flex-col items-center z-40">
+        {/* SIDEBAR NAV — chỉ hiện trên desktop (sm trở lên) */}
+        <nav className="flex-shrink-0 w-14 bg-white border-r flex-col items-center z-40 hidden sm:flex">
           {NAV_ITEMS.map(item => {
             const isActive = pathname.startsWith(item.href);
             return (
@@ -127,11 +133,43 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* NỘI DUNG TRANG */}
-        <main className="flex-1 overflow-hidden">
+        {/* Trên mobile cần padding-bottom để tránh bị che bởi bottom bar */}
+        <main className="flex-1 overflow-hidden pb-16 sm:pb-0">
           {children}
         </main>
 
       </div>
+
+      {/* BOTTOM NAV BAR — chỉ hiện trên mobile */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-[0_-2px_12px_rgba(0,0,0,0.08)] flex items-stretch">
+        {NAV_ITEMS.map(item => {
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <Link key={item.href} href={item.href}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-all
+                ${isActive ? 'text-orange-500' : 'text-gray-400 hover:text-orange-400'}`}>
+              <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-orange-50' : ''}`}>
+                {item.icon}
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-tight leading-none">
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+
+        {/* Nút đăng xuất trong bottom bar */}
+        <Link href="/logout"
+          className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-red-400 hover:text-red-500 transition-all">
+          <div className="p-1 rounded-xl">
+            {LOGOUT_ICON}
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-tight leading-none">
+            Thoát
+          </span>
+        </Link>
+      </nav>
+
     </div>
   );
 }
