@@ -325,9 +325,10 @@ function ProjectCard({ project }: { project: Project }) {
       {positions.length > 0 && (
         <div className="px-4 pb-3">
           {positions.map((pos, i) => (
-            <div key={i} className="flex items-start gap-2 text-gray-800 font-bold text-[13px] leading-snug mb-1.5 last:mb-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0 mt-[5px]" /><span>{pos}</span>
-            </span>
+<div key={i} className="flex items-start gap-2 text-gray-800 font-bold text-[13px] leading-snug mb-1.5 last:mb-0">
+  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0 mt-[5px]" />
+  <span>{pos}</span>
+</div>
           ))}
         </div>
       )}
