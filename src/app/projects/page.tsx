@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import AppLayout from '@/components/AppLayout';
@@ -17,7 +17,7 @@ interface Project {
   id: number;
   project_id: string;
   project: string;
-  project_type: 'Recruiting' | 'Outsourcing' | string;
+  project_type: string;
   company: string;
   address_city: string;
   position: string;
@@ -47,49 +47,64 @@ const typeConfig: Record<string, { label: string; color: string }> = {
   'Outsourcing': { label: 'Outsourcing', color: 'bg-purple-100 text-purple-700' },
 };
 
-// Màu & icon ribbon theo nội dung tag — thêm tag mới vào đây tùy nhu cầu
+// Tag màu — không dùng icon
+// "Tuyển gấp" luôn được ưu tiên đẩy lên đầu trong sort
 const TAG_COLORS: Record<string, string> = {
   'Tuyển gấp':  'bg-red-500 text-white',
-  'Hot':        'bg-red-500 text-white',
+  'Hot':        'bg-rose-400 text-white',
   'Ưu tiên':    'bg-orange-500 text-white',
   'Mới':        'bg-blue-500 text-white',
   'Thưởng lớn': 'bg-amber-500 text-white',
   'VIP':        'bg-purple-600 text-white',
 };
-const TAG_ICONS: Record<string, string> = {
-  'Tuyển gấp':  '🔥',
-  'Hot':        '🔥',
-  'Ưu tiên':    '⚡',
-  'Mới':        '✨',
-  'Thưởng lớn': '🎁',
-  'VIP':        '👑',
-};
 
-// Lấy tag đầu tiên có config, hoặc tag đầu tiên bất kỳ
-function getFirstTag(tags: string | null): string | null {
+// Màu fallback cho tag không có trong config — xoay vòng
+const FALLBACK_COLORS = [
+  'bg-teal-500 text-white',
+  'bg-cyan-600 text-white',
+  'bg-indigo-500 text-white',
+  'bg-pink-500 text-white',
+  'bg-lime-600 text-white',
+];
+function tagColor(tag: string): string {
+  if (TAG_COLORS[tag]) return TAG_COLORS[tag];
+  const idx = tag.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % FALLBACK_COLORS.length;
+  return FALLBACK_COLORS[idx];
+}
+
+// Lấy tag ribbon ưu tiên: "Tuyển gấp" trước, sau đó tag có config, rồi tag đầu tiên
+function getRibbonTag(tags: string | null): string | null {
   if (!tags) return null;
   const list = tags.split(',').map(t => t.trim()).filter(Boolean);
-  return list.find(t => TAG_COLORS[t]) ?? list[0] ?? null;
+  if (list.includes('Tuyển gấp')) return 'Tuyển gấp';
+  const withConfig = list.find(t => TAG_COLORS[t]);
+  return withConfig ?? list[0] ?? null;
+}
+
+// Ưu tiên sort: "Tuyển gấp" = 2, có tag khác = 1, không tag = 0
+function tagPriority(tags: string | null): number {
+  if (!tags) return 0;
+  const list = tags.split(',').map(t => t.trim());
+  if (list.includes('Tuyển gấp')) return 2;
+  if (list.some(t => t)) return 1;
+  return 0;
 }
 
 function formatSalary(min: number | null, max: number | null): string {
   if (!min && !max) return 'THU NHẬP: THỎA THUẬN';
   const fmt = (n: number) => n >= 1000
     ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)} TỶ`
-    : `${n} TRIỆU`;
-  if (min && max) return `THU NHẬP ${fmt(min)} ĐẾN ${fmt(max)} / THÁNG`;
-  if (min) return `THU NHẬP TỪ ${fmt(min)} / THÁNG`;
-  return `THU NHẬP ĐẾN ${fmt(max!)} / THÁNG`;
+    : `${n}`;
+  if (min && max) return `THU NHẬP ${fmt(min)} - ${fmt(max)} TRIỆU / THÁNG`;
+  if (min) return `THU NHẬP TỪ ${fmt(min)} TRIỆU / THÁNG`;
+  return `THU NHẬP ĐẾN ${fmt(max!)} TRIỆU / THÁNG`;
 }
 
 // ── Project Card ───────────────────────────────────────────────────────────
 function ProjectCard({ project }: { project: Project }) {
   const status    = statusConfig[project.status] ?? statusConfig['Đang tuyển'];
   const type      = typeConfig[project.project_type] ?? typeConfig['Outsourcing'];
-  const tag       = getFirstTag(project.tags);
-  const tagColor  = tag ? (TAG_COLORS[tag] ?? 'bg-gray-700 text-white') : null;
-  const tagIcon   = tag ? (TAG_ICONS[tag]  ?? '🏷️') : null;
-
+  const ribbon    = getRibbonTag(project.tags);
   const positions = project.position
     ? project.position.split(',').map(p => p.trim()).filter(Boolean)
     : [];
@@ -99,16 +114,16 @@ function ProjectCard({ project }: { project: Project }) {
       href={`/projects/${project.project_id}`}
       className="group relative flex flex-col bg-white rounded-2xl border border-gray-100 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-50 transition-all duration-200 overflow-hidden"
     >
-      {/* Ribbon tag — chỉ hiện khi có tag */}
-      {tag && tagColor && (
+      {/* Ribbon — chỉ text, không icon */}
+      {ribbon && (
         <div className="absolute top-0 right-0 z-10">
-          <div className={`${tagColor} text-[9px] font-black px-3 py-1 rounded-bl-xl tracking-wide`}>
-            {tagIcon} {tag}
+          <div className={`${tagColor(ribbon)} text-[9px] font-black px-3 py-1 rounded-bl-xl tracking-wide`}>
+            {ribbon}
           </div>
         </div>
       )}
 
-      {/* Logo + tên dự án */}
+      {/* Logo + tên */}
       <div className="p-4 pb-3 flex gap-3 items-start">
         <div className="flex-shrink-0 w-12 h-12 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
           {project.icon_job ? (
@@ -128,7 +143,7 @@ function ProjectCard({ project }: { project: Project }) {
         </div>
       </div>
 
-      {/* Vị trí — full text, không cắt, chữ to nổi bật */}
+      {/* Vị trí — full text, chữ to */}
       {positions.length > 0 && (
         <div className="px-4 pb-3">
           <div className="flex flex-col gap-1.5">
@@ -144,17 +159,17 @@ function ProjectCard({ project }: { project: Project }) {
 
       <div className="mx-4 border-t border-gray-100" />
 
-      {/* Lương — uppercase, nổi bật */}
+      {/* Lương */}
       <div className="px-4 pt-3 pb-2">
         <div className="flex items-center gap-1.5 bg-blue-50 rounded-xl px-3 py-2.5">
           <span className="text-sm">💰</span>
-          <span className="text-blue-700 font-black text-[11px] tracking-wide leading-tight">
+          <span className="text-blue-700 font-black text-[11px] tracking-wide">
             {formatSalary(project.salary_min, project.salary_max)}
           </span>
         </div>
       </div>
 
-      {/* Highlight — ngay dưới lương, không khoảng trắng thừa */}
+      {/* Highlight — ngay dưới lương */}
       {project.highlight_info && (
         <div className="px-4 pb-3">
           <div className="px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-lg">
@@ -204,9 +219,7 @@ function SkeletonCard() {
         <div className="h-4 bg-gray-100 rounded w-2/3" />
       </div>
       <div className="mx-4 border-t border-gray-100" />
-      <div className="px-4 py-3">
-        <div className="h-9 bg-blue-50 rounded-xl" />
-      </div>
+      <div className="px-4 py-3"><div className="h-9 bg-blue-50 rounded-xl" /></div>
       <div className="px-4 pb-4 flex gap-2">
         <div className="h-5 bg-gray-100 rounded-full w-20" />
         <div className="h-5 bg-gray-100 rounded-full w-16" />
@@ -215,39 +228,125 @@ function SkeletonCard() {
   );
 }
 
-// ── Filter Drawer ──────────────────────────────────────────────────────────
-interface FilterDrawerProps {
-  open: boolean; onClose: () => void;
+// ── Filter Sidebar (PC) — đổ từ phải sang như trang candidate ─────────────
+interface FilterSidebarProps {
+  show: boolean;
   filterStatus: string; setFilterStatus: (v: string) => void;
   filterType: string;   setFilterType:   (v: string) => void;
   filterCity: string;   setFilterCity:   (v: string) => void;
   sortBy: string;       setSortBy:       (v: string) => void;
   cities: string[];
-  activeFilters: number;
   onReset: () => void;
 }
 
-function FilterDrawer({
-  open, onClose,
+function FilterSidebar({
+  show,
   filterStatus, setFilterStatus,
   filterType,   setFilterType,
   filterCity,   setFilterCity,
   sortBy,       setSortBy,
-  cities, activeFilters, onReset,
-}: FilterDrawerProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
+  cities, onReset,
+}: FilterSidebarProps) {
+  return (
+    <div className={`hidden sm:flex flex-col flex-shrink-0 bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${show ? 'w-56' : 'w-0 border-0'}`}>
+      {show && (
+        <>
+          <div className="p-3 border-b bg-orange-600 flex items-center justify-between flex-shrink-0">
+            <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc</span>
+            <button onClick={onReset} className="text-[9px] font-bold text-orange-200 hover:text-white underline">Xóa tất cả</button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
 
-  // Click outside đóng panel trên PC
+            {/* Sắp xếp */}
+            <div>
+              <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Sắp xếp</label>
+              <div className="space-y-1">
+                {[
+                  { value: 'newest',      label: 'Mới nhất' },
+                  { value: 'salary_high', label: 'Lương cao nhất' },
+                  { value: 'salary_low',  label: 'Lương thấp nhất' },
+                ].map(opt => (
+                  <label key={opt.value} className={`flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer text-[11px] transition ${sortBy === opt.value ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <input type="radio" name="sort" checked={sortBy === opt.value} onChange={() => setSortBy(opt.value)} className="accent-orange-500 w-3 h-3" />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Trạng thái */}
+            <div>
+              <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Trạng thái</label>
+              <div className="space-y-1">
+                {Object.keys(statusConfig).map(s => (
+                  <label key={s} className={`flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer text-[11px] transition ${filterStatus === s ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <input type="checkbox" checked={filterStatus === s} onChange={() => setFilterStatus(filterStatus === s ? '' : s)} className="w-3 h-3 rounded accent-orange-500" />
+                    {s}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Loại dự án */}
+            <div>
+              <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Loại dự án</label>
+              <div className="space-y-1">
+                {['Recruiting', 'Outsourcing'].map(t => (
+                  <label key={t} className={`flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer text-[11px] transition ${filterType === t ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <input type="checkbox" checked={filterType === t} onChange={() => setFilterType(filterType === t ? '' : t)} className="w-3 h-3 rounded accent-orange-500" />
+                    {t}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Tỉnh thành */}
+            {cities.length > 0 && (
+              <div>
+                <label className="text-[10px] uppercase font-black text-gray-400 mb-1.5 block">Tỉnh / Thành phố</label>
+                <div className="space-y-1 max-h-36 overflow-y-auto scrollbar-thin pr-1">
+                  {cities.map(c => (
+                    <label key={c} className={`flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer text-[11px] transition ${filterCity === c ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
+                      <input type="checkbox" checked={filterCity === c} onChange={() => setFilterCity(filterCity === c ? '' : c)} className="w-3 h-3 rounded accent-orange-500" />
+                      {c}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Filter Popup (Mobile) ──────────────────────────────────────────────────
+interface FilterPopupProps {
+  open: boolean;
+  onClose: () => void;
+  onApply: (filters: { status: string; type: string; city: string; sort: string }) => void;
+  initial: { status: string; type: string; city: string; sort: string };
+  cities: string[];
+}
+
+function FilterPopup({ open, onClose, onApply, initial, cities }: FilterPopupProps) {
+  const [localStatus, setLocalStatus] = useState(initial.status);
+  const [localType,   setLocalType]   = useState(initial.type);
+  const [localCity,   setLocalCity]   = useState(initial.city);
+  const [localSort,   setLocalSort]   = useState(initial.sort);
+
+  // Sync khi mở popup
   useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open, onClose]);
+    if (open) {
+      setLocalStatus(initial.status);
+      setLocalType(initial.type);
+      setLocalCity(initial.city);
+      setLocalSort(initial.sort);
+    }
+  }, [open]);
 
-  // Khóa scroll khi mở trên mobile
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
@@ -255,101 +354,100 @@ function FilterDrawer({
 
   if (!open) return null;
 
-  const FilterContent = () => (
-    <div className="space-y-5 p-4">
-      {/* Sắp xếp */}
-      <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sắp xếp</p>
-        {[
-          { value: 'newest',      label: 'Mới nhất' },
-          { value: 'salary_high', label: 'Lương cao nhất' },
-          { value: 'salary_low',  label: 'Lương thấp nhất' },
-        ].map(opt => (
-          <label key={opt.value} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[12px] transition ${sortBy === opt.value ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <input type="radio" name="sort" checked={sortBy === opt.value} onChange={() => setSortBy(opt.value)} className="accent-orange-500" />
-            {opt.label}
-          </label>
-        ))}
-      </div>
-
-      {/* Trạng thái */}
-      <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Trạng thái</p>
-        {Object.keys(statusConfig).map(s => (
-          <label key={s} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[12px] transition ${filterStatus === s ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <input type="radio" name="status" checked={filterStatus === s} onChange={() => setFilterStatus(filterStatus === s ? '' : s)} className="accent-orange-500" />
-            {s}
-          </label>
-        ))}
-      </div>
-
-      {/* Loại dự án */}
-      <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Loại dự án</p>
-        {['Recruiting', 'Outsourcing'].map(t => (
-          <label key={t} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[12px] transition ${filterType === t ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <input type="radio" name="type" checked={filterType === t} onChange={() => setFilterType(filterType === t ? '' : t)} className="accent-orange-500" />
-            {t}
-          </label>
-        ))}
-      </div>
-
-      {/* Tỉnh thành */}
-      {cities.length > 0 && (
-        <div>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tỉnh / Thành phố</p>
-          <div className="max-h-40 overflow-y-auto">
-            {cities.map(c => (
-              <label key={c} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[12px] transition ${filterCity === c ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <input type="radio" name="city" checked={filterCity === c} onChange={() => setFilterCity(filterCity === c ? '' : c)} className="accent-orange-500" />
-                {c}
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  const activeCount = [localStatus, localType, localCity].filter(Boolean).length;
 
   return (
-    <>
-      {/* ── MOBILE: bottom sheet ── */}
-      <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end">
-        <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-        <div className="relative bg-white rounded-t-2xl shadow-2xl max-h-[85vh] flex flex-col">
-          <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-            <div className="w-10 h-1 bg-gray-200 rounded-full" />
-          </div>
-          <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
-            <span className="font-black text-sm">Bộ lọc & Sắp xếp</span>
-            {activeFilters > 0 && (
-              <button onClick={onReset} className="text-xs text-orange-500 font-bold">Xóa tất cả</button>
-            )}
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <FilterContent />
-          </div>
-          <div className="p-4 border-t flex-shrink-0">
-            <button onClick={onClose} className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl text-sm hover:bg-orange-700 transition">
-              Áp dụng{activeFilters > 0 ? ` (${activeFilters} bộ lọc)` : ''}
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="sm:hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
-      {/* ── PC: dropdown panel ── */}
-      <div ref={panelRef} className="hidden sm:block absolute top-[56px] right-4 z-50 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-orange-600 flex-shrink-0">
-          <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc & Sắp xếp</span>
-          {activeFilters > 0 && (
-            <button onClick={onReset} className="text-orange-200 text-[10px] font-bold hover:text-white underline">Xóa tất cả</button>
+      {/* Popup */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-orange-600 rounded-t-2xl flex-shrink-0">
+          <span className="text-white font-black text-sm">Bộ lọc & Sắp xếp</span>
+          <button onClick={onClose} className="text-orange-200 hover:text-white text-xl leading-none">✕</button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-5">
+
+          {/* Sắp xếp */}
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sắp xếp</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: 'newest',      label: 'Mới nhất' },
+                { value: 'salary_high', label: 'Lương cao' },
+                { value: 'salary_low',  label: 'Lương thấp' },
+              ].map(opt => (
+                <button key={opt.value} onClick={() => setLocalSort(opt.value)}
+                  className={`py-2 px-2 rounded-xl text-[11px] font-bold border transition ${localSort === opt.value ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Trạng thái */}
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Trạng thái</p>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.keys(statusConfig).map(s => (
+                <button key={s} onClick={() => setLocalStatus(localStatus === s ? '' : s)}
+                  className={`py-2 px-3 rounded-xl text-[11px] font-bold border transition text-left ${localStatus === s ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Loại dự án */}
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Loại dự án</p>
+            <div className="grid grid-cols-2 gap-2">
+              {['Recruiting', 'Outsourcing'].map(t => (
+                <button key={t} onClick={() => setLocalType(localType === t ? '' : t)}
+                  className={`py-2 px-3 rounded-xl text-[11px] font-bold border transition ${localType === t ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tỉnh thành */}
+          {cities.length > 0 && (
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tỉnh / Thành phố</p>
+              <div className="grid grid-cols-2 gap-2">
+                {cities.map(c => (
+                  <button key={c} onClick={() => setLocalCity(localCity === c ? '' : c)}
+                    className={`py-2 px-3 rounded-xl text-[11px] font-bold border transition text-left ${localCity === c ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </div>
-        <div className="max-h-[70vh] overflow-y-auto">
-          <FilterContent />
+
+        {/* Footer buttons */}
+        <div className="px-4 pb-4 pt-3 border-t flex gap-2 flex-shrink-0">
+          <button
+            onClick={() => { setLocalStatus(''); setLocalType(''); setLocalCity(''); setLocalSort('newest'); }}
+            className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-50 transition"
+          >
+            Xóa tất cả
+          </button>
+          <button
+            onClick={() => { onApply({ status: localStatus, type: localType, city: localCity, sort: localSort }); onClose(); }}
+            className="flex-2 px-6 py-3 rounded-xl bg-orange-600 text-white font-bold text-sm hover:bg-orange-700 transition"
+          >
+            LỌC{activeCount > 0 ? ` (${activeCount})` : ''}
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -363,7 +461,8 @@ function ProjectsContent() {
   const [filterType, setFilterType]     = useState('');
   const [filterCity, setFilterCity]     = useState('');
   const [sortBy, setSortBy]             = useState('newest');
-  const [showFilters, setShowFilters]   = useState(false);
+  const [showFilters, setShowFilters]   = useState(false);  // PC sidebar
+  const [showPopup, setShowPopup]       = useState(false);  // Mobile popup
 
   useEffect(() => {
     const fetchData = async () => {
@@ -396,7 +495,6 @@ function ProjectsContent() {
 
   const filtered = useMemo(() => {
     let result = [...projects];
-
     if (search.trim()) {
       const s = search.toLowerCase();
       result = result.filter(p =>
@@ -411,114 +509,133 @@ function ProjectsContent() {
     if (filterType)   result = result.filter(p => p.project_type === filterType);
     if (filterCity)   result = result.filter(p => p.address_city === filterCity);
 
-    // Dự án có tag → lên đầu; trong mỗi nhóm sort theo tiêu chí
     result.sort((a, b) => {
-      const aPin = getFirstTag(a.tags) ? 1 : 0;
-      const bPin = getFirstTag(b.tags) ? 1 : 0;
-      if (bPin !== aPin) return bPin - aPin;
+      const aPri = tagPriority(a.tags);
+      const bPri = tagPriority(b.tags);
+      if (bPri !== aPri) return bPri - aPri;
       if (sortBy === 'salary_high') return (b.salary_max ?? 0) - (a.salary_max ?? 0);
       if (sortBy === 'salary_low')  return (a.salary_min ?? 0) - (b.salary_min ?? 0);
       return 0;
     });
-
     return result;
   }, [projects, search, filterStatus, filterType, filterCity, sortBy]);
 
   const activeFilters = [filterStatus, filterType, filterCity].filter(Boolean).length;
-  const resetFilters  = () => { setFilterStatus(''); setFilterType(''); setFilterCity(''); };
+  const resetFilters  = () => { setFilterStatus(''); setFilterType(''); setFilterCity(''); setSortBy('newest'); };
 
   return (
-    <div className="relative flex flex-col h-full bg-gray-50 overflow-hidden">
+    <div className="flex h-full bg-gray-100 overflow-hidden text-sm p-4 gap-3">
 
-      {/* TOOLBAR */}
-      <div className="bg-white border-b px-4 py-3 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              type="text"
-              placeholder="Tìm dự án, công ty, tỉnh thành..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none text-sm transition"
-            />
+      {/* PC SIDEBAR — đổ từ phải sang giống candidate */}
+      <FilterSidebar
+        show={showFilters}
+        filterStatus={filterStatus} setFilterStatus={setFilterStatus}
+        filterType={filterType}     setFilterType={setFilterType}
+        filterCity={filterCity}     setFilterCity={setFilterCity}
+        sortBy={sortBy}             setSortBy={setSortBy}
+        cities={cities}             onReset={resetFilters}
+      />
+
+      {/* MAIN COLUMN */}
+      <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden flex-1">
+
+        {/* TOOLBAR */}
+        <div className="p-3 border-b bg-white flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Tìm dự án, công ty, tỉnh thành..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-sm"
+              />
+            </div>
+
+            {/* Nút Lọc — PC mở sidebar, mobile mở popup */}
+            <button
+              onClick={() => {
+                if (window.innerWidth >= 640) setShowFilters(v => !v);
+                else setShowPopup(true);
+              }}
+              className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition
+                ${showFilters || activeFilters > 0
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                <line x1="4" y1="6" x2="20" y2="6"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+                <line x1="11" y1="18" x2="13" y2="18"/>
+              </svg>
+              Lọc
+              {activeFilters > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  {activeFilters}
+                </span>
+              )}
+            </button>
+
+            <Link
+              href="/projects/new"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 border-orange-600 transition whitespace-nowrap"
+            >
+              + Thêm dự án
+            </Link>
           </div>
 
-          <button
-            onClick={() => setShowFilters(v => !v)}
-            className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition
-              ${showFilters || activeFilters > 0
-                ? 'bg-orange-500 text-white border-orange-500'
-                : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-              <line x1="4" y1="6" x2="20" y2="6"/>
-              <line x1="8" y1="12" x2="16" y2="12"/>
-              <line x1="11" y1="18" x2="13" y2="18"/>
-            </svg>
-            Lọc
-            {activeFilters > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                {activeFilters}
-              </span>
-            )}
-          </button>
-
-          <Link
-            href="/projects/new"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 border-orange-600 transition whitespace-nowrap"
-          >
-            + Thêm dự án
-          </Link>
+          {!loading && (
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
+              {filtered.length} dự án{search || activeFilters ? ` (lọc từ ${projects.length})` : ''}
+            </p>
+          )}
         </div>
 
-        {!loading && (
-          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
-            {filtered.length} dự án{search || activeFilters ? ` (lọc từ ${projects.length})` : ''}
-          </p>
-        )}
+        {/* GRID */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm text-center">
+              {error}
+              <button onClick={() => window.location.reload()} className="ml-2 underline font-bold">Thử lại</button>
+            </div>
+          )}
+          {loading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          )}
+          {!loading && !error && filtered.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+              <span className="text-5xl mb-4">🔍</span>
+              <p className="font-bold text-sm">Không tìm thấy dự án phù hợp</p>
+              <p className="text-xs mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+            </div>
+          )}
+          {!loading && !error && filtered.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filtered.map(project => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* GRID */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm text-center">
-            {error}
-            <button onClick={() => window.location.reload()} className="ml-2 underline font-bold">Thử lại</button>
-          </div>
-        )}
-        {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
-          </div>
-        )}
-        {!loading && !error && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-            <span className="text-5xl mb-4">🔍</span>
-            <p className="font-bold text-sm">Không tìm thấy dự án phù hợp</p>
-            <p className="text-xs mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
-          </div>
-        )}
-        {!loading && !error && filtered.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.map(project => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* FILTER DRAWER */}
-      <FilterDrawer
-        open={showFilters}           onClose={() => setShowFilters(false)}
-        filterStatus={filterStatus}  setFilterStatus={setFilterStatus}
-        filterType={filterType}      setFilterType={setFilterType}
-        filterCity={filterCity}      setFilterCity={setFilterCity}
-        sortBy={sortBy}              setSortBy={setSortBy}
-        cities={cities}              activeFilters={activeFilters}
-        onReset={resetFilters}
+      {/* MOBILE POPUP */}
+      <FilterPopup
+        open={showPopup}
+        onClose={() => setShowPopup(false)}
+        onApply={({ status, type, city, sort }) => {
+          setFilterStatus(status);
+          setFilterType(type);
+          setFilterCity(city);
+          setSortBy(sort);
+        }}
+        initial={{ status: filterStatus, type: filterType, city: filterCity, sort: sortBy }}
+        cities={cities}
       />
     </div>
   );
