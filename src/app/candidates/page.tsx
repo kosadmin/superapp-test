@@ -220,14 +220,14 @@ function CandidatesContent() {
   const processedData = useMemo(() => {
     let result = [...allCandidates];
 
-    if (search.trim()) {
-      const s = search.toLowerCase().trim();
-      result = result.filter(c =>
-        c.candidate_name?.toLowerCase().includes(s) ||
-        c.phone?.includes(search) ||
-        c.candidate_id?.toLowerCase().includes(s)
-      );
-    }
+if (search.trim()) {
+  const s = search.toLowerCase().trim();
+  result = result.filter(c =>
+    (c.candidate_name ? String(c.candidate_name).toLowerCase().includes(s) : false) ||
+    (c.phone ? String(c.phone).includes(search) : false) ||
+    (c.candidate_id ? String(c.candidate_id).toLowerCase().includes(s) : false)
+  );
+}
 
     // Multi-select status filter
     if (filters.status.length > 0) {
@@ -253,14 +253,14 @@ function CandidatesContent() {
     if (filters.assigned_user.length > 0)
       result = result.filter(c => filters.assigned_user.includes(c.assigned_user_name));
 
-    // Multi-select tags
-    if (filters.tags.length > 0) {
-      result = result.filter(c => {
-        if (!c.tags) return false;
-        const tagList = c.tags.split(',').map((t: string) => t.trim());
-        return filters.tags.some(sel => tagList.includes(sel));
-      });
-    }
+// Thay đoạn filter tags cũ
+if (filters.tags.length > 0) {
+  result = result.filter(c => {
+    if (!c.tags) return false;
+    const tagList = String(c.tags).split(',').map((t: string) => t.trim()); // ✅ ép về string
+    return filters.tags.some(sel => tagList.includes(sel));
+  });
+}
 
     if (filters.interview_from) result = result.filter(c => c.interview_date && c.interview_date >= filters.interview_from);
     if (filters.interview_to) result = result.filter(c => c.interview_date && c.interview_date <= filters.interview_to);
