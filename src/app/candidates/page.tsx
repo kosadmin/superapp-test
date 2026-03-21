@@ -220,14 +220,14 @@ function CandidatesContent() {
   const processedData = useMemo(() => {
     let result = [...allCandidates];
 
-    if (search.trim()) {
-      const s = search.toLowerCase().trim();
-      result = result.filter(c =>
-        c.candidate_name?.toLowerCase().includes(s) ||
-        c.phone?.includes(search) ||
-        c.candidate_id?.toLowerCase().includes(s)
-      );
-    }
+if (search.trim()) {
+  const s = search.toLowerCase().trim();
+  result = result.filter(c =>
+    (c.candidate_name ? String(c.candidate_name).toLowerCase().includes(s) : false) ||
+    (c.phone ? String(c.phone).includes(search) : false) ||
+    (c.candidate_id ? String(c.candidate_id).toLowerCase().includes(s) : false)
+  );
+}
 
     // Multi-select status filter
     if (filters.status.length > 0) {
@@ -253,14 +253,14 @@ function CandidatesContent() {
     if (filters.assigned_user.length > 0)
       result = result.filter(c => filters.assigned_user.includes(c.assigned_user_name));
 
-    // Multi-select tags
-    if (filters.tags.length > 0) {
-      result = result.filter(c => {
-        if (!c.tags) return false;
-        const tagList = c.tags.split(',').map((t: string) => t.trim());
-        return filters.tags.some(sel => tagList.includes(sel));
-      });
-    }
+// Thay đoạn filter tags cũ
+if (filters.tags.length > 0) {
+  result = result.filter(c => {
+    if (!c.tags) return false;
+    const tagList = String(c.tags).split(',').map((t: string) => t.trim()); // ✅ ép về string
+    return filters.tags.some(sel => tagList.includes(sel));
+  });
+}
 
     if (filters.interview_from) result = result.filter(c => c.interview_date && c.interview_date >= filters.interview_from);
     if (filters.interview_to) result = result.filter(c => c.interview_date && c.interview_date <= filters.interview_to);
@@ -401,9 +401,9 @@ function CandidatesContent() {
     if (formData.pass_interview && !formData.onboard_date) return alert("Vui lòng nhập 'Ngày nhận việc' khi ứng viên đã đỗ PV!");
     if (formData.reject_offer && !formData.reason_rejected_offer) return alert("Vui lòng chọn 'Lý do từ chối Offer'!");
     if (formData.unqualified && !formData.reason_unqualified) return alert("Vui lòng chọn 'Lý do không đạt'!");
-    if (!formData.candidate_name?.trim()) return alert('Họ tên không được để trống');
-    if (!formData.phone?.trim()) return alert('Số điện thoại không được để trống');
-    if (!/^0\d{9}$/.test(formData.phone)) return alert('Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
+if (!String(formData.candidate_name || '').trim()) return alert('Họ tên không được để trống');
+if (!String(formData.phone || '').trim()) return alert('Số điện thoại không được để trống');
+if (!/^0\d{9}$/.test(String(formData.phone || ''))) return alert('Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) return alert('Email không đúng định dạng');
     setIsSaving(true);
     try {
@@ -419,13 +419,13 @@ function CandidatesContent() {
 
   const handleAddTag = (tag: string) => {
     if (!formData) return;
-    const current = formData.tags ? formData.tags.split(',').map((t: string) => t.trim()) : [];
+const current = formData.tags ? String(formData.tags).split(',').map((t: string) => t.trim()) : [];
     if (!current.includes(tag)) handleChange('tags', [...current, tag].join(', '));
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     if (!formData || !formData.tags) return;
-    handleChange('tags', formData.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t !== tagToRemove).join(', '));
+handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim()).filter((t: string) => t !== tagToRemove).join(', '));
   };
 
   const handleDelete = async () => {
