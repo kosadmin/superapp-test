@@ -401,9 +401,9 @@ if (filters.tags.length > 0) {
     if (formData.pass_interview && !formData.onboard_date) return alert("Vui lòng nhập 'Ngày nhận việc' khi ứng viên đã đỗ PV!");
     if (formData.reject_offer && !formData.reason_rejected_offer) return alert("Vui lòng chọn 'Lý do từ chối Offer'!");
     if (formData.unqualified && !formData.reason_unqualified) return alert("Vui lòng chọn 'Lý do không đạt'!");
-    if (!formData.candidate_name?.trim()) return alert('Họ tên không được để trống');
-    if (!formData.phone?.trim()) return alert('Số điện thoại không được để trống');
-    if (!/^0\d{9}$/.test(formData.phone)) return alert('Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
+if (!String(formData.candidate_name || '').trim()) return alert('Họ tên không được để trống');
+if (!String(formData.phone || '').trim()) return alert('Số điện thoại không được để trống');
+if (!/^0\d{9}$/.test(String(formData.phone || ''))) return alert('Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0');
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) return alert('Email không đúng định dạng');
     setIsSaving(true);
     try {
@@ -419,13 +419,13 @@ if (filters.tags.length > 0) {
 
   const handleAddTag = (tag: string) => {
     if (!formData) return;
-    const current = formData.tags ? formData.tags.split(',').map((t: string) => t.trim()) : [];
+const current = formData.tags ? String(formData.tags).split(',').map((t: string) => t.trim()) : [];
     if (!current.includes(tag)) handleChange('tags', [...current, tag].join(', '));
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     if (!formData || !formData.tags) return;
-    handleChange('tags', formData.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t !== tagToRemove).join(', '));
+handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim()).filter((t: string) => t !== tagToRemove).join(', '));
   };
 
   const handleDelete = async () => {
