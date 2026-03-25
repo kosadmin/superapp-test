@@ -464,16 +464,19 @@ function ProjectsContent() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
                 <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
               </svg>
-              Lọc
+              <span className="hidden sm:inline">Lọc</span>
               {activeCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">{activeCount}</span>
               )}
             </button>
 
-            <Link href="/projects/new"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 border-orange-600 transition whitespace-nowrap">
-              + Thêm dự án
-            </Link>
+<Link href="/projects/new"
+  className="flex items-center justify-center gap-1.5 px-3 py-2 sm:px-3 rounded-lg border text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 border-orange-600 transition">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5 flex-shrink-0">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+  <span className="hidden sm:inline">Thêm dự án</span>
+</Link>
           </div>
           {!loading && (
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
