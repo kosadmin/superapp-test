@@ -285,7 +285,7 @@ function ProjectDetailContent() {
   }, [project_id]);
 
   if (loading) return (
-    <div className="flex-1 flex items-center justify-center gap-3 text-gray-400">
+  <div className="fixed inset-0 flex items-center justify-center gap-3 text-gray-400 bg-gray-50">
       <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"/>
       Đang tải...
     </div>
@@ -421,41 +421,38 @@ function ProjectDetailContent() {
           {/* HEADER CARD */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
 
-            {/* Logo + tên + status + tags */}
-            <div className="flex gap-4 items-start mb-4 relative">
-              {/* Tags — absolute top-right corner */}
-              {tagList.length > 0 && (
-                <div className="absolute top-0 right-0 flex flex-wrap justify-end gap-1 max-w-[140px]">
-                  {tagList.map(tag => (
-                    <span key={tag} className={`${tagColor(tag)} text-[11px] font-black px-2.5 py-1 rounded-lg tracking-wide shadow-sm`}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
+      {/* Tags + Status — hàng ngang trên cùng */}
+{(tagList.length > 0 || project.status) && (
+  <div className="flex flex-wrap gap-1.5 mb-3">
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold border ${status.color}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}/>{project.status}
+    </span>
+    {tagList.map(tag => (
+      <span key={tag} className={`${tagColor(tag)} text-[11px] font-black px-3 py-1 rounded-lg tracking-wide shadow-sm`}>
+        {tag}
+      </span>
+    ))}
+  </div>
+)}
 
-              <div className="flex-shrink-0 w-14 h-14 rounded-2xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
-                {project.icon_job
-                  ? <img src={project.icon_job} alt={project.company} className="w-full h-full object-contain p-1.5"/>
-                  : <span className="text-2xl">{project.project_type === 'Recruiting' ? '🏭' : '🏢'}</span>}
-              </div>
-              <div className="flex-1 min-w-0" style={{ paddingRight: tagList.length > 0 ? '148px' : '0' }}>
-                <h1 className="font-black text-gray-900 text-xl leading-tight">{project.project}</h1>
-                {positions.length > 0 && (
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
-                    {positions.map((pos, i) => (
-                      <span key={i} className="text-orange-600 font-semibold text-sm whitespace-nowrap">{pos}</span>
-                    ))}
-                  </div>
-                )}
-                {/* Status — luôn hiện, nằm dưới positions */}
-                <div className="mt-2">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${status.color}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}/>{project.status}
-                  </span>
-                </div>
-              </div>
-            </div>
+{/* Logo + tên */}
+<div className="flex gap-4 items-start mb-4">
+  <div className="flex-shrink-0 w-14 h-14 rounded-2xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
+    {project.icon_job
+      ? <img src={project.icon_job} alt={project.company} className="w-full h-full object-contain p-1.5"/>
+      : <span className="text-2xl">{project.project_type === 'Recruiting' ? '🏭' : '🏢'}</span>}
+  </div>
+  <div className="flex-1 min-w-0">
+    <h1 className="font-black text-gray-900 text-xl leading-tight">{project.project}</h1>
+    {positions.length > 0 && (
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+        {positions.map((pos, i) => (
+          <span key={i} className="text-orange-600 font-semibold text-sm whitespace-nowrap">{pos}</span>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
                 {/* Address */}
                 <div className="flex items-center gap-1.5 mt-1">
                   <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
