@@ -232,28 +232,28 @@ function ActionMenu({ project, isPrivileged }: { project: ProjectDetail; isPrivi
   }, []);
 
   const items = [
-    { label: '+ Thêm dự án', href: '/projects/new', style: 'text-gray-700' },
-    ...(isPrivileged ? [{ label: 'Sửa dự án', href: `/projects/${project.project_id}/edit`, style: 'text-orange-600 font-bold' }] : []),
-    { label: '+ Thêm ứng viên', href: `/candidates/new?project=${encodeURIComponent(project.project)}`, style: 'text-gray-700' },
-    { label: 'Danh sách ứng viên', href: `/candidates?project=${encodeURIComponent(project.project)}`, style: 'text-gray-700' },
+    { label: '+ Thêm dự án',       href: '/projects/new' },
+    ...(isPrivileged ? [{ label: '+ Sửa dự án', href: `/projects/${project.project_id}/edit` }] : []),
+    { label: '+ Thêm ứng viên',    href: `/candidates/new?project=${encodeURIComponent(project.project)}` },
+    { label: '+ Danh sách ứng viên', href: `/candidates?project=${encodeURIComponent(project.project)}` },
   ];
 
   return (
     <div className="relative" ref={ref}>
       <button onClick={() => setOpen(v => !v)}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition
-          ${open ? 'bg-orange-500 text-white border-orange-500' : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}>
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/>
+          ${open ? 'bg-orange-600 text-white border-orange-600' : 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500'}`}>
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <path d="M12 5v14M5 12h14"/>
         </svg>
-        <span className="hidden sm:inline">Thao tác</span>
+        <span>Thao tác</span>
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+        <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
           {items.map(item => (
             <Link key={item.href} href={item.href}
               onClick={() => setOpen(false)}
-              className={`block px-4 py-2.5 text-sm hover:bg-orange-50 transition ${item.style}`}>
+              className="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
               {item.label}
             </Link>
           ))}
@@ -300,7 +300,7 @@ function ProjectDetailContent() {
 
   const status      = statusConfig[project.status] ?? statusConfig['Đang tuyển'];
   const positions   = project.position?.split(',').map(p => p.trim()).filter(Boolean) ?? [];
-  const addressFull = [project.adress_full || project.address_specific, project.address_city].filter(Boolean).join(', ');
+  const addressFull = project.adress_full || project.address_city;
   const ageLabel    = project.age_min && project.age_max ? `${project.age_min} – ${project.age_max}`
     : project.age_min ? `Từ ${project.age_min}` : project.age_max ? `Đến ${project.age_max}` : null;
 
@@ -421,47 +421,47 @@ function ProjectDetailContent() {
           {/* HEADER CARD */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
 
-            {/* Logo + tên + status + tags — tags góc phải */}
-            <div className="flex gap-4 items-start mb-4">
+            {/* Logo + tên + status + tags */}
+            <div className="flex gap-4 items-start mb-4 relative">
+              {/* Tags — absolute top-right corner */}
+              {tagList.length > 0 && (
+                <div className="absolute top-0 right-0 flex flex-wrap justify-end gap-1 max-w-[140px]">
+                  {tagList.map(tag => (
+                    <span key={tag} className={`${tagColor(tag)} text-[11px] font-black px-2.5 py-1 rounded-lg tracking-wide shadow-sm`}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="flex-shrink-0 w-14 h-14 rounded-2xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
                 {project.icon_job
                   ? <img src={project.icon_job} alt={project.company} className="w-full h-full object-contain p-1.5"/>
                   : <span className="text-2xl">{project.project_type === 'Recruiting' ? '🏭' : '🏢'}</span>}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <h1 className="font-black text-gray-900 text-xl leading-tight">{project.project}</h1>
-                    {positions.length > 0 && (
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
-                        {positions.map((pos, i) => (
-                          <span key={i} className="text-orange-600 font-semibold text-sm">{pos}</span>
-                        ))}
-                      </div>
-                    )}
+              <div className="flex-1 min-w-0" style={{ paddingRight: tagList.length > 0 ? '148px' : '0' }}>
+                <h1 className="font-black text-gray-900 text-xl leading-tight">{project.project}</h1>
+                {positions.length > 0 && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                    {positions.map((pos, i) => (
+                      <span key={i} className="text-orange-600 font-semibold text-sm whitespace-nowrap">{pos}</span>
+                    ))}
                   </div>
-                  {/* Status + Tags stacked top-right */}
-                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${status.color}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}/>{project.status}
-                    </span>
-                    {tagList.length > 0 && (
-                      <div className="flex flex-wrap justify-end gap-1">
-                        {tagList.map(tag => (
-                          <span key={tag} className={`${tagColor(tag)} text-[8px] font-black px-2 py-0.5 rounded-full tracking-wide`}>
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                )}
+                {/* Status — luôn hiện, nằm dưới positions */}
+                <div className="mt-2">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${status.color}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}/>{project.status}
+                  </span>
                 </div>
+              </div>
+            </div>
                 {/* Address */}
                 <div className="flex items-center gap-1.5 mt-2">
                   <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/>
                   </svg>
-                  <span className="text-gray-500 text-[12px]">{addressFull || project.address_city}</span>
+                  <span className="text-gray-500 text-[12px]">{addressFull}</span>
                 </div>
               </div>
             </div>
@@ -473,8 +473,8 @@ function ProjectDetailContent() {
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2.5">
                   <span className="text-base flex-shrink-0">💰</span>
                   <div>
-                    <p className="hidden sm:block text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Thu nhập</p>
-                    <p className="text-[12px] sm:text-[13px] font-bold text-gray-800 leading-snug">{formatSalaryShort(project.salary_min, project.salary_max)}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Thu nhập</p>
+                    <p className="text-[12px] font-bold text-gray-800 leading-snug">{formatSalaryShort(project.salary_min, project.salary_max)}</p>
                   </div>
                 </div>
               )}
@@ -483,8 +483,8 @@ function ProjectDetailContent() {
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2.5">
                   <span className="text-base flex-shrink-0">📋</span>
                   <div>
-                    <p className="hidden sm:block text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Hình thức</p>
-                    <p className="text-[12px] sm:text-[13px] font-bold text-gray-800 leading-snug">{project.hiring_form}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Hình thức</p>
+                    <p className="text-[12px] font-bold text-gray-800 leading-snug">{project.hiring_form}</p>
                   </div>
                 </div>
               )}
@@ -495,8 +495,8 @@ function ProjectDetailContent() {
                     <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/></svg>
                   </span>
                   <div>
-                    <p className="hidden sm:block text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Độ tuổi</p>
-                    <p className="text-[12px] sm:text-[13px] font-bold text-gray-800 leading-snug">{ageLabel}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Độ tuổi</p>
+                    <p className="text-[12px] font-bold text-gray-800 leading-snug">{ageLabel}</p>
                   </div>
                 </div>
               )}
@@ -505,8 +505,8 @@ function ProjectDetailContent() {
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2.5">
                   <span className="text-base flex-shrink-0">👥</span>
                   <div>
-                    <p className="hidden sm:block text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Cần tuyển</p>
-                    <p className="text-[12px] sm:text-[13px] font-bold text-gray-800 leading-snug">{project.headcount} người</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Cần tuyển</p>
+                    <p className="text-[12px] font-bold text-gray-800 leading-snug">{project.headcount} người</p>
                   </div>
                 </div>
               )}
