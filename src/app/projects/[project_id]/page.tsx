@@ -457,14 +457,12 @@ function ProjectDetailContent() {
               </div>
             </div>
                 {/* Address */}
-                <div className="flex items-center gap-1.5 mt-2">
+                <div className="flex items-center gap-1.5 mt-1">
                   <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/>
                   </svg>
                   <span className="text-gray-500 text-[12px]">{addressFull}</span>
                 </div>
-              </div>
-            </div>
 
             {/* Metric pills — ẩn tên trường trên mobile */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
