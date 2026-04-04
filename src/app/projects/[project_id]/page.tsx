@@ -20,6 +20,7 @@ interface ProjectDetail {
   project: string;
   project_type: string;
   company: string;
+  company_intro: string | null;          // ← thêm mới
   address_city: string;
   address_specific: string | null;
   adress_full: string | null;
@@ -92,7 +93,6 @@ const tagColor = (t: string) => TAG_COLORS[t] ?? FALLBACK_TAG_COLORS[t.split('')
 
 function formatSalary(min: number | null, max: number | null): string {
   if (!min && !max) return 'Thỏa thuận';
-  // "11 - 13 triệu" — không lặp đơn vị
   const fmt = (n: number) => n >= 1000 ? `${(n/1000).toFixed(n%1000===0?0:1)} tỷ` : `${n}`;
   if (min && max) return `${fmt(min)} - ${fmt(max)} triệu / tháng`;
   if (min) return `Từ ${fmt(min)} triệu / tháng`;
@@ -114,36 +114,43 @@ function formatDate(d: string | null): string {
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────
-const IconEdit = () => (
-  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+const IconDoc = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
   </svg>
 );
-const IconDoc = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-);
 const IconProcess = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+  </svg>
 );
 const IconMoney = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </svg>
 );
 const IconShield = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+  </svg>
 );
 const IconGift = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+  </svg>
 );
 const IconFolder = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+  </svg>
 );
 const IconNote = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+  </svg>
 );
 
 // ── Sub-components ─────────────────────────────────────────────────────────
-
 function InfoRow({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
@@ -166,7 +173,9 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   );
 }
 
+// ── ReqItem: ẩn hoàn toàn khi không có giá trị ──────────────────────────
 function ReqItem({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string | null }) {
+  if (!value) return null;                       // ← ẩn thay vì "Không yêu cầu"
   return (
     <div className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
       <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -174,7 +183,7 @@ function ReqItem({ icon, label, value }: { icon: React.ReactNode; label: string;
       </div>
       <div>
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{label}</p>
-        <p className="text-[13px] text-gray-700 mt-0.5 font-medium">{value || 'Không yêu cầu'}</p>
+        <p className="text-[13px] text-gray-700 mt-0.5 font-medium">{value}</p>
       </div>
     </div>
   );
@@ -232,10 +241,11 @@ function ActionMenu({ project, isPrivileged }: { project: ProjectDetail; isPrivi
   }, []);
 
   const items = [
-    { label: '+ Thêm dự án',       href: '/projects/new' },
+    { label: '+ Thêm dự án',         href: '/projects/new' },
     ...(isPrivileged ? [{ label: '+ Sửa dự án', href: `/projects/${project.project_id}/edit` }] : []),
-    { label: '+ Thêm ứng viên',    href: `/candidates/new?project=${encodeURIComponent(project.project)}` },
-    { label: '+ Danh sách ứng viên', href: `/candidates?project=${encodeURIComponent(project.project)}` },
+    // ← truyền project_id để trang thêm ứng viên tự động fill dữ liệu
+    { label: '+ Thêm ứng viên',       href: `/candidates/new?project_id=${project.project_id}` },
+    { label: '+ Danh sách ứng viên',  href: `/candidates?project=${encodeURIComponent(project.project)}` },
   ];
 
   return (
@@ -285,7 +295,7 @@ function ProjectDetailContent() {
   }, [project_id]);
 
   if (loading) return (
-  <div className="fixed inset-0 flex items-center justify-center gap-3 text-gray-400 bg-gray-50">
+    <div className="fixed inset-0 flex items-center justify-center gap-3 text-gray-400 bg-gray-50">
       <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"/>
       Đang tải...
     </div>
@@ -313,15 +323,18 @@ function ProjectDetailContent() {
     { key: 'equip',     label: 'Trang thiết bị', value: project.benefit_equipment },
   ].filter(b => b.value);
 
-  // ── Sections (reusable for both PC and mobile) ──────────────────────────
+  // ── Sections ────────────────────────────────────────────────────────────
+
+  // ① "Thông tin công việc" (đổi từ "Thông tin chi tiết tuyển dụng")
   const SectionDetail = (
-    <Section title="Thông tin chi tiết tuyển dụng" icon={<IconDoc/>}>
+    <Section title="Thông tin công việc" icon={<IconDoc/>}>
       {isPrivileged && <InfoRow label="Loại công việc" value={project.job_type}/>}
-      {isPrivileged && <InfoRow label="Loại dự án" value={project.project_type}/>}
-      <InfoRow label="Mô tả công việc" value={project.job_description}/>
-      <InfoRow label="Bộ phận" value={project.department}/>
-      <InfoRow label="Thời gian làm việc" value={project.work_schedule}/>
-      <InfoRow label="Môi trường làm việc" value={project.work_environment}/>
+      {isPrivileged && <InfoRow label="Loại dự án"     value={project.project_type}/>}
+      <InfoRow label="Giới thiệu công ty"   value={project.company_intro}/>  {/* ← thêm mới */}
+      <InfoRow label="Mô tả công việc"      value={project.job_description}/>
+      <InfoRow label="Bộ phận"              value={project.department}/>
+      <InfoRow label="Thời gian làm việc"   value={project.work_schedule}/>
+      <InfoRow label="Môi trường làm việc"  value={project.work_environment}/>
       <InfoRow label="Triển khai" value={
         project.deploy_start || project.deploy_end
           ? `${formatDate(project.deploy_start)} → ${formatDate(project.deploy_end)}`
@@ -332,12 +345,13 @@ function ProjectDetailContent() {
 
   const SectionSalary = (
     <Section title="Thông tin lương" icon={<IconMoney/>}>
-      <InfoRow label="Thu nhập" value={formatSalary(project.salary_min, project.salary_max)}/>
+      <InfoRow label="Thu nhập"       value={formatSalary(project.salary_min, project.salary_max)}/>
       <InfoRow label="Chi tiết lương" value={project.salary_detail}/>
       <InfoRow label="Lương thử việc" value={project.probation_salary}/>
     </Section>
   );
 
+  // ② "Chi tiết quyền lợi" (đổi từ "Quyền lợi chi tiết")
   const SectionBenefit = (
     <Section title="Quyền lợi" icon={<IconGift/>}>
       {benefitItems.length > 0 && (
@@ -354,7 +368,7 @@ function ProjectDetailContent() {
       )}
       {project.benefit_specific && (
         <div className={benefitItems.length > 0 ? 'pt-2 border-t border-gray-50' : ''}>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Quyền lợi chi tiết</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Chi tiết quyền lợi</p>
           <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-line">{project.benefit_specific}</p>
         </div>
       )}
@@ -364,34 +378,37 @@ function ProjectDetailContent() {
     </Section>
   );
 
+  // ③ "Yêu cầu công việc" — ReqItem ẩn hoàn toàn khi null (không hiện "Không yêu cầu")
   const SectionRequire = (
     <Section title="Yêu cầu công việc" icon={<IconShield/>}>
       <ReqItem icon="⚤" label="Giới tính" value={project.gender_required}/>
       <ReqItem icon={
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/></svg>
       } label="Độ tuổi" value={ageLabel}/>
-      <ReqItem icon="🎓" label="Học vấn" value={project.education_required}/>
-      <ReqItem icon="💼" label="Kinh nghiệm" value={project.experience_required}/>
-      <ReqItem icon="👤" label="Ngoại hình / Thể chất" value={project.appearance_required}/>
-      <ReqItem icon="⚙️" label="Kỹ năng" value={project.skill_required}/>
-      <ReqItem icon="🔄" label="Tái tuyển dụng" value={project.rehire_accepted}/>
+      <ReqItem icon="🎓" label="Học vấn"                value={project.education_required}/>
+      <ReqItem icon="💼" label="Kinh nghiệm"            value={project.experience_required}/>
+      <ReqItem icon="👤" label="Ngoại hình / Thể chất"  value={project.appearance_required}/>
+      <ReqItem icon="⚙️" label="Kỹ năng"               value={project.skill_required}/>
+      <ReqItem icon="🔄" label="Tái tuyển dụng"         value={project.rehire_accepted}/>
     </Section>
   );
 
+  // ④ "Hồ sơ cần chuẩn bị" (đổi từ "Hồ sơ yêu cầu")
   const SectionDocs = (
-    <Section title="Hồ sơ yêu cầu" icon={<IconFolder/>}>
+    <Section title="Hồ sơ cần chuẩn bị" icon={<IconFolder/>}>
       <InfoRow label="Khi đi phỏng vấn" value={project.interview_docs}/>
-      <InfoRow label="Khi đi làm" value={project.onboard_docs}/>
+      <InfoRow label="Khi đi làm"       value={project.onboard_docs}/>
     </Section>
   );
 
+  // ⑤ Labels ngắn gọn cho quy trình
   const SectionProcess = (
     <Section title="Quy trình tuyển dụng" icon={<IconProcess/>}>
-      <InfoRow label="Lịch & Quy trình đăng ký, chốt danh sách" value={project.register_process}/>
-      <InfoRow label="Lịch & Quy trình Phỏng vấn, Nhận việc" value={project.interview_process}/>
-      <InfoRow label="Đầu mối đón / hỗ trợ" value={project.pickup_support}/>
-      <InfoRow label="Quy trình thử việc" value={project.probation_info}/>
-      <InfoRow label="Thời hạn bảo hành" value={project.warranty_period}/>
+      <InfoRow label="Đăng ký & Chốt danh sách" value={project.register_process}/>
+      <InfoRow label="Phỏng vấn & Nhận việc"    value={project.interview_process}/>
+      <InfoRow label="Đầu mối đón / hỗ trợ"     value={project.pickup_support}/>
+      <InfoRow label="Thử việc"                 value={project.probation_info}/>
+      <InfoRow label="Thời hạn bảo hành"        value={project.warranty_period}/>
     </Section>
   );
 
@@ -421,49 +438,49 @@ function ProjectDetailContent() {
           {/* HEADER CARD */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
 
-      {/* Tags + Status — hàng ngang trên cùng */}
-{(tagList.length > 0 || project.status) && (
-  <div className="flex flex-wrap gap-1.5 mb-3">
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold border ${status.color}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}/>{project.status}
-    </span>
-    {tagList.map(tag => (
-      <span key={tag} className={`${tagColor(tag)} text-[11px] font-black px-3 py-1 rounded-lg tracking-wide shadow-sm`}>
-        {tag}
-      </span>
-    ))}
-  </div>
-)}
+            {/* Tags + Status */}
+            {(tagList.length > 0 || project.status) && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold border ${status.color}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}/>{project.status}
+                </span>
+                {tagList.map(tag => (
+                  <span key={tag} className={`${tagColor(tag)} text-[11px] font-black px-3 py-1 rounded-lg tracking-wide shadow-sm`}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
-{/* Logo + tên */}
-<div className="flex gap-4 items-start mb-4">
-  <div className="flex-shrink-0 w-14 h-14 rounded-2xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
-    {project.icon_job
-      ? <img src={project.icon_job} alt={project.company} className="w-full h-full object-contain p-1.5"/>
-      : <span className="text-2xl">{project.project_type === 'Recruiting' ? '🏭' : '🏢'}</span>}
-  </div>
-  <div className="flex-1 min-w-0">
-    <h1 className="font-black text-gray-900 text-xl leading-tight">{project.project}</h1>
-    {positions.length > 0 && (
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
-        {positions.map((pos, i) => (
-          <span key={i} className="text-orange-600 font-semibold text-sm whitespace-nowrap">{pos}</span>
-        ))}
-      </div>
-    )}
-  </div>
-</div>
-                {/* Address */}
-                <div className="flex items-center gap-1.5 mt-1">
-                  <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/>
-                  </svg>
-                  <span className="text-gray-500 text-[12px]">{addressFull}</span>
-                </div>
+            {/* Logo + tên */}
+            <div className="flex gap-4 items-start mb-4">
+              <div className="flex-shrink-0 w-14 h-14 rounded-2xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
+                {project.icon_job
+                  ? <img src={project.icon_job} alt={project.company} className="w-full h-full object-contain p-1.5"/>
+                  : <span className="text-2xl">{project.project_type === 'Recruiting' ? '🏭' : '🏢'}</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="font-black text-gray-900 text-xl leading-tight">{project.project}</h1>
+                {positions.length > 0 && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                    {positions.map((pos, i) => (
+                      <span key={i} className="text-orange-600 font-semibold text-sm whitespace-nowrap">{pos}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
-            {/* Metric pills — ẩn tên trường trên mobile */}
+            {/* Address */}
+            <div className="flex items-center gap-1.5 mb-4">
+              <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/>
+              </svg>
+              <span className="text-gray-500 text-[12px]">{addressFull}</span>
+            </div>
+
+            {/* Metric pills */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-              {/* Thu nhập */}
               {(project.salary_min || project.salary_max) && (
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2.5">
                   <span className="text-base flex-shrink-0">💰</span>
@@ -473,7 +490,6 @@ function ProjectDetailContent() {
                   </div>
                 </div>
               )}
-              {/* Hình thức tuyển */}
               {project.hiring_form && (
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2.5">
                   <span className="text-base flex-shrink-0">📋</span>
@@ -483,7 +499,6 @@ function ProjectDetailContent() {
                   </div>
                 </div>
               )}
-              {/* Độ tuổi */}
               {ageLabel && (
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2.5">
                   <span className="text-base flex-shrink-0">
@@ -495,7 +510,6 @@ function ProjectDetailContent() {
                   </div>
                 </div>
               )}
-              {/* Cần tuyển — sensitive */}
               {isPrivileged && project.headcount && (
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 px-3 py-2.5">
                   <span className="text-base flex-shrink-0">👥</span>
@@ -516,18 +530,15 @@ function ProjectDetailContent() {
             )}
           </div>
 
-          {/* ── PC LAYOUT ── hidden on mobile */}
+          {/* ── PC LAYOUT ── */}
           <div className="hidden lg:grid grid-cols-3 gap-4">
-            {/* LEFT 2/3 */}
             <div className="col-span-2 space-y-4">
               {SectionDetail}
               {SectionSalary}
               {SectionProcess}
               {SectionNote}
             </div>
-            {/* RIGHT 1/3 */}
             <div className="space-y-4">
-              {/* Map / Company */}
               <div className="bg-white rounded-2xl border border-gray-100 p-4">
                 {project.map_link
                   ? <MapCard mapLink={project.map_link} address={addressFull || project.address_city}/>
@@ -551,9 +562,8 @@ function ProjectDetailContent() {
             </div>
           </div>
 
-          {/* ── MOBILE LAYOUT ── hidden on desktop */}
+          {/* ── MOBILE LAYOUT ── */}
           <div className="lg:hidden space-y-4">
-            {/* Map — gọn, không có company/avatar/ID */}
             {project.map_link && (
               <div className="bg-white rounded-2xl border border-gray-100 p-4">
                 <MapCard mapLink={project.map_link} address={addressFull || project.address_city}/>
@@ -574,10 +584,10 @@ function ProjectDetailContent() {
               <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Thông tin hệ thống</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 text-[12px]">
                 {([
-                  ['Người tạo',    project.created_by],
-                  ['Ngày tạo',     formatDate(project.created_at?.split('T')[0] ?? null)],
-                  ['Cập nhật cuối',formatDate(project.last_updated_at?.split('T')[0] ?? null)],
-                  ['Quyền riêng tư', project.privacy],
+                  ['Người tạo',     project.created_by],
+                  ['Ngày tạo',      formatDate(project.created_at?.split('T')[0] ?? null)],
+                  ['Cập nhật cuối', formatDate(project.last_updated_at?.split('T')[0] ?? null)],
+                  ['Quyền riêng tư',project.privacy],
                 ] as [string, string | null][]).map(([lbl, val]) => val && val !== '—' ? (
                   <div key={lbl}>
                     <p className="text-gray-400 font-bold text-[10px] uppercase tracking-wide">{lbl}</p>
