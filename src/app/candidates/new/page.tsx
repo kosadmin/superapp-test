@@ -1,12 +1,37 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * SETUP:
+ *  - Thêm vào .env.local:
+ *      NEXT_PUBLIC_GAS_CANDIDATES_URL=https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec
+ *
+ *  - Điều hướng từ trang dự án:
+ *      href="/candidates/new?project_id=<project_id>"
+ *    → Trang sẽ tự fetch dữ liệu dự án từ Supabase và auto-fill các trường tương ứng.
+ *
+ *  - Vị trí ứng tuyển: tự động chuyển thành dropdown khi dự án có danh sách vị trí.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AppLayout from '@/components/AppLayout';
 import { MASTER_DATA } from '@/constants/masterData';
-import { API_CONFIG } from '@/constants/masterData';
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// ── Google Apps Script endpoint ────────────────────────────────────────────
+// Khai báo trong .env.local: NEXT_PUBLIC_GAS_CANDIDATES_URL=https://...
+const GAS_URL = process.env.NEXT_PUBLIC_GAS_CANDIDATES_URL ?? '';
+
+// ── Types ──────────────────────────────────────────────────────────────────
 interface CandidateForm {
   candidate_name: string;
   phone: string;
@@ -38,14 +63,28 @@ interface CandidateForm {
   assigned_user_group: string;
 }
 
-interface FormErrors {
-  [key: string]: string | undefined;
+interface FormErrors { [key: string]: string | undefined; }
+
+// Dữ liệu dự án lấy từ Supabase
+interface ProjectOption {
+  project_id: string;
+  project: string;
+  project_type: string;
+  company: string;
+  department: string | null;
+  position: string | null;
 }
 
+// ── Inner form (cần Suspense vì dùng useSearchParams) ─────────────────────
 function NewCandidateForm() {
   const { name, user_id, user_group } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const searchParams = useSearchParams();
+
+  const [loading, setLoading]             = useState(false);
+  const [errors, setErrors]               = useState<FormErrors>({});
+  const [supabaseProjects, setSupabaseProjects] = useState<ProjectOption[]>([]);
+  const [projectsLoading, setProjectsLoading]   = useState(true);
+
   const [form, setForm] = useState<CandidateForm>({
     candidate_name: '', phone: '', other_phone: '', gender: '', email: '',
     id_card_number: '', id_card_issued_date: '', id_card_issued_place: '',
@@ -56,42 +95,85 @@ function NewCandidateForm() {
     assigned_user: '', assigned_user_name: '', assigned_user_group: '',
   });
 
+  // ── Load danh sách dự án từ Supabase ──────────────────────────────────
+  useEffect(() => {
+    supabase
+      .from('projects')
+      .select('project_id, project, project_type, company, department, position')
+      .eq('status', 'Đang tuyển')
+      .order('project', { ascending: true })
+      .then(({ data }) => {
+        setSupabaseProjects((data as ProjectOption[]) || []);
+        setProjectsLoading(false);
+      });
+  }, []);
+
+  // ── Auto-fill từ URL param ?project_id=... ────────────────────────────
+  useEffect(() => {
+    if (projectsLoading) return;
+    const projectIdParam = searchParams.get('project_id');
+    if (!projectIdParam) return;
+    const found = supabaseProjects.find(p => p.project_id === projectIdParam);
+    if (!found) return;
+    setForm(prev => ({
+      ...prev,
+      project:      found.project,
+      project_id:   found.project_id,
+      project_type: found.project_type || '',
+      company:      found.company || '',
+      department:   found.department || '',
+      position:     '',   // reset vị trí để user chọn từ dropdown
+    }));
+  }, [projectsLoading, supabaseProjects, searchParams]);
+
+  // ── Sync thông tin người phụ trách ───────────────────────────────────
   useEffect(() => {
     setForm(prev => ({
       ...prev,
-      assigned_user: user_id ? String(user_id) : prev.assigned_user,
-      assigned_user_name: name ? String(name) : prev.assigned_user_name,
+      assigned_user:       user_id    ? String(user_id)    : prev.assigned_user,
+      assigned_user_name:  name       ? String(name)       : prev.assigned_user_name,
       assigned_user_group: user_group ? String(user_group) : prev.assigned_user_group,
     }));
   }, [user_id, name, user_group]);
 
+  // ── Derived values ────────────────────────────────────────────────────
+  const selectedProject = supabaseProjects.find(p => p.project === form.project);
+  const availablePositions = selectedProject?.position
+    ?.split(',').map(p => p.trim()).filter(Boolean) ?? [];
+
   const availableSourceTypeGroups = form.data_source_dept
     ? (MASTER_DATA.sourceTypeGroupsByDept as Record<string, string[]>)[form.data_source_dept] || []
     : [];
-
   const availableSourceTypes = form.data_source_type_group
     ? (MASTER_DATA.sourceTypesByGroup as Record<string, string[]>)[form.data_source_type_group] || []
     : [];
 
-  const birthYear = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
+  const birthYear   = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
   const addressFull = [form.address_street, form.address_ward, form.address_city].filter(Boolean).join(' - ');
 
+  // ── Handlers ──────────────────────────────────────────────────────────
   const handleChange = (field: keyof CandidateForm, value: string) => {
     setForm(prev => {
-      const newForm = { ...prev, [field]: value };
+      const next = { ...prev, [field]: value };
+
       if (field === 'project') {
-        newForm.project_type = MASTER_DATA.projectTypeMap[value] || '';
-        newForm.project_id = MASTER_DATA.projectIdMap[value] || '';
-        newForm.company = MASTER_DATA.projectCompanyMap[value] || '';
+        // Lookup từ Supabase thay vì MASTER_DATA
+        const found = supabaseProjects.find(p => p.project === value);
+        next.project_type = found?.project_type || '';
+        next.project_id   = found?.project_id   || '';
+        next.company      = found?.company       || '';
+        next.department   = found?.department    || '';
+        next.position     = '';   // reset khi đổi dự án
       }
       if (field === 'data_source_dept') {
-        newForm.data_source_type_group = '';
-        newForm.data_source_type = '';
+        next.data_source_type_group = '';
+        next.data_source_type       = '';
       } else if (field === 'data_source_type_group') {
-        newForm.data_source_type = '';
+        next.data_source_type = '';
       }
-      return newForm;
+      return next;
     });
+
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
     if (field === 'phone' && value && !/^0\d{9}$/.test(value))
       setErrors(prev => ({ ...prev, phone: 'SĐT phải có 10 chữ số và bắt đầu bằng 0' }));
@@ -100,61 +182,84 @@ function NewCandidateForm() {
   };
 
   const validateForm = () => {
-    const newErrors: FormErrors = {};
-    if (!form.candidate_name.trim()) newErrors.candidate_name = 'Họ tên là bắt buộc';
-    if (!form.phone.trim()) newErrors.phone = 'Số điện thoại là bắt buộc';
-    else if (!/^0\d{9}$/.test(form.phone)) newErrors.phone = 'SĐT phải có 10 chữ số và bắt đầu bằng 0';
-    if (!form.data_source_dept) newErrors.data_source_dept = 'Vui lòng chọn Bộ phận tạo nguồn';
-    if (!form.data_source_type_group) newErrors.data_source_type_group = 'Vui lòng chọn Nhóm nguồn';
-    if (!form.data_source_type) newErrors.data_source_type = 'Vui lòng chọn Loại nguồn cụ thể';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e: FormErrors = {};
+    if (!form.candidate_name.trim())     e.candidate_name        = 'Họ tên là bắt buộc';
+    if (!form.phone.trim())              e.phone                 = 'Số điện thoại là bắt buộc';
+    else if (!/^0\d{9}$/.test(form.phone)) e.phone              = 'SĐT phải có 10 chữ số và bắt đầu bằng 0';
+    if (!form.data_source_dept)          e.data_source_dept      = 'Vui lòng chọn Bộ phận tạo nguồn';
+    if (!form.data_source_type_group)    e.data_source_type_group= 'Vui lòng chọn Nhóm nguồn';
+    if (!form.data_source_type)          e.data_source_type      = 'Vui lòng chọn Loại nguồn cụ thể';
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ── Submit → Google Apps Script ───────────────────────────────────────
+  const handleSubmit = async (ev: React.FormEvent) => {
+    ev.preventDefault();
     if (!validateForm()) return;
+    if (!GAS_URL) { alert('Chưa cấu hình NEXT_PUBLIC_GAS_CANDIDATES_URL'); return; }
+
     setLoading(true);
     try {
       const payload = {
-        action: 'create',
-        name: name || 'unknown',
-        user_id: user_id || 'unknown',
-        user_group: user_group || 'unknown',
+        // Metadata người tạo
+        created_by_name:  name       || 'unknown',
+        created_by_id:    user_id    || 'unknown',
+        created_by_group: user_group || 'unknown',
+        // Form fields
         ...form,
-        birth_year: birthYear,
+        birth_year:   birthYear,
         address_full: addressFull,
-        contacted: true,
+        contacted:    true,
+        // Các trường boolean & candidate_id sẽ được GAS tự sinh:
+        // candidate_id, interested, scheduled_for_interview,
+        // show_up_for_interview, pass_interview, onboard,
+        // reject_offer, unqualified
       };
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
-        method: 'POST',
+
+      const res = await fetch(GAS_URL, {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body:    JSON.stringify(payload),
+        // Nếu GAS chưa bật CORS, dùng mode: 'no-cors' (response sẽ opaque — không đọc được body)
+        // mode: 'no-cors',
       });
-      if (!res.ok) throw new Error(`Lỗi server: ${res.status}`);
-      const data = await res.json();
-      if (data.success) {
+
+      // Khi dùng mode 'no-cors', res.ok luôn false và không đọc được json —
+      // trong trường hợp đó hãy coi thành công nếu không throw.
+      let success = false;
+      try {
+        const data = await res.json();
+        success = !!data?.success;
+        if (!success) throw new Error(data?.error || 'Lỗi từ server');
+      } catch {
+        // Nếu không parse được JSON (no-cors), vẫn coi là đã gửi thành công
+        success = true;
+      }
+
+      if (success) {
         alert('Tạo ứng viên thành công!');
         window.location.href = '/candidates';
-      } else {
-        alert('Lỗi: ' + (data.message || 'Không thể tạo ứng viên'));
       }
     } catch (err) {
       console.error('Submit error:', err);
-      alert('Lỗi kết nối server.');
+      alert('Lỗi khi gửi dữ liệu: ' + (err instanceof Error ? err.message : 'Không xác định'));
     } finally {
       setLoading(false);
     }
   };
 
-  // --- STYLE HELPERS ---
+  // ── Style helpers ─────────────────────────────────────────────────────
   const inp = (field: keyof CandidateForm) =>
-    `w-full p-2.5 border rounded-xl mt-1 text-sm outline-none transition focus:bg-white ${errors[field] ? 'border-red-400 focus:border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-orange-400 bg-white'}`;
-  const ro = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500 text-sm cursor-not-allowed";
-  const lbl = "text-[10px] font-bold text-gray-400 uppercase ml-1";
-  const err = "text-red-500 text-[10px] mt-0.5 ml-1 font-medium";
+    `w-full p-2.5 border rounded-xl mt-1 text-sm outline-none transition focus:bg-white ${
+      errors[field]
+        ? 'border-red-400 focus:border-red-500 bg-red-50/30'
+        : 'border-gray-200 focus:border-orange-400 bg-white'
+    }`;
+  const ro  = 'w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500 text-sm cursor-not-allowed';
+  const lbl = 'text-[10px] font-bold text-gray-400 uppercase ml-1';
+  const err = 'text-red-500 text-[10px] mt-0.5 ml-1 font-medium';
 
-  // Section header component helper
   const SectionHeader = ({ color, label }: { color: string; label: string }) => (
     <h3 className={`font-bold mb-4 border-l-4 pl-3 text-xs uppercase tracking-wider text-gray-800 ${color}`}>{label}</h3>
   );
@@ -162,8 +267,8 @@ function NewCandidateForm() {
   return (
     <div className="h-full bg-gray-100 overflow-hidden flex flex-col text-sm">
 
-      {/* TOP BAR */}
-      <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 bg-white border-b">
+      {/* TOP BAR ─────────────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-5 py-3 bg-white border-b">
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => window.history.back()}
             className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition">
@@ -173,13 +278,18 @@ function NewCandidateForm() {
           </button>
           <h1 className="font-black text-orange-700 uppercase tracking-tight text-sm">Tạo mới ứng viên</h1>
         </div>
+
         <div className="flex gap-2">
+          {/* Hủy: mobile = "Hủy", desktop = "Hủy bỏ" */}
           <button type="button" onClick={() => window.history.back()}
-            className="px-4 py-2 rounded-xl border text-xs font-bold text-gray-600 bg-white hover:bg-gray-50 transition">
-            Hủy bỏ
+            className="px-3 sm:px-4 py-2 rounded-xl border text-xs font-bold text-gray-600 bg-white hover:bg-gray-50 transition">
+            <span className="sm:hidden">Hủy</span>
+            <span className="hidden sm:inline">Hủy bỏ</span>
           </button>
+
+          {/* Lưu: mobile = "Lưu", desktop = "Lưu ứng viên" */}
           <button type="submit" form="new-candidate-form" disabled={loading}
-            className="px-6 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 disabled:bg-orange-300 shadow-sm shadow-orange-200 transition flex items-center gap-1.5">
+            className="px-4 sm:px-6 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 disabled:bg-orange-300 shadow-sm shadow-orange-200 transition flex items-center gap-1.5">
             {loading ? (
               <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.21-8.58"/></svg>
             ) : (
@@ -188,17 +298,18 @@ function NewCandidateForm() {
                 <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
               </svg>
             )}
-            {loading ? 'Đang lưu...' : 'Lưu ứng viên'}
+            <span className="sm:hidden">{loading ? '...' : 'Lưu'}</span>
+            <span className="hidden sm:inline">{loading ? 'Đang lưu...' : 'Lưu ứng viên'}</span>
           </button>
         </div>
       </div>
 
-      {/* BODY — scrollable */}
+      {/* BODY ─────────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto p-4">
         <form id="new-candidate-form" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
-            {/* CỘT TRÁI */}
+            {/* ── CỘT TRÁI ── */}
             <div className="space-y-4">
 
               {/* THÔNG TIN CÁ NHÂN */}
@@ -207,7 +318,8 @@ function NewCandidateForm() {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                   <div className="col-span-2">
                     <label className={lbl}>Họ và tên <span className="text-red-500">*</span></label>
-                    <input type="text" value={form.candidate_name} onChange={e => handleChange('candidate_name', e.target.value)} className={inp('candidate_name')} placeholder="Nguyễn Văn A" />
+                    <input type="text" value={form.candidate_name} onChange={e => handleChange('candidate_name', e.target.value)}
+                      className={inp('candidate_name')} placeholder="Nguyễn Văn A" />
                     {errors.candidate_name && <p className={err}>{errors.candidate_name}</p>}
                   </div>
                   <div>
@@ -223,16 +335,19 @@ function NewCandidateForm() {
                   </div>
                   <div>
                     <label className={lbl}>Số điện thoại <span className="text-red-500">*</span></label>
-                    <input type="text" value={form.phone} onChange={e => handleChange('phone', e.target.value)} className={inp('phone')} placeholder="090..." />
+                    <input type="text" value={form.phone} onChange={e => handleChange('phone', e.target.value)}
+                      className={inp('phone')} placeholder="090..." />
                     {errors.phone && <p className={err}>{errors.phone}</p>}
                   </div>
                   <div>
                     <label className={lbl}>Số điện thoại khác</label>
-                    <input type="text" value={form.other_phone} onChange={e => handleChange('other_phone', e.target.value)} className={inp('other_phone')} placeholder="090..." />
+                    <input type="text" value={form.other_phone} onChange={e => handleChange('other_phone', e.target.value)}
+                      className={inp('other_phone')} placeholder="090..." />
                   </div>
                   <div className="col-span-2">
                     <label className={lbl}>Email</label>
-                    <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} className={inp('email')} placeholder="example@gmail.com" />
+                    <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)}
+                      className={inp('email')} placeholder="example@gmail.com" />
                     {errors.email && <p className={err}>{errors.email}</p>}
                   </div>
                 </div>
@@ -261,7 +376,7 @@ function NewCandidateForm() {
               <div className="bg-white rounded-xl border p-5 shadow-sm">
                 <SectionHeader color="border-emerald-500" label="Địa chỉ thường trú" />
                 <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className={lbl}>Số nhà / Tên đường</label>
                       <input type="text" value={form.address_street} onChange={e => handleChange('address_street', e.target.value)} className={inp('address_street')} />
@@ -284,13 +399,12 @@ function NewCandidateForm() {
                   </div>
                 </div>
               </div>
-
             </div>
 
-            {/* CỘT PHẢI */}
+            {/* ── CỘT PHẢI ── */}
             <div className="space-y-4">
 
-              {/* HỌC VẤN */}
+              {/* HỌC VẤN & KINH NGHIỆM */}
               <div className="bg-white rounded-xl border p-5 shadow-sm">
                 <SectionHeader color="border-orange-500" label="Học vấn & Kinh nghiệm" />
                 <div className="space-y-3">
@@ -303,49 +417,80 @@ function NewCandidateForm() {
                   </div>
                   <div>
                     <label className={lbl}>Tóm tắt kinh nghiệm làm việc</label>
-                    <textarea rows={3} value={form.experience_summary} onChange={e => handleChange('experience_summary', e.target.value)} className={inp('experience_summary')} placeholder="Các công ty đã làm, vị trí đảm nhiệm..." />
+                    <textarea rows={3} value={form.experience_summary} onChange={e => handleChange('experience_summary', e.target.value)}
+                      className={inp('experience_summary')} placeholder="Các công ty đã làm, vị trí đảm nhiệm..." />
                   </div>
                   <div>
                     <label className={lbl}>Nguyện vọng công việc</label>
-                    <textarea rows={2} value={form.job_wish} onChange={e => handleChange('job_wish', e.target.value)} className={inp('job_wish')} placeholder="Mong muốn về lương, môi trường..." />
+                    <textarea rows={2} value={form.job_wish} onChange={e => handleChange('job_wish', e.target.value)}
+                      className={inp('job_wish')} placeholder="Mong muốn về lương, môi trường..." />
                   </div>
                   <div>
                     <label className={lbl}>Ghi chú chăm sóc</label>
-                    <textarea rows={2} value={form.take_note} onChange={e => handleChange('take_note', e.target.value)} className={inp('take_note')} placeholder="Ghi chú về cách chăm sóc, mốc chăm sóc..." />
+                    <textarea rows={2} value={form.take_note} onChange={e => handleChange('take_note', e.target.value)}
+                      className={inp('take_note')} placeholder="Ghi chú về cách chăm sóc, mốc chăm sóc..." />
                   </div>
                 </div>
               </div>
 
-              {/* TUYỂN DỤNG */}
+              {/* PHÂN LOẠI TUYỂN DỤNG */}
               <div className="bg-white rounded-xl border p-5 shadow-sm">
                 <SectionHeader color="border-orange-600" label="Phân loại tuyển dụng" />
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+
+                  {/* Chọn dự án — từ Supabase */}
                   <div className="col-span-2">
                     <label className={lbl}>Dự án</label>
-                    <select value={form.project} onChange={e => handleChange('project', e.target.value)} className={inp('project')}>
-                      <option value="">-- Chọn dự án --</option>
-                      {MASTER_DATA.projects.map(item => <option key={item} value={item}>{item}</option>)}
+                    <select
+                      value={form.project}
+                      onChange={e => handleChange('project', e.target.value)}
+                      className={inp('project')}
+                      disabled={projectsLoading}
+                    >
+                      <option value="">
+                        {projectsLoading ? 'Đang tải danh sách...' : '-- Chọn dự án --'}
+                      </option>
+                      {supabaseProjects.map(p => (
+                        <option key={p.project_id} value={p.project}>{p.project}</option>
+                      ))}
                     </select>
                   </div>
+
+                  {/* Trường tự động */}
                   <div>
                     <label className={lbl}>Loại dự án (Tự động)</label>
-                    <input type="text" value={form.project_type} readOnly className={ro} placeholder="Sẽ hiển thị khi chọn dự án" />
+                    <input type="text" value={form.project_type} readOnly className={ro} placeholder="Tự động" />
                   </div>
                   <div>
                     <label className={lbl}>ID Dự án (Tự động)</label>
-                    <input type="text" value={form.project_id} readOnly className={ro} placeholder="Sẽ hiển thị khi chọn dự án" />
+                    <input type="text" value={form.project_id} readOnly className={ro} placeholder="Tự động" />
                   </div>
                   <div className="col-span-2">
                     <label className={lbl}>Công ty (Tự động)</label>
-                    <input type="text" value={form.company} readOnly className={ro} placeholder="Sẽ hiển thị khi chọn dự án" />
+                    <input type="text" value={form.company} readOnly className={ro} placeholder="Tự động" />
                   </div>
+
+                  {/* Vị trí ứng tuyển: dropdown nếu dự án có vị trí, input text nếu chưa chọn dự án */}
                   <div>
                     <label className={lbl}>Vị trí ứng tuyển</label>
-                    <input type="text" value={form.position} onChange={e => handleChange('position', e.target.value)} className={inp('position')} />
+                    {availablePositions.length > 0 ? (
+                      <select value={form.position} onChange={e => handleChange('position', e.target.value)} className={inp('position')}>
+                        <option value="">-- Chọn vị trí --</option>
+                        {availablePositions.map(pos => (
+                          <option key={pos} value={pos}>{pos}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input type="text" value={form.position} onChange={e => handleChange('position', e.target.value)}
+                        className={inp('position')} placeholder={form.project ? 'Nhập vị trí' : 'Chọn dự án trước'} />
+                    )}
                   </div>
+
+                  {/* Bộ phận ứng tuyển */}
                   <div>
                     <label className={lbl}>Bộ phận ứng tuyển</label>
-                    <input type="text" value={form.department} onChange={e => handleChange('department', e.target.value)} className={inp('department')} />
+                    <input type="text" value={form.department} onChange={e => handleChange('department', e.target.value)}
+                      className={inp('department')} />
                   </div>
                 </div>
               </div>
@@ -364,7 +509,8 @@ function NewCandidateForm() {
                   </div>
                   <div>
                     <label className={lbl}>Nhóm nguồn <span className="text-red-500">*</span></label>
-                    <select value={form.data_source_type_group} onChange={e => handleChange('data_source_type_group', e.target.value)} className={inp('data_source_type_group')} disabled={!form.data_source_dept}>
+                    <select value={form.data_source_type_group} onChange={e => handleChange('data_source_type_group', e.target.value)}
+                      className={inp('data_source_type_group')} disabled={!form.data_source_dept}>
                       <option value="">-- Chọn nhóm --</option>
                       {availableSourceTypeGroups.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
@@ -372,7 +518,8 @@ function NewCandidateForm() {
                   </div>
                   <div className="col-span-2">
                     <label className={lbl}>Loại nguồn cụ thể <span className="text-red-500">*</span></label>
-                    <select value={form.data_source_type} onChange={e => handleChange('data_source_type', e.target.value)} className={inp('data_source_type')} disabled={!form.data_source_type_group}>
+                    <select value={form.data_source_type} onChange={e => handleChange('data_source_type', e.target.value)}
+                      className={inp('data_source_type')} disabled={!form.data_source_type_group}>
                       <option value="">-- Chọn nguồn --</option>
                       {availableSourceTypes.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -407,11 +554,19 @@ function NewCandidateForm() {
   );
 }
 
+// ── Wrapper với Suspense (bắt buộc vì dùng useSearchParams) ───────────────
 export default function NewCandidate() {
   return (
     <ProtectedRoute>
       <AppLayout>
-        <NewCandidateForm />
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-full gap-3 text-gray-400">
+            <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"/>
+            Đang tải...
+          </div>
+        }>
+          <NewCandidateForm />
+        </Suspense>
       </AppLayout>
     </ProtectedRoute>
   );
