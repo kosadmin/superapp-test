@@ -27,8 +27,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// ── Google Apps Script endpoint ────────────────────────────────────────────
-// Khai báo trong .env.local: NEXT_PUBLIC_GAS_CANDIDATES_URL=https://...
 const GAS_URL = process.env.NEXT_PUBLIC_GAS_CANDIDATES_URL ?? '';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -61,11 +59,23 @@ interface CandidateForm {
   assigned_user: string;
   assigned_user_name: string;
   assigned_user_group: string;
+  // Tiến độ tuyển dụng
+  new: boolean;
+  interested: boolean;
+  scheduled_for_interview: boolean;
+  show_up_for_interview: boolean;
+  pass_interview: boolean;
+  onboard: boolean;
+  reject_offer: boolean;
+  unqualified: boolean;
+  interview_date: string;
+  onboard_date: string;
+  reason_rejected_offer: string;
+  reason_unqualified: string;
 }
 
 interface FormErrors { [key: string]: string | undefined; }
 
-// Dữ liệu dự án lấy từ Supabase
 interface ProjectOption {
   project_id: string;
   project: string;
@@ -75,13 +85,28 @@ interface ProjectOption {
   position: string | null;
 }
 
-// ── Inner form (cần Suspense vì dùng useSearchParams) ─────────────────────
+// ── Funnel config ──────────────────────────────────────────────────────────
+const MAIN_STEPS = [
+  { key: 'new',                    label: 'Mới',          locked: true },
+  { key: 'interested',             label: 'Quan tâm',     locked: false },
+  { key: 'scheduled_for_interview',label: 'Đăng ký PV',   locked: false },
+  { key: 'show_up_for_interview',  label: 'Tham gia PV',  locked: false },
+  { key: 'pass_interview',         label: 'Đỗ PV',        locked: false },
+  { key: 'onboard',                label: 'Nhận việc',    locked: false },
+] as const;
+
+const NEG_STEPS = [
+  { key: 'reject_offer', label: 'Từ chối' },
+  { key: 'unqualified',  label: 'Không đạt' },
+] as const;
+
+// ── Inner form ─────────────────────────────────────────────────────────────
 function NewCandidateForm() {
   const { name, user_id, user_group } = useAuth();
   const searchParams = useSearchParams();
 
-  const [loading, setLoading]             = useState(false);
-  const [errors, setErrors]               = useState<FormErrors>({});
+  const [loading, setLoading]                   = useState(false);
+  const [errors, setErrors]                     = useState<FormErrors>({});
   const [supabaseProjects, setSupabaseProjects] = useState<ProjectOption[]>([]);
   const [projectsLoading, setProjectsLoading]   = useState(true);
 
@@ -93,9 +118,16 @@ function NewCandidateForm() {
     project: '', project_id: '', project_type: '', position: '', company: '', department: '',
     data_source_dept: '', data_source_type_group: '', data_source_type: '',
     assigned_user: '', assigned_user_name: '', assigned_user_group: '',
+    // Funnel — new luôn true
+    new: true,
+    interested: false, scheduled_for_interview: false,
+    show_up_for_interview: false, pass_interview: false,
+    onboard: false, reject_offer: false, unqualified: false,
+    interview_date: '', onboard_date: '',
+    reason_rejected_offer: '', reason_unqualified: '',
   });
 
-  // ── Load danh sách dự án từ Supabase ──────────────────────────────────
+  // ── Load dự án từ Supabase ─────────────────────────────────────────────
   useEffect(() => {
     supabase
       .from('projects')
@@ -108,7 +140,7 @@ function NewCandidateForm() {
       });
   }, []);
 
-  // ── Auto-fill từ URL param ?project_id=... ────────────────────────────
+  // ── Auto-fill từ URL param ?project_id=... ─────────────────────────────
   useEffect(() => {
     if (projectsLoading) return;
     const projectIdParam = searchParams.get('project_id');
@@ -122,11 +154,11 @@ function NewCandidateForm() {
       project_type: found.project_type || '',
       company:      found.company || '',
       department:   found.department || '',
-      position:     '',   // reset vị trí để user chọn từ dropdown
+      position:     '',
     }));
   }, [projectsLoading, supabaseProjects, searchParams]);
 
-  // ── Sync thông tin người phụ trách ───────────────────────────────────
+  // ── Sync người phụ trách ───────────────────────────────────────────────
   useEffect(() => {
     setForm(prev => ({
       ...prev,
@@ -136,8 +168,8 @@ function NewCandidateForm() {
     }));
   }, [user_id, name, user_group]);
 
-  // ── Derived values ────────────────────────────────────────────────────
-  const selectedProject = supabaseProjects.find(p => p.project === form.project);
+  // ── Derived values ─────────────────────────────────────────────────────
+  const selectedProject    = supabaseProjects.find(p => p.project === form.project);
   const availablePositions = selectedProject?.position
     ?.split(',').map(p => p.trim()).filter(Boolean) ?? [];
 
@@ -151,88 +183,116 @@ function NewCandidateForm() {
   const birthYear   = form.date_of_birth ? form.date_of_birth.split('-')[0] : '';
   const addressFull = [form.address_street, form.address_ward, form.address_city].filter(Boolean).join(' - ');
 
-  // ── Handlers ──────────────────────────────────────────────────────────
-  const handleChange = (field: keyof CandidateForm, value: string) => {
+  // ── Handlers ───────────────────────────────────────────────────────────
+  const handleChange = (field: keyof CandidateForm, value: string | boolean) => {
     setForm(prev => {
-      const next = { ...prev, [field]: value };
+      const next = { ...prev, [field]: value } as CandidateForm;
 
+      // Project auto-fill
       if (field === 'project') {
-        // Lookup từ Supabase thay vì MASTER_DATA
-        const found = supabaseProjects.find(p => p.project === value);
+        const found = supabaseProjects.find(p => p.project === (value as string));
         next.project_type = found?.project_type || '';
         next.project_id   = found?.project_id   || '';
         next.company      = found?.company       || '';
         next.department   = found?.department    || '';
-        next.position     = '';   // reset khi đổi dự án
+        next.position     = '';
       }
+
+      // Source cascade reset
       if (field === 'data_source_dept') {
         next.data_source_type_group = '';
         next.data_source_type       = '';
       } else if (field === 'data_source_type_group') {
         next.data_source_type = '';
       }
+
+      // Funnel cascade logic
+      const mainKeys: Array<keyof CandidateForm> = [
+        'interested', 'scheduled_for_interview', 'show_up_for_interview', 'pass_interview', 'onboard',
+      ];
+      if (mainKeys.includes(field as keyof CandidateForm)) {
+        const idx = mainKeys.indexOf(field as keyof CandidateForm);
+        if (value === true) {
+          // Tick bước sau → tự tick hết bước trước
+          for (let i = 0; i < idx; i++) (next as any)[mainKeys[i]] = true;
+          // Untick 2 kết quả tiêu cực nếu tick onboard
+          if (field === 'onboard') { next.reject_offer = false; next.unqualified = false; }
+        } else {
+          // Untick bước trước → tự untick hết bước sau
+          for (let i = idx + 1; i < mainKeys.length; i++) (next as any)[mainKeys[i]] = false;
+        }
+      }
+
+      // Negative outcomes: loại trừ lẫn nhau với nhau và với onboard
+      if (field === 'reject_offer' && value === true) { next.onboard = false; next.unqualified = false; }
+      if (field === 'unqualified'  && value === true) { next.onboard = false; next.reject_offer = false; }
+
       return next;
     });
 
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
-    if (field === 'phone' && value && !/^0\d{9}$/.test(value))
+    if (errors[field as string]) setErrors(prev => ({ ...prev, [field as string]: undefined }));
+    if (field === 'phone' && value && !/^0\d{9}$/.test(value as string))
       setErrors(prev => ({ ...prev, phone: 'SĐT phải có 10 chữ số và bắt đầu bằng 0' }));
-    if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value))
+    if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value as string))
       setErrors(prev => ({ ...prev, email: 'Email không đúng định dạng' }));
   };
 
   const validateForm = () => {
     const e: FormErrors = {};
-    if (!form.candidate_name.trim())     e.candidate_name        = 'Họ tên là bắt buộc';
-    if (!form.phone.trim())              e.phone                 = 'Số điện thoại là bắt buộc';
-    else if (!/^0\d{9}$/.test(form.phone)) e.phone              = 'SĐT phải có 10 chữ số và bắt đầu bằng 0';
-    if (!form.data_source_dept)          e.data_source_dept      = 'Vui lòng chọn Bộ phận tạo nguồn';
-    if (!form.data_source_type_group)    e.data_source_type_group= 'Vui lòng chọn Nhóm nguồn';
-    if (!form.data_source_type)          e.data_source_type      = 'Vui lòng chọn Loại nguồn cụ thể';
+    if (!form.candidate_name.trim())     e.candidate_name         = 'Họ tên là bắt buộc';
+    if (!form.phone.trim())              e.phone                  = 'Số điện thoại là bắt buộc';
+    else if (!/^0\d{9}$/.test(form.phone)) e.phone               = 'SĐT phải có 10 chữ số và bắt đầu bằng 0';
+    if (!form.data_source_dept)          e.data_source_dept       = 'Vui lòng chọn Bộ phận tạo nguồn';
+    if (!form.data_source_type_group)    e.data_source_type_group = 'Vui lòng chọn Nhóm nguồn';
+    if (!form.data_source_type)          e.data_source_type       = 'Vui lòng chọn Loại nguồn cụ thể';
+    // Funnel validation
+    if (form.scheduled_for_interview && !form.interview_date)
+      e.interview_date = 'Vui lòng nhập ngày phỏng vấn';
+    if (form.pass_interview && !form.onboard_date)
+      e.onboard_date = 'Vui lòng nhập ngày nhận việc khi đỗ PV';
+    if (form.reject_offer && !form.reason_rejected_offer)
+      e.reason_rejected_offer = 'Vui lòng chọn lý do từ chối';
+    if (form.unqualified && !form.reason_unqualified)
+      e.reason_unqualified = 'Vui lòng chọn lý do không đạt';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // ── Submit → Google Apps Script ───────────────────────────────────────
+  // ── Submit → Google Apps Script (Cách 1: bỏ Content-Type để tránh CORS) ─
   const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validateForm()) return;
     if (!GAS_URL) { alert('Chưa cấu hình NEXT_PUBLIC_GAS_CANDIDATES_URL'); return; }
 
     setLoading(true);
+    const now = new Date().toISOString();
     try {
       const payload = {
-        // Metadata người tạo
         created_by_name:  name       || 'unknown',
         created_by_id:    user_id    || 'unknown',
         created_by_group: user_group || 'unknown',
-        // Form fields
         ...form,
-        birth_year:   birthYear,
-        address_full: addressFull,
-        contacted:    true,
-        // Các trường boolean & candidate_id sẽ được GAS tự sinh:
-        // candidate_id, interested, scheduled_for_interview,
-        // show_up_for_interview, pass_interview, onboard,
-        // reject_offer, unqualified
+        birth_year:       birthYear,
+        address_full:     addressFull,
+        contacted:        true,
+        // Timestamps & creator
+        created_at:       now,
+        last_updated_at:  now,
+        created_by:       user_id ? String(user_id) : '',
       };
 
-const res = await fetch(GAS_URL, {
-  method: 'POST',
-  // Bỏ header Content-Type → browser không gửi preflight
-  // GAS nhận body là string, phải parse bằng JSON.parse(e.postData.contents)
-  body: JSON.stringify(payload),
-});
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        // Không set Content-Type → tránh CORS preflight với GAS
+        body: JSON.stringify(payload),
+      });
 
-      // Khi dùng mode 'no-cors', res.ok luôn false và không đọc được json —
-      // trong trường hợp đó hãy coi thành công nếu không throw.
       let success = false;
       try {
         const data = await res.json();
         success = !!data?.success;
         if (!success) throw new Error(data?.error || 'Lỗi từ server');
       } catch {
-        // Nếu không parse được JSON (no-cors), vẫn coi là đã gửi thành công
         success = true;
       }
 
@@ -248,10 +308,10 @@ const res = await fetch(GAS_URL, {
     }
   };
 
-  // ── Style helpers ─────────────────────────────────────────────────────
+  // ── Style helpers ──────────────────────────────────────────────────────
   const inp = (field: keyof CandidateForm) =>
     `w-full p-2.5 border rounded-xl mt-1 text-sm outline-none transition focus:bg-white ${
-      errors[field]
+      errors[field as string]
         ? 'border-red-400 focus:border-red-500 bg-red-50/30'
         : 'border-gray-200 focus:border-orange-400 bg-white'
     }`;
@@ -263,10 +323,147 @@ const res = await fetch(GAS_URL, {
     <h3 className={`font-bold mb-4 border-l-4 pl-3 text-xs uppercase tracking-wider text-gray-800 ${color}`}>{label}</h3>
   );
 
+  // ── Funnel Step Component ──────────────────────────────────────────────
+  const FunnelStepper = () => {
+    const mainStepKeys = ['new','interested','scheduled_for_interview','show_up_for_interview','pass_interview','onboard'];
+    return (
+      <div>
+        {/* Main journey */}
+        <div className="relative">
+          {/* Connecting line background */}
+          <div className="hidden sm:block absolute top-5 left-5 right-5 h-0.5 bg-gray-200 z-0" style={{ top: '20px' }} />
+          {/* Active line overlay */}
+          <div
+            className="hidden sm:block absolute h-0.5 bg-orange-500 z-0 transition-all duration-300"
+            style={{
+              top: '20px',
+              left: '5%',
+              width: (() => {
+                const idx = mainStepKeys.findLastIndex(k => !!(form as any)[k]);
+                if (idx <= 0) return '0%';
+                return `${(idx / (mainStepKeys.length - 1)) * 90}%`;
+              })(),
+            }}
+          />
+
+          <div className="grid grid-cols-3 sm:flex sm:items-start gap-y-4 gap-x-0 sm:gap-0 sm:justify-between relative z-10">
+            {MAIN_STEPS.map((step, i) => {
+              const active = !!(form as any)[step.key];
+              const isLocked = step.locked;
+              return (
+                <button
+                  key={step.key}
+                  type="button"
+                  disabled={isLocked}
+                  onClick={() => !isLocked && handleChange(step.key as keyof CandidateForm, !active)}
+                  className="flex flex-col items-center gap-1.5 sm:flex-1 group focus:outline-none"
+                >
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200 shadow-sm
+                    ${active
+                      ? 'bg-orange-500 border-orange-500 text-white shadow-orange-200'
+                      : 'bg-white border-gray-300 text-gray-400 group-hover:border-orange-400 group-hover:text-orange-400'}
+                    ${isLocked ? 'cursor-default' : 'cursor-pointer'}`}>
+                    {active ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    ) : (
+                      <span className="text-xs font-black">{i + 1}</span>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-bold text-center leading-tight transition-colors
+                    ${active ? 'text-orange-600' : 'text-gray-400 group-hover:text-orange-500'}`}>
+                    {step.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Negative outcomes */}
+        <div className="mt-4 flex gap-3">
+          {NEG_STEPS.map(step => {
+            const active = !!(form as any)[step.key];
+            return (
+              <button
+                key={step.key}
+                type="button"
+                onClick={() => handleChange(step.key as keyof CandidateForm, !active)}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all duration-200 text-[11px] font-bold
+                  ${active
+                    ? 'bg-gray-600 border-gray-600 text-white shadow-md'
+                    : 'bg-white border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-600'}`}
+              >
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all
+                  ${active ? 'bg-white border-white' : 'border-current'}`}>
+                  {active && (
+                    <svg className="w-3 h-3 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  )}
+                </div>
+                {step.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Conditional date & reason fields */}
+        {(form.scheduled_for_interview || form.pass_interview || form.reject_offer || form.unqualified) && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {form.scheduled_for_interview && (
+              <div>
+                <label className={lbl}>Ngày phỏng vấn <span className="text-red-500">*</span></label>
+                <input type="date" value={form.interview_date}
+                  onChange={e => handleChange('interview_date', e.target.value)}
+                  className={inp('interview_date')} />
+                {errors.interview_date && <p className={err}>{errors.interview_date}</p>}
+              </div>
+            )}
+            {form.pass_interview && (
+              <div>
+                <label className={lbl}>Ngày nhận việc <span className="text-red-500">*</span></label>
+                <input type="date" value={form.onboard_date}
+                  onChange={e => handleChange('onboard_date', e.target.value)}
+                  className={inp('onboard_date')} />
+                {errors.onboard_date && <p className={err}>{errors.onboard_date}</p>}
+              </div>
+            )}
+            {form.reject_offer && (
+              <div>
+                <label className={lbl}>Lý do từ chối offer <span className="text-red-500">*</span></label>
+                <select value={form.reason_rejected_offer}
+                  onChange={e => handleChange('reason_rejected_offer', e.target.value)}
+                  className={inp('reason_rejected_offer')}>
+                  <option value="">-- Chọn lý do --</option>
+                  {MASTER_DATA.rejectReasonsOffer.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                {errors.reason_rejected_offer && <p className={err}>{errors.reason_rejected_offer}</p>}
+              </div>
+            )}
+            {form.unqualified && (
+              <div>
+                <label className={lbl}>Lý do không đạt <span className="text-red-500">*</span></label>
+                <select value={form.reason_unqualified}
+                  onChange={e => handleChange('reason_unqualified', e.target.value)}
+                  className={inp('reason_unqualified')}>
+                  <option value="">-- Chọn lý do --</option>
+                  {MASTER_DATA.rejectReasonsUnqualified.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                {errors.reason_unqualified && <p className={err}>{errors.reason_unqualified}</p>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="h-full bg-gray-100 overflow-hidden flex flex-col text-sm">
 
-      {/* TOP BAR ─────────────────────────────────────────────────────── */}
+      {/* TOP BAR */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-5 py-3 bg-white border-b">
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => window.history.back()}
@@ -279,14 +476,11 @@ const res = await fetch(GAS_URL, {
         </div>
 
         <div className="flex gap-2">
-          {/* Hủy: mobile = "Hủy", desktop = "Hủy bỏ" */}
           <button type="button" onClick={() => window.history.back()}
             className="px-3 sm:px-4 py-2 rounded-xl border text-xs font-bold text-gray-600 bg-white hover:bg-gray-50 transition">
             <span className="sm:hidden">Hủy</span>
             <span className="hidden sm:inline">Hủy bỏ</span>
           </button>
-
-          {/* Lưu: mobile = "Lưu", desktop = "Lưu ứng viên" */}
           <button type="submit" form="new-candidate-form" disabled={loading}
             className="px-4 sm:px-6 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 disabled:bg-orange-300 shadow-sm shadow-orange-200 transition flex items-center gap-1.5">
             {loading ? (
@@ -303,7 +497,7 @@ const res = await fetch(GAS_URL, {
         </div>
       </div>
 
-      {/* BODY ─────────────────────────────────────────────────────────── */}
+      {/* BODY */}
       <div className="flex-1 overflow-y-auto p-4">
         <form id="new-candidate-form" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
@@ -398,6 +592,7 @@ const res = await fetch(GAS_URL, {
                   </div>
                 </div>
               </div>
+
             </div>
 
             {/* ── CỘT PHẢI ── */}
@@ -437,15 +632,11 @@ const res = await fetch(GAS_URL, {
                 <SectionHeader color="border-orange-600" label="Phân loại tuyển dụng" />
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3">
 
-                  {/* Chọn dự án — từ Supabase */}
+                  {/* Chọn dự án */}
                   <div className="col-span-2">
                     <label className={lbl}>Dự án</label>
-                    <select
-                      value={form.project}
-                      onChange={e => handleChange('project', e.target.value)}
-                      className={inp('project')}
-                      disabled={projectsLoading}
-                    >
+                    <select value={form.project} onChange={e => handleChange('project', e.target.value)}
+                      className={inp('project')} disabled={projectsLoading}>
                       <option value="">
                         {projectsLoading ? 'Đang tải danh sách...' : '-- Chọn dự án --'}
                       </option>
@@ -455,7 +646,6 @@ const res = await fetch(GAS_URL, {
                     </select>
                   </div>
 
-                  {/* Trường tự động */}
                   <div>
                     <label className={lbl}>Loại dự án (Tự động)</label>
                     <input type="text" value={form.project_type} readOnly className={ro} placeholder="Tự động" />
@@ -469,7 +659,7 @@ const res = await fetch(GAS_URL, {
                     <input type="text" value={form.company} readOnly className={ro} placeholder="Tự động" />
                   </div>
 
-                  {/* Vị trí ứng tuyển: dropdown nếu dự án có vị trí, input text nếu chưa chọn dự án */}
+                  {/* Vị trí ứng tuyển */}
                   <div>
                     <label className={lbl}>Vị trí ứng tuyển</label>
                     {availablePositions.length > 0 ? (
@@ -485,13 +675,18 @@ const res = await fetch(GAS_URL, {
                     )}
                   </div>
 
-                  {/* Bộ phận ứng tuyển */}
                   <div>
                     <label className={lbl}>Bộ phận ứng tuyển</label>
                     <input type="text" value={form.department} onChange={e => handleChange('department', e.target.value)}
                       className={inp('department')} />
                   </div>
                 </div>
+              </div>
+
+              {/* TIẾN ĐỘ TUYỂN DỤNG */}
+              <div className="bg-white rounded-xl border p-5 shadow-sm">
+                <SectionHeader color="border-amber-500" label="Tiến độ tuyển dụng" />
+                <FunnelStepper />
               </div>
 
               {/* NGUỒN & PHỤ TRÁCH */}
@@ -553,7 +748,7 @@ const res = await fetch(GAS_URL, {
   );
 }
 
-// ── Wrapper với Suspense (bắt buộc vì dùng useSearchParams) ───────────────
+// ── Wrapper với Suspense ───────────────────────────────────────────────────
 export default function NewCandidate() {
   return (
     <ProtectedRoute>
