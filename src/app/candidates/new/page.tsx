@@ -217,13 +217,12 @@ function NewCandidateForm() {
         // reject_offer, unqualified
       };
 
-      const res = await fetch(GAS_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-        // Nếu GAS chưa bật CORS, dùng mode: 'no-cors' (response sẽ opaque — không đọc được body)
-        // mode: 'no-cors',
-      });
+const res = await fetch(GAS_URL, {
+  method: 'POST',
+  // Bỏ header Content-Type → browser không gửi preflight
+  // GAS nhận body là string, phải parse bằng JSON.parse(e.postData.contents)
+  body: JSON.stringify(payload),
+});
 
       // Khi dùng mode 'no-cors', res.ok luôn false và không đọc được json —
       // trong trường hợp đó hãy coi thành công nếu không throw.
