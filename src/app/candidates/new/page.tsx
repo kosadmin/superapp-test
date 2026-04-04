@@ -325,88 +325,81 @@ function NewCandidateForm() {
 
   // ── Funnel Step Component ──────────────────────────────────────────────
   const FunnelStepper = () => {
-    const mainStepKeys = ['new','interested','scheduled_for_interview','show_up_for_interview','pass_interview','onboard'];
+    // Tất cả các bước gộp thành 1 hàng: 6 bước chính + 2 kết quả tiêu cực
+    const ALL_STEPS = [
+      ...MAIN_STEPS.map((s, i) => ({ ...s, index: i, isNeg: false })),
+      ...NEG_STEPS.map(s => ({ key: s.key, label: s.label, locked: false, index: -1, isNeg: true })),
+    ];
+
+    // Tính chiều rộng đường cam: dựa trên bước chính cuối cùng đang active
+    const mainKeys = ['new','interested','scheduled_for_interview','show_up_for_interview','pass_interview','onboard'];
+    let lastActiveMainIdx = -1;
+    for (let i = mainKeys.length - 1; i >= 0; i--) {
+      if (!!(form as any)[mainKeys[i]]) { lastActiveMainIdx = i; break; }
+    }
+    // 6 bước chính chiếm 6/8 = 75% chiều rộng tổng (8 bước)
+    const lineWidth = lastActiveMainIdx <= 0
+      ? '0%'
+      : `${(lastActiveMainIdx / (ALL_STEPS.length - 1)) * 88}%`;
+
     return (
       <div>
-        {/* Main journey */}
-        <div className="relative">
+        {/* Stepper */}
+        <div className="relative overflow-x-auto pb-1">
           {/* Connecting line background */}
-          <div className="hidden sm:block absolute top-5 left-5 right-5 h-0.5 bg-gray-200 z-0" style={{ top: '20px' }} />
-          {/* Active line overlay */}
+          <div className="hidden sm:block absolute h-0.5 bg-gray-200 z-0" style={{ top: '20px', left: '4%', right: '4%' }} />
+          {/* Active line overlay (chỉ phủ phần bước chính) */}
           <div
             className="hidden sm:block absolute h-0.5 bg-orange-500 z-0 transition-all duration-300"
-            style={{
-              top: '20px',
-              left: '5%',
-              width: (() => {
-                const idx = mainStepKeys.findLastIndex(k => !!(form as any)[k]);
-                if (idx <= 0) return '0%';
-                return `${(idx / (mainStepKeys.length - 1)) * 90}%`;
-              })(),
-            }}
+            style={{ top: '20px', left: '4%', width: lineWidth }}
           />
 
-          <div className="grid grid-cols-3 sm:flex sm:items-start gap-y-4 gap-x-0 sm:gap-0 sm:justify-between relative z-10">
-            {MAIN_STEPS.map((step, i) => {
-              const active = !!(form as any)[step.key];
+          <div className="grid grid-cols-4 sm:flex sm:items-start gap-y-4 sm:gap-0 sm:justify-between relative z-10">
+            {ALL_STEPS.map((step, i) => {
+              const active   = !!(form as any)[step.key];
               const isLocked = step.locked;
+              const isNeg    = step.isNeg;
+              // Dấu phân cách giữa bước chính cuối và kết quả tiêu cực
+              const showDivider = isNeg && i === MAIN_STEPS.length;
+
               return (
-                <button
-                  key={step.key}
-                  type="button"
-                  disabled={isLocked}
-                  onClick={() => !isLocked && handleChange(step.key as keyof CandidateForm, !active)}
-                  className="flex flex-col items-center gap-1.5 sm:flex-1 group focus:outline-none"
-                >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200 shadow-sm
-                    ${active
-                      ? 'bg-orange-500 border-orange-500 text-white shadow-orange-200'
-                      : 'bg-white border-gray-300 text-gray-400 group-hover:border-orange-400 group-hover:text-orange-400'}
-                    ${isLocked ? 'cursor-default' : 'cursor-pointer'}`}>
-                    {active ? (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                      </svg>
-                    ) : (
-                      <span className="text-xs font-black">{i + 1}</span>
-                    )}
-                  </div>
-                  <span className={`text-[10px] font-bold text-center leading-tight transition-colors
-                    ${active ? 'text-orange-600' : 'text-gray-400 group-hover:text-orange-500'}`}>
-                    {step.label}
-                  </span>
-                </button>
+                <React.Fragment key={step.key}>
+                  {showDivider && (
+                    <div className="hidden sm:flex items-center self-start pt-4">
+                      <div className="w-px h-6 bg-gray-200 mx-1" />
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    disabled={isLocked}
+                    onClick={() => !isLocked && handleChange(step.key as keyof CandidateForm, !active)}
+                    className="flex flex-col items-center gap-1.5 sm:flex-1 group focus:outline-none min-w-0"
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200 shadow-sm
+                      ${active && !isNeg  ? 'bg-orange-500 border-orange-500 text-white shadow-orange-100' : ''}
+                      ${active && isNeg   ? 'bg-gray-500 border-gray-500 text-white shadow-gray-100' : ''}
+                      ${!active && !isLocked ? 'bg-white border-gray-300 text-gray-400 group-hover:border-orange-400 group-hover:text-orange-400' : ''}
+                      ${!active && isNeg  ? 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-500 group-hover:text-gray-500' : ''}
+                      ${isLocked ? 'cursor-default' : 'cursor-pointer'}`}>
+                      {active ? (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                      ) : (
+                        <span className="text-xs font-black">{isNeg ? (i === MAIN_STEPS.length ? '✕' : '✕') : i + 1}</span>
+                      )}
+                    </div>
+                    <span className={`text-[10px] font-bold text-center leading-tight transition-colors px-0.5
+                      ${active && !isNeg ? 'text-orange-600' : ''}
+                      ${active && isNeg  ? 'text-gray-600' : ''}
+                      ${!active          ? 'text-gray-400 group-hover:text-gray-500' : ''}`}>
+                      {step.label}
+                    </span>
+                  </button>
+                </React.Fragment>
               );
             })}
           </div>
-        </div>
-
-        {/* Negative outcomes */}
-        <div className="mt-4 flex gap-3">
-          {NEG_STEPS.map(step => {
-            const active = !!(form as any)[step.key];
-            return (
-              <button
-                key={step.key}
-                type="button"
-                onClick={() => handleChange(step.key as keyof CandidateForm, !active)}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all duration-200 text-[11px] font-bold
-                  ${active
-                    ? 'bg-gray-600 border-gray-600 text-white shadow-md'
-                    : 'bg-white border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-600'}`}
-              >
-                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all
-                  ${active ? 'bg-white border-white' : 'border-current'}`}>
-                  {active && (
-                    <svg className="w-3 h-3 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                  )}
-                </div>
-                {step.label}
-              </button>
-            );
-          })}
         </div>
 
         {/* Conditional date & reason fields */}
