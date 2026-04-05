@@ -369,7 +369,10 @@ function ProjectDetailContent() {
       {project.benefit_specific && (
         <div className={benefitItems.length > 0 ? 'pt-2 border-t border-gray-50' : ''}>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Chi tiết quyền lợi</p>
-          <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-line">{project.benefit_specific}</p>
+          <div
+            className="text-[13px] text-gray-700 leading-relaxed prose prose-sm prose-a:text-orange-500 prose-a:font-bold max-w-none"
+            dangerouslySetInnerHTML={{ __html: project.benefit_specific }}
+          />
         </div>
       )}
       {benefitItems.length === 0 && !project.benefit_specific && (
