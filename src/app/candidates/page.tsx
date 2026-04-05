@@ -223,7 +223,7 @@ function FilterPopup({ open, onClose, onApply, initial, statusOptions, uniquePro
   return (
     <div className="sm:hidden fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] flex flex-col">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[65vh] flex flex-col">
 
         <div className="flex items-center justify-between px-4 py-3 border-b bg-orange-600 rounded-t-2xl flex-shrink-0">
           <span className="text-white font-black text-sm">Bộ lọc</span>
@@ -359,6 +359,15 @@ useEffect(() => {
 
   useEffect(() => { if (user_group && user_id) fetchAllCandidates(); }, [user_group, user_id, isAuthLoading]);
   useEffect(() => { setCurrentPage(1); }, [search, filters]);
+  // Đọc ?project=... từ URL khi trang load
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const projectParam = params.get('project');
+    if (projectParam) {
+      setFilters(prev => ({ ...prev, project: [decodeURIComponent(projectParam)] }));
+    }
+  }, []);
 
   const processedData = useMemo(() => {
     let result = [...allCandidates];
@@ -706,6 +715,13 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
         {/* TOOLBAR */}
            <div className="p-3 border-b bg-white">
           <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Tìm theo tên, SĐT hoặc mã ứng viên..."
+              className="flex-1 px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-xs sm:text-sm"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
         {/* Nút Lọc */}
 <button
   onClick={() => {
@@ -868,7 +884,8 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
                   )}
                   <button onClick={handleSave} disabled={isSaving || !hasChanges}
                     className={`px-6 py-2 rounded-xl font-bold transition shadow-lg ${hasChanges ? 'bg-green-600 text-white hover:bg-green-700 shadow-green-100' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
-                    {isSaving ? 'ĐANG LƯU...' : 'LƯU THAY ĐỔI'}
+                    <span className="sm:hidden">{isSaving ? '...' : 'Lưu'}</span>
+                    <span className="hidden sm:inline">{isSaving ? 'ĐANG LƯU...' : 'LƯU THAY ĐỔI'}</span>
                   </button>
                 </div>
               </div>
