@@ -9,6 +9,21 @@ import { MASTER_DATA } from '@/constants/masterData';
 import { API_CONFIG } from '@/constants/masterData';
 import * as XLSX from 'xlsx';
 import { getOnboardAssignments } from '@/constants/onboardDefaults';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+interface ProjectOption {
+  project_id: string;
+  project: string;
+  project_type: string;
+  company: string;
+  department: string | null;
+  position: string | null;
+}
 
 const ITEMS_PER_PAGE = 50;
 
@@ -189,6 +204,17 @@ function CandidatesContent() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+const [mobileShowDetail, setMobileShowDetail] = useState(false);
+  const [supabaseProjects, setSupabaseProjects] = useState<ProjectOption[]>([]);
+
+useEffect(() => {
+  supabase
+    .from('projects')
+    .select('project_id, project, project_type, company, department, position')
+    .eq('status', 'Đang tuyển')
+    .order('project', { ascending: true })
+    .then(({ data }) => setSupabaseProjects((data as ProjectOption[]) || []));
+}, []);
 
   const readOnlyClass = "w-full p-2.5 border rounded-xl mt-1 bg-gray-50 text-gray-500";
 
@@ -307,21 +333,25 @@ if (filters.tags.length > 0) {
     localStorage.setItem('table_frozen_count', newFrozen.toString());
   };
 
-  const fetchDetail = async (id: string) => {
-    if (selectedId === id) return;
-    setSelectedId(id);
-    setDetailLoading(true);
-    try {
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get', id, user_group, user_id }),
-      });
-      const data = await res.json();
-      if (data.success) { setFormData(data.data); setOriginalData(data.data); }
-    } catch (err) { console.error(err); }
-    finally { setDetailLoading(false); }
-  };
+const fetchDetail = async (id: string) => {
+  if (selectedId === id) {
+    setMobileShowDetail(true); // tap lại → mở lên
+    return;
+  }
+  setSelectedId(id);
+  setMobileShowDetail(true);
+  setDetailLoading(true);
+  try {
+    const res = await fetch(API_CONFIG.CANDIDATE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get', id, user_group, user_id }),
+    });
+    const data = await res.json();
+    if (data.success) { setFormData(data.data); setOriginalData(data.data); }
+  } catch (err) { console.error(err); }
+  finally { setDetailLoading(false); }
+};
 
   const birthYear = formData?.date_of_birth ? formData.date_of_birth.split('-')[0] : '';
 
@@ -380,10 +410,19 @@ if (filters.tags.length > 0) {
     });
   };
 
-  const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setFormData(prev => prev ? { ...prev, project: val, project_id: MASTER_DATA.projectIdMap[val] || '', project_type: MASTER_DATA.projectTypeMap[val] || '', company: MASTER_DATA.projectCompanyMap[val] || '' } : null);
-  };
+const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const val = e.target.value;
+  const found = supabaseProjects.find(p => p.project === val);
+  setFormData(prev => prev ? {
+    ...prev,
+    project:      val,
+    project_id:   found?.project_id   || '',
+    project_type: found?.project_type || '',
+    company:      found?.company      || '',
+    department:   found?.department   || prev.department,
+    position:     '',
+  } : null);
+};
 
   const handleSourceDeptChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -502,71 +541,89 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
 
   return (
-    <div className="flex h-full bg-gray-100 overflow-hidden text-sm p-4 gap-3">
+<div className="flex h-full bg-gray-100 overflow-hidden text-sm p-2 sm:p-4 gap-3">
 
-      {/* FILTER SIDEBAR */}
-      <div className={`flex-shrink-0 flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${showFilters ? 'w-56' : 'w-0 border-0'}`}>
-        {showFilters && (
-          <>
-            <div className="p-3 border-b bg-orange-600 flex items-center justify-between">
-              <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc</span>
-              <button onClick={resetFilters} className="text-[9px] font-bold text-orange-200 hover:text-white underline">Xóa tất cả</button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
-
-              <MultiCheckList
-                label="Trạng thái"
-                options={statusOptions}
-                selected={filters.status}
-                onChange={val => setFilters(prev => ({ ...prev, status: val }))}
-              />
-
-              <MultiCheckList
-                label="Dự án"
-                options={uniqueProjects as string[]}
-                selected={filters.project}
-                onChange={val => setFilters(prev => ({ ...prev, project: val }))}
-              />
-
-              <MultiCheckList
-                label="Người phụ trách"
-                options={uniqueUsers as string[]}
-                selected={filters.assigned_user}
-                onChange={val => setFilters(prev => ({ ...prev, assigned_user: val }))}
-              />
-
-              <MultiCheckList
-                label="Nhãn"
-                options={MASTER_DATA.candidateTags}
-                selected={filters.tags}
-                onChange={val => setFilters(prev => ({ ...prev, tags: val }))}
-              />
-
-              {/* Lọc theo ngày */}
-              <div className="border-t pt-3 space-y-3">
-                <p className="text-[10px] uppercase font-black text-orange-600">Lọc theo ngày</p>
-
-                <div>
-                  <label className="text-[10px] font-bold text-gray-500 block mb-1">Ngày Phỏng vấn</label>
-                  <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
-                    value={filters.interview_from} onChange={e => setFilters(prev => ({ ...prev, interview_from: e.target.value }))} />
-                  <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
-                    value={filters.interview_to} onChange={e => setFilters(prev => ({ ...prev, interview_to: e.target.value }))} />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-gray-500 block mb-1">Ngày Nhận việc</label>
-                  <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
-                    value={filters.onboard_from} onChange={e => setFilters(prev => ({ ...prev, onboard_from: e.target.value }))} />
-                  <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
-                    value={filters.onboard_to} onChange={e => setFilters(prev => ({ ...prev, onboard_to: e.target.value }))} />
-                </div>
+    {/* FILTER SIDEBAR — chỉ hiện trên desktop */}
+    <div className={`hidden sm:flex flex-shrink-0 flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${showFilters ? 'w-56' : 'w-0 border-0'}`}>
+      {showFilters && (
+        <>
+          <div className="p-3 border-b bg-orange-600 flex items-center justify-between">
+            <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc</span>
+            <button onClick={resetFilters} className="text-[9px] font-bold text-orange-200 hover:text-white underline">Xóa tất cả</button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
+            <MultiCheckList label="Trạng thái" options={statusOptions} selected={filters.status}
+              onChange={val => setFilters(prev => ({ ...prev, status: val }))} />
+            <MultiCheckList label="Dự án" options={uniqueProjects as string[]} selected={filters.project}
+              onChange={val => setFilters(prev => ({ ...prev, project: val }))} />
+            <MultiCheckList label="Người phụ trách" options={uniqueUsers as string[]} selected={filters.assigned_user}
+              onChange={val => setFilters(prev => ({ ...prev, assigned_user: val }))} />
+            <MultiCheckList label="Nhãn" options={MASTER_DATA.candidateTags} selected={filters.tags}
+              onChange={val => setFilters(prev => ({ ...prev, tags: val }))} />
+            <div className="border-t pt-3 space-y-3">
+              <p className="text-[10px] uppercase font-black text-orange-600">Lọc theo ngày</p>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 block mb-1">Ngày Phỏng vấn</label>
+                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
+                  value={filters.interview_from} onChange={e => setFilters(prev => ({ ...prev, interview_from: e.target.value }))} />
+                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
+                  value={filters.interview_to} onChange={e => setFilters(prev => ({ ...prev, interview_to: e.target.value }))} />
               </div>
-
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 block mb-1">Ngày Nhận việc</label>
+                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
+                  value={filters.onboard_from} onChange={e => setFilters(prev => ({ ...prev, onboard_from: e.target.value }))} />
+                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
+                  value={filters.onboard_to} onChange={e => setFilters(prev => ({ ...prev, onboard_to: e.target.value }))} />
+              </div>
             </div>
-          </>
-        )}
+          </div>
+        </>
+      )}
+    </div>
+
+    {/* FILTER BOTTOM SHEET — chỉ hiện trên mobile */}
+    {showFilters && (
+      <div className="sm:hidden fixed inset-0 z-40 flex flex-col justify-end">
+        <div className="absolute inset-0 bg-black/40" onClick={() => setShowFilters(false)} />
+        <div className="relative bg-white rounded-t-2xl shadow-2xl max-h-[75vh] flex flex-col">
+          <div className="p-3 border-b bg-orange-600 flex items-center justify-between rounded-t-2xl">
+            <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc</span>
+            <div className="flex gap-3 items-center">
+              <button onClick={resetFilters} className="text-[9px] font-bold text-orange-200 hover:text-white underline">Xóa tất cả</button>
+              <button onClick={() => setShowFilters(false)} className="text-white font-bold text-sm">✕</button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
+            <MultiCheckList label="Trạng thái" options={statusOptions} selected={filters.status}
+              onChange={val => setFilters(prev => ({ ...prev, status: val }))} />
+            <MultiCheckList label="Dự án" options={uniqueProjects as string[]} selected={filters.project}
+              onChange={val => setFilters(prev => ({ ...prev, project: val }))} />
+            <MultiCheckList label="Người phụ trách" options={uniqueUsers as string[]} selected={filters.assigned_user}
+              onChange={val => setFilters(prev => ({ ...prev, assigned_user: val }))} />
+            <MultiCheckList label="Nhãn" options={MASTER_DATA.candidateTags} selected={filters.tags}
+              onChange={val => setFilters(prev => ({ ...prev, tags: val }))} />
+            <div className="border-t pt-3 space-y-3">
+              <p className="text-[10px] uppercase font-black text-orange-600">Lọc theo ngày</p>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 block mb-1">Ngày Phỏng vấn</label>
+                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
+                  value={filters.interview_from} onChange={e => setFilters(prev => ({ ...prev, interview_from: e.target.value }))} />
+                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
+                  value={filters.interview_to} onChange={e => setFilters(prev => ({ ...prev, interview_to: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 block mb-1">Ngày Nhận việc</label>
+                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
+                  value={filters.onboard_from} onChange={e => setFilters(prev => ({ ...prev, onboard_from: e.target.value }))} />
+                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
+                  value={filters.onboard_to} onChange={e => setFilters(prev => ({ ...prev, onboard_to: e.target.value }))} />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+    )}
 
       {/* DANH SÁCH */}
       <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden flex-1">
@@ -767,50 +824,121 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
                   </div>
                 </section>
 
-                {/* FUNNEL */}
-                <section className="bg-white p-0 rounded-2xl">
-                  <h3 className="text-[10px] font-black text-orange-400 uppercase mb-3 tracking-[0.2em] px-1">Tiến độ tuyển dụng (Phễu)</h3>
-                  <div className="flex items-stretch gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                    {funnelSteps.map(step => {
-                      const isNegative = step.key === 'reject_offer' || step.key === 'unqualified';
-                      const activeClass = isNegative
-                        ? 'border-gray-500 bg-gray-500 text-white shadow-md font-bold ring-2 ring-gray-200'
-                        : 'border-orange-600 bg-orange-600 text-white shadow-md font-bold ring-2 ring-orange-100';
-                      return (
-                        <label key={step.key} className={`flex-shrink-0 flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all min-w-[90px] ${formData[step.key] ? activeClass : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-300'}`}>
-                          <span className="text-[9px] mb-2 uppercase text-center leading-tight">{step.label}</span>
-                          <input type="checkbox" checked={!!formData[step.key]} onChange={e => handleChange(step.key, e.target.checked)}
-                            className={`w-4 h-4 rounded-md focus:ring-offset-0 ${isNegative ? 'text-gray-600 focus:ring-gray-500' : 'text-orange-600 focus:ring-orange-500'}`} />
-                        </label>
-                      );
-                    })}
-                  </div>
-                </section>
+{/* FUNNEL */}
+<section className="bg-white rounded-2xl">
+  <h3 className="text-[10px] font-black text-orange-400 uppercase mb-4 tracking-[0.2em] px-1">
+    Tiến độ tuyển dụng
+  </h3>
 
-                {/* LỊCH HẸN */}
-                <section>
-                  <h3 className="text-gray-800 font-bold mb-4 border-l-4 border-emerald-500 pl-3 text-xs uppercase tracking-wider">Thông tin lịch hẹn</h3>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày phỏng vấn</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-emerald-50/30 focus:bg-white focus:border-emerald-500 transition" value={formData.interview_date || ''} onChange={e => handleChange('interview_date', e.target.value)} /></div>
-                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày nhận việc</label><input type="date" className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-emerald-50/30 focus:bg-white focus:border-emerald-500 transition" value={formData.onboard_date || ''} onChange={e => handleChange('onboard_date', e.target.value)} /></div>
-                    </div>
-                    <div className="space-y-3">
-                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do từ chối Offer</label>
-                        <select className="w-full p-2.5 border rounded-xl mt-1 text-sm outline-none bg-gray-50 focus:bg-white" value={formData.reason_rejected_offer || ''} onChange={e => handleChange('reason_rejected_offer', e.target.value)}>
-                          <option value="">-- Chọn lý do --</option>
-                          {MASTER_DATA.rejectReasonsOffer.map(r => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                      </div>
-                      <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do không đạt</label>
-                        <select className="w-full p-2.5 border rounded-xl mt-1 text-sm outline-none bg-gray-50 focus:bg-white" value={formData.reason_unqualified || ''} onChange={e => handleChange('reason_unqualified', e.target.value)}>
-                          <option value="">-- Chọn lý do --</option>
-                          {MASTER_DATA.rejectReasonsUnqualified.map(r => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </section>
+  {/* Stepper giống trang tạo mới */}
+  <div className="relative overflow-x-auto pb-1">
+    {/* Background line */}
+    <div className="hidden sm:block absolute h-0.5 bg-gray-200 z-0"
+      style={{ top: '20px', left: '4%', right: '4%' }} />
+    {/* Active orange line — tính từ bước chính cuối active */}
+    {(() => {
+      const mainKeys = ['new','interested','scheduled_for_interview','show_up_for_interview','pass_interview','onboard'];
+      let lastIdx = -1;
+      for (let i = mainKeys.length - 1; i >= 0; i--) {
+        if (formData[mainKeys[i]]) { lastIdx = i; break; }
+      }
+      const totalSteps = 8; // 6 main + divider + 2 neg = 8 slots
+      const lineW = lastIdx <= 0 ? '0%' : `${(lastIdx / (totalSteps - 1)) * 88}%`;
+      return (
+        <div className="hidden sm:block absolute h-0.5 bg-orange-500 z-0 transition-all duration-300"
+          style={{ top: '20px', left: '4%', width: lineW }} />
+      );
+    })()}
+
+    <div className="grid grid-cols-4 sm:flex sm:items-start gap-y-4 sm:gap-0 sm:justify-between relative z-10">
+      {[
+        { key: 'new',                     label: 'Mới',         locked: true,  isNeg: false },
+        { key: 'interested',              label: 'Quan tâm',    locked: false, isNeg: false },
+        { key: 'scheduled_for_interview', label: 'Đăng ký PV',  locked: false, isNeg: false },
+        { key: 'show_up_for_interview',   label: 'Tham gia PV', locked: false, isNeg: false },
+        { key: 'pass_interview',          label: 'Đỗ PV',       locked: false, isNeg: false },
+        { key: 'onboard',                 label: 'Nhận việc',   locked: false, isNeg: false },
+        { key: 'reject_offer',            label: 'Từ chối',     locked: false, isNeg: true  },
+        { key: 'unqualified',             label: 'Không đạt',   locked: false, isNeg: true  },
+      ].map((step, i) => {
+        const active = !!formData[step.key];
+        const showDivider = step.isNeg && i === 6;
+        return (
+          <React.Fragment key={step.key}>
+            {showDivider && (
+              <div className="hidden sm:flex items-center self-start pt-4">
+                <div className="w-px h-6 bg-gray-200 mx-1" />
+              </div>
+            )}
+            <button
+              type="button"
+              disabled={step.locked}
+              onClick={() => !step.locked && handleChange(step.key, !active)}
+              className="flex flex-col items-center gap-1.5 sm:flex-1 group focus:outline-none min-w-0"
+            >
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200 shadow-sm
+                ${active && !step.isNeg ? 'bg-orange-500 border-orange-500 text-white shadow-orange-100' : ''}
+                ${active && step.isNeg  ? 'bg-gray-500 border-gray-500 text-white shadow-gray-100' : ''}
+                ${!active && !step.locked ? 'bg-white border-gray-300 text-gray-400 group-hover:border-orange-400 group-hover:text-orange-400' : ''}
+                ${step.locked ? 'cursor-default' : 'cursor-pointer'}`}>
+                {active
+                  ? <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  : <span className="text-xs font-black">{step.isNeg ? '✕' : i + 1}</span>
+                }
+              </div>
+              <span className={`text-[10px] font-bold text-center leading-tight transition-colors px-0.5
+                ${active && !step.isNeg ? 'text-orange-600' : ''}
+                ${active && step.isNeg  ? 'text-gray-600'   : ''}
+                ${!active               ? 'text-gray-400 group-hover:text-gray-500' : ''}`}>
+                {step.label}
+              </span>
+            </button>
+          </React.Fragment>
+        );
+      })}
+    </div>
+  </div>
+
+  {/* Conditional fields bên dưới phễu */}
+  {(formData.scheduled_for_interview || formData.pass_interview || formData.reject_offer || formData.unqualified) && (
+    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {formData.scheduled_for_interview && (
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày phỏng vấn</label>
+          <input type="date" value={formData.interview_date || ''} onChange={e => handleChange('interview_date', e.target.value)}
+            className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-orange-400 bg-white" />
+        </div>
+      )}
+      {formData.pass_interview && (
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Ngày nhận việc</label>
+          <input type="date" value={formData.onboard_date || ''} onChange={e => handleChange('onboard_date', e.target.value)}
+            className="w-full p-2.5 border rounded-xl mt-1 outline-none focus:border-orange-400 bg-white" />
+        </div>
+      )}
+      {formData.reject_offer && (
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do từ chối offer</label>
+          <select value={formData.reason_rejected_offer || ''} onChange={e => handleChange('reason_rejected_offer', e.target.value)}
+            className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-white">
+            <option value="">-- Chọn lý do --</option>
+            {MASTER_DATA.rejectReasonsOffer.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+      )}
+      {formData.unqualified && (
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Lý do không đạt</label>
+          <select value={formData.reason_unqualified || ''} onChange={e => handleChange('reason_unqualified', e.target.value)}
+            className="w-full p-2.5 border rounded-xl mt-1 outline-none bg-white">
+            <option value="">-- Chọn lý do --</option>
+            {MASTER_DATA.rejectReasonsUnqualified.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+      )}
+    </div>
+  )}
+</section>
 
                 {/* TUYỂN DỤNG */}
                 <section>
@@ -818,10 +946,16 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
                   <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                     <div className="col-span-2">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Dự án <span className="text-red-500">*</span></label>
-                      <select className="w-full p-2.5 border rounded-xl mt-1 font-bold text-orange-900 focus:ring-2 focus:ring-orange-500 outline-none" value={formData.project || ''} onChange={handleProjectChange}>
-                        <option value="">-- Chọn dự án --</option>
-                        {MASTER_DATA.projects.map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
+<select
+  className="w-full p-2.5 border rounded-xl mt-1 font-bold text-orange-900 focus:ring-2 focus:ring-orange-500 outline-none"
+  value={formData.project || ''}
+  onChange={handleProjectChange}
+>
+  <option value="">-- Chọn dự án --</option>
+  {supabaseProjects.map(p => (
+    <option key={p.project_id} value={p.project}>{p.project}</option>
+  ))}
+</select>
                     </div>
                     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">ID Dự án</label><input className={readOnlyClass} value={formData.project_id || ''} readOnly /></div>
                     <div><label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Loại dự án</label><input className={readOnlyClass} value={formData.project_type || ''} readOnly /></div>
