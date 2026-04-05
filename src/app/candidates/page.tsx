@@ -182,7 +182,123 @@ function MultiCheckList({
     </div>
   );
 }
+function FilterPopup({ open, onClose, onApply, initial, statusOptions, uniqueProjects, uniqueUsers }: {
+  open: boolean;
+  onClose: () => void;
+  onApply: (f: FilterState) => void;
+  initial: FilterState;
+  statusOptions: string[];
+  uniqueProjects: string[];
+  uniqueUsers: string[];
+}) {
+  const [local, setLocal] = useState<FilterState>(initial);
+  const set = (patch: Partial<FilterState>) => setLocal(prev => ({ ...prev, ...patch }));
 
+  useEffect(() => { if (open) setLocal(initial); }, [open]);
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
+  if (!open) return null;
+
+  const toggle = (field: 'status' | 'project' | 'assigned_user' | 'tags', val: string) => {
+    const cur = local[field] as string[];
+    set({ [field]: cur.includes(val) ? cur.filter(v => v !== val) : [...cur, val] });
+  };
+
+  const Chip = ({ field, val }: { field: 'status' | 'project' | 'assigned_user' | 'tags'; val: string }) => {
+    const active = (local[field] as string[]).includes(val);
+    return (
+      <button onClick={() => toggle(field, val)}
+        className={`py-2 px-3 rounded-xl text-[11px] font-bold border transition text-left ${active ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+        {val}
+      </button>
+    );
+  };
+
+  const activeCount = local.status.length + local.project.length + local.assigned_user.length + local.tags.length +
+    [local.interview_from, local.interview_to, local.onboard_from, local.onboard_to].filter(Boolean).length;
+
+  return (
+    <div className="sm:hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] flex flex-col">
+
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-orange-600 rounded-t-2xl flex-shrink-0">
+          <span className="text-white font-black text-sm">Bộ lọc</span>
+          <button onClick={onClose} className="text-orange-200 hover:text-white text-xl leading-none">✕</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-5">
+
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Trạng thái</p>
+            <div className="grid grid-cols-2 gap-2">
+              {statusOptions.map(s => <Chip key={s} field="status" val={s} />)}
+            </div>
+          </div>
+
+          {uniqueProjects.length > 0 && (
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Dự án</p>
+              <div className="grid grid-cols-2 gap-2">
+                {uniqueProjects.map(p => <Chip key={p} field="project" val={p} />)}
+              </div>
+            </div>
+          )}
+
+          {uniqueUsers.length > 0 && (
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Người phụ trách</p>
+              <div className="grid grid-cols-2 gap-2">
+                {uniqueUsers.map(u => <Chip key={u} field="assigned_user" val={u} />)}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ngày phỏng vấn</p>
+            <div className="flex items-center gap-2">
+              <input type="date" value={local.interview_from}
+                onChange={e => set({ interview_from: e.target.value })}
+                className="flex-1 p-2 border rounded-xl text-xs outline-none focus:border-orange-400 bg-white" />
+              <span className="text-gray-300 text-xs">—</span>
+              <input type="date" value={local.interview_to}
+                onChange={e => set({ interview_to: e.target.value })}
+                className="flex-1 p-2 border rounded-xl text-xs outline-none focus:border-orange-400 bg-white" />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ngày nhận việc</p>
+            <div className="flex items-center gap-2">
+              <input type="date" value={local.onboard_from}
+                onChange={e => set({ onboard_from: e.target.value })}
+                className="flex-1 p-2 border rounded-xl text-xs outline-none focus:border-orange-400 bg-white" />
+              <span className="text-gray-300 text-xs">—</span>
+              <input type="date" value={local.onboard_to}
+                onChange={e => set({ onboard_to: e.target.value })}
+                className="flex-1 p-2 border rounded-xl text-xs outline-none focus:border-orange-400 bg-white" />
+            </div>
+          </div>
+
+        </div>
+
+        <div className="px-4 pb-4 pt-3 border-t flex gap-2 flex-shrink-0">
+          <button onClick={() => setLocal(DEFAULT_FILTERS)}
+            className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-50 transition">
+            Xóa tất cả
+          </button>
+          <button onClick={() => { onApply(local); onClose(); }}
+            className="flex-1 py-3 rounded-xl bg-orange-600 text-white font-bold text-sm hover:bg-orange-700 transition">
+            LỌC{activeCount > 0 ? ` (${activeCount})` : ''}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 function CandidatesContent() {
   const { user_group, user_id, isLoading: isAuthLoading } = useAuth();
   const canEditSource = user_group?.toLowerCase() === 'admin';
@@ -205,6 +321,7 @@ function CandidatesContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 const [mobileShowDetail, setMobileShowDetail] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const [supabaseProjects, setSupabaseProjects] = useState<ProjectOption[]>([]);
 
 useEffect(() => {
@@ -541,7 +658,7 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
   if (isAuthLoading || listLoading) return <div className="h-screen flex items-center justify-center">Đang tải dữ liệu...</div>;
 
   return (
-<div className="flex h-full bg-gray-100 overflow-hidden text-sm p-2 sm:p-4 gap-3">
+<div className="flex h-full bg-gray-100 overflow-hidden text-xs sm:text-sm p-2 sm:p-4 gap-3">
 
     {/* FILTER SIDEBAR — chỉ hiện trên desktop */}
     <div className={`hidden sm:flex flex-shrink-0 flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden ${showFilters ? 'w-56' : 'w-0 border-0'}`}>
@@ -582,111 +699,74 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
       )}
     </div>
 
-    {/* FILTER BOTTOM SHEET — chỉ hiện trên mobile */}
-    {showFilters && (
-      <div className="sm:hidden fixed inset-0 z-40 flex flex-col justify-end">
-        <div className="absolute inset-0 bg-black/40" onClick={() => setShowFilters(false)} />
-        <div className="relative bg-white rounded-t-2xl shadow-2xl max-h-[75vh] flex flex-col">
-          <div className="p-3 border-b bg-orange-600 flex items-center justify-between rounded-t-2xl">
-            <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc</span>
-            <div className="flex gap-3 items-center">
-              <button onClick={resetFilters} className="text-[9px] font-bold text-orange-200 hover:text-white underline">Xóa tất cả</button>
-              <button onClick={() => setShowFilters(false)} className="text-white font-bold text-sm">✕</button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
-            <MultiCheckList label="Trạng thái" options={statusOptions} selected={filters.status}
-              onChange={val => setFilters(prev => ({ ...prev, status: val }))} />
-            <MultiCheckList label="Dự án" options={uniqueProjects as string[]} selected={filters.project}
-              onChange={val => setFilters(prev => ({ ...prev, project: val }))} />
-            <MultiCheckList label="Người phụ trách" options={uniqueUsers as string[]} selected={filters.assigned_user}
-              onChange={val => setFilters(prev => ({ ...prev, assigned_user: val }))} />
-            <MultiCheckList label="Nhãn" options={MASTER_DATA.candidateTags} selected={filters.tags}
-              onChange={val => setFilters(prev => ({ ...prev, tags: val }))} />
-            <div className="border-t pt-3 space-y-3">
-              <p className="text-[10px] uppercase font-black text-orange-600">Lọc theo ngày</p>
-              <div>
-                <label className="text-[10px] font-bold text-gray-500 block mb-1">Ngày Phỏng vấn</label>
-                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
-                  value={filters.interview_from} onChange={e => setFilters(prev => ({ ...prev, interview_from: e.target.value }))} />
-                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
-                  value={filters.interview_to} onChange={e => setFilters(prev => ({ ...prev, interview_to: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-500 block mb-1">Ngày Nhận việc</label>
-                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500 mb-1"
-                  value={filters.onboard_from} onChange={e => setFilters(prev => ({ ...prev, onboard_from: e.target.value }))} />
-                <input type="date" className="w-full p-1 border rounded-md text-[10px] outline-none bg-white focus:border-orange-500"
-                  value={filters.onboard_to} onChange={e => setFilters(prev => ({ ...prev, onboard_to: e.target.value }))} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
 
       {/* DANH SÁCH */}
       <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden flex-1">
 
         {/* TOOLBAR */}
-        <div className="p-3 border-b bg-white">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Tìm theo tên, SĐT hoặc mã ứng viên..."
-              className="flex-1 px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-sm"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-            {/* Nút Lọc */}
-            <button onClick={() => setShowFilters(!showFilters)}
-              className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition
-                ${showFilters ? 'bg-orange-500 text-white border-orange-500' : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
-              </svg>
-              Lọc
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-            {/* Nút Cột */}
-            <button onClick={() => setShowSettings(!showSettings)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition
-                ${showSettings ? 'bg-orange-500 text-white border-orange-500' : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-              </svg>
-              Cột
-            </button>
-            {/* Xuất Excel */}
-            <button onClick={handleExportExcel}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-white hover:bg-orange-50 text-gray-600 border-gray-200 transition">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Xuất
-            </button>
-            {/* Import */}
-            <Link href="/candidates/import"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-white hover:bg-orange-50 text-gray-600 border-gray-200 transition">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-              Import
-            </Link>
-            {/* Thêm mới */}
-            {!selectedId && (
-              <Link href="/candidates/new"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 border-orange-600 transition">
-                + Thêm mới
-              </Link>
-            )}
+        {/* Nút Lọc */}
+<button
+  onClick={() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 640) {
+      setShowFilters(v => !v);
+    } else {
+      setShowPopup(true);
+    }
+  }}
+  className={`relative flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs font-bold transition
+    ${showFilters ? 'bg-orange-500 text-white border-orange-500' : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0">
+    <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+  </svg>
+  <span className="hidden sm:inline">Lọc</span>
+  {activeFilterCount > 0 && (
+    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+      {activeFilterCount}
+    </span>
+  )}
+</button>
+
+{/* Nút Cột */}
+<button onClick={() => setShowSettings(!showSettings)}
+  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs font-bold transition
+    ${showSettings ? 'bg-orange-500 text-white border-orange-500' : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0">
+    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+    <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+  </svg>
+  <span className="hidden sm:inline">Cột</span>
+</button>
+
+{/* Xuất Excel — ẩn trên mobile */}
+<button onClick={handleExportExcel}
+  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-white hover:bg-orange-50 text-gray-600 border-gray-200 transition">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  Xuất
+</button>
+
+{/* Import — ẩn trên mobile */}
+<Link href="/candidates/import"
+  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-white hover:bg-orange-50 text-gray-600 border-gray-200 transition">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+  </svg>
+  Import
+</Link>
+
+{/* Thêm mới */}
+{!selectedId && (
+  <Link href="/candidates/new"
+    className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 border-orange-600 transition">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 flex-shrink-0">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    <span className="hidden sm:inline">Thêm mới</span>
+  </Link>
+)}
             <Link href="/dashboard" className="p-2 text-gray-300 hover:text-red-400 transition">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -738,9 +818,10 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
 
         {/* PAGINATION */}
         <div className="p-3 border-t bg-white flex items-center justify-between">
-          <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">
-            Tổng: {processedData.length} ứng viên | Trang {currentPage}/{totalPages || 1}
-          </span>
+          <span className="text-[9px] sm:text-[10px] text-gray-400 uppercase font-bold tracking-widest">
+  <span className="sm:hidden">{processedData.length} UV | {currentPage}/{totalPages || 1}</span>
+  <span className="hidden sm:inline">Tổng: {processedData.length} ứng viên | Trang {currentPage}/{totalPages || 1}</span>
+</span>
           <div className="flex gap-1">
             <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 border rounded-lg bg-white hover:bg-gray-50 disabled:opacity-30 transition">‹</button>
             <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 border rounded-lg bg-white hover:bg-gray-50 disabled:opacity-30 transition">›</button>
@@ -750,7 +831,12 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
 
       {/* CHI TIẾT */}
       {selectedId && (
-        <div className="w-1/2 flex-shrink-0 flex flex-col bg-white rounded-xl shadow-xl border overflow-hidden">
+        <div className={`
+  fixed inset-0 z-50 flex flex-col bg-white
+  sm:relative sm:inset-auto sm:z-auto sm:w-1/2 sm:flex-shrink-0 sm:rounded-xl sm:shadow-xl sm:border
+  transition-transform duration-300
+  ${mobileShowDetail ? 'translate-y-0' : 'translate-y-full sm:translate-y-0'}
+`}>
           {detailLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2">
               <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
@@ -786,7 +872,7 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
               </div>
 
               {/* Body Detail */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-6 sm:space-y-8 pb-24 scrollbar-thin">
 
                 {/* TAGS */}
                 <section className="relative">
@@ -1100,6 +1186,15 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
           )}
         </div>
       )}
+<FilterPopup
+        open={showPopup}
+        onClose={() => setShowPopup(false)}
+        onApply={setFilters}
+        initial={filters}
+        statusOptions={statusOptions}
+        uniqueProjects={uniqueProjects as string[]}
+        uniqueUsers={uniqueUsers as string[]}
+      />
 
       {/* SETTINGS OVERLAY */}
       {showSettings && (
