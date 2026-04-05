@@ -704,6 +704,8 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
       <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden flex-1">
 
         {/* TOOLBAR */}
+           <div className="p-3 border-b bg-white">
+          <div className="flex items-center gap-2">
         {/* Nút Lọc */}
 <button
   onClick={() => {
