@@ -187,7 +187,7 @@ export const MASTER_DATA: MasterDataType = {
   sourceTypesByGroup: {
     "Ads": ["Facebook Ads", "Tiktok Ads", "Zalo Ads"],
     "Tiktok Organic": ["Tiktok Video", "Tiktok Live", "Tiktok Inbox"],
-    "MKT Organic khác": ["Hotline", "Zalo OA", "Website", "Group Facebook", "Fanpage Facebook","Khai thác lại","Social khác"],
+    "MKT Organic khác": ["Hotline", "Zalo OA", "Website", "Group Zalo", "Group Facebook", "Fanpage Facebook","Khai thác lại","Social khác"],
     "Seeding": ["Seeding thường", "Seeding tự động"],
     "Vendor/CTV": ["CTV cá nhân", "Vendor"],
     "Offline": ["Trường học", "Sự kiện tuyển dụng", "Cơ quan địa phương"]
@@ -206,7 +206,8 @@ export const MASTER_DATA: MasterDataType = {
     "Không đạt về trình độ",
     "Không đạt về sức khỏe",
     "Thái độ không tốt",
-    "Hồ sơ giả mạo",
+    "Không đạt yêu cầu về hồ sơ",
+    "Không đạt yêu cầu về tái tuyển",
         "Không gọi được quá nhiều lần",
     "Không thuộc địa điểm được phép tuyển",
     "Không thuộc độ tuổi được phép tuyển",
