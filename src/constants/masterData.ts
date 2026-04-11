@@ -216,9 +216,9 @@ export const MASTER_DATA: MasterDataType = {
   ],
   candidateTags: [
     "Ưu tiên",
-    "Ra tết",
+    "Online",
+    "Trực tiếp",
     "Chưa liên lạc được",
-    "Sai số",
     "Đăng ký KTX",
     "Đăng ký tuyến xe"
   ],
