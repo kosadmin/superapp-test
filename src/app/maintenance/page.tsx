@@ -29,19 +29,14 @@ export default function MaintenancePage() {
         }}
       >
         {/* Brand */}
-        <div className="flex items-center justify-center gap-2.5 mb-10">
+        <div className="flex items-center justify-center mb-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.png"
             alt="KOS"
-            className="h-5 w-auto"
-            style={{ filter: 'brightness(0) saturate(100%) invert(75%) sepia(10%) saturate(300%) hue-rotate(10deg)' }}
+            className="h-8 w-auto"
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
-          <span style={{ width: 1, height: 16, background: '#ddd8d2' }} />
-          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#bbb4ab' }}>
-            Super CRM
-          </span>
         </div>
 
         {/* Icon */}
@@ -50,12 +45,12 @@ export default function MaintenancePage() {
             style={{
               width: 72, height: 72,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #fff4ed, #ffe8d6)',
-              border: '1px solid #ffd4b3',
+              background: 'linear-gradient(135deg, #fff2e5, #ffdfc0)',
+              border: '1px solid #ffbf86',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="#f07020" strokeWidth="1.8"
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ff6a00" strokeWidth="1.8"
               strokeLinecap="round" strokeLinejoin="round" width={32} height={32}>
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
@@ -73,15 +68,15 @@ export default function MaintenancePage() {
         <div className="flex justify-center mb-7">
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: '#fff4ed', border: '1px solid #ffd4b3',
+            background: '#fff2e5', border: '1px solid #ffbf86',
             borderRadius: 999, padding: '4px 12px',
           }}>
             <span style={{
-              width: 6, height: 6, borderRadius: '50%', background: '#f07020',
+              width: 6, height: 6, borderRadius: '50%', background: '#ff6a00',
               animation: 'pulse-dot 1.8s ease-in-out infinite',
               display: 'inline-block',
             }} />
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e06010' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ff6a00' }}>
               Đang bảo trì
             </span>
           </div>
